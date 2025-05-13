@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>個人檔案 - 網頁小遊戲合集</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="profile-styles.css" />
+    <link rel="stylesheet" href="notification-styles.css" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="查看您的遊戲成就、統計數據和個人設定" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+            <li><a href="profile.html" class="active">個人檔案</a></li>
+            <li>
+              <button id="theme-toggle" aria-label="切換主題">
+                <span class="theme-icon light-icon">☀️</span>
+                <span class="theme-icon dark-icon">🌙</span>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+      <div
+        id="achievement-notification"
+        class="achievement-notification hidden"
+      >
+        <div class="achievement-content">
+          <div class="achievement-icon"></div>
+          <div class="achievement-info">
+            <h3 class="achievement-title"></h3>
+            <p class="achievement-description"></p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container profile-container">
+      <div class="profile-header">
+        <h1>個人檔案</h1>
+        <p>查看您的遊戲成就、統計數據和個人設定</p>
+      </div>
+
+      <div class="profile-nav">
+        <button class="profile-tab active" data-tab="statistics">
+          統計數據
+        </button>
+        <button class="profile-tab" data-tab="achievements">遊戲成就</button>
+        <button class="profile-tab" data-tab="settings">設定</button>
+      </div>
+
+      <!-- 統計數據區塊 -->
+      <section id="statistics" class="profile-section active">
+        <h2>遊戲統計數據</h2>
+        <div class="stats-summary">
+          <div class="stats-card">
+            <div class="stats-icon">🎮</div>
+            <div class="stats-data">
+              <span id="total-games-played">0</span>
+              <span class="stats-label">已遊玩次數</span>
+            </div>
+          </div>
+          <div class="stats-card">
+            <div class="stats-icon">⏱️</div>
+            <div class="stats-data">
+              <span id="total-play-time">0</span>
+              <span class="stats-label">總遊玩時間</span>
+            </div>
+          </div>
+          <div class="stats-card">
+            <div class="stats-icon">🏆</div>
+            <div class="stats-data">
+              <span id="favorite-game">-</span>
+              <span class="stats-label">最喜愛的遊戲</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-details">
+          <h3>遊戲詳細統計</h3>
+          <div class="stats-table-container">
+            <table class="stats-table">
+              <thead>
+                <tr>
+                  <th>遊戲名稱</th>
+                  <th>遊玩次數</th>
+                  <th>最高分數</th>
+                  <th>平均分數</th>
+                  <th>總遊玩時間</th>
+                  <th>最近遊玩</th>
+                </tr>
+              </thead>
+              <tbody id="game-stats-body">
+                <!-- 由 JavaScript 填充數據 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 成就區塊 -->
+      <section id="achievements" class="profile-section">
+        <h2>遊戲成就</h2>
+        <div class="achievement-summary">
+          <div class="achievement-progress">
+            <div class="progress-bar">
+              <div
+                id="achievement-progress-bar"
+                class="progress-fill"
+                style="width: 0%"
+              ></div>
+            </div>
+            <div class="progress-text">
+              已解鎖 <span id="unlocked-count">0</span> /
+              <span id="total-count">0</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="achievement-filters">
+          <button class="achievement-filter active" data-filter="all">
+            全部成就
+          </button>
+          <button class="achievement-filter" data-filter="general">
+            一般成就
+          </button>
+          <button class="achievement-filter" data-filter="game-specific">
+            遊戲專屬成就
+          </button>
+          <button class="achievement-filter" data-filter="unlocked">
+            已解鎖
+          </button>
+          <button class="achievement-filter" data-filter="locked">
+            未解鎖
+          </button>
+        </div>
+
+        <div class="achievement-list" id="achievement-container">
+          <!-- 由 JavaScript 填充成就 -->
+        </div>
+      </section>
+
+      <!-- 設定區塊 -->
+      <section id="settings" class="profile-section">
+        <h2>遊戲設定</h2>
+
+        <div class="settings-group">
+          <h3>主題設定</h3>
+          <div class="setting-item">
+            <label for="theme-select">主題選擇</label>
+            <select id="theme-select">
+              <option value="auto">跟隨系統</option>
+              <option value="light">明亮主題</option>
+              <option value="dark">暗黑主題</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>觸控設定</h3>
+          <div class="setting-item">
+            <label for="touch-controls-toggle">啟用觸控控制</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="touch-controls-toggle" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <label for="touch-sensitivity">觸控靈敏度</label>
+            <input
+              type="range"
+              id="touch-sensitivity"
+              min="1"
+              max="10"
+              value="5"
+              class="slider"
+            />
+            <span id="sensitivity-value">5</span>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>離線設定</h3>
+          <div class="setting-item">
+            <label for="offline-toggle">離線模式</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="offline-toggle" checked />
+              <span class="toggle-slider"></span>
+            </label>
+            <p class="setting-description">
+              啟用離線模式將允許遊戲在無網絡連接時運行
+            </p>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3>資料管理</h3>
+          <div class="setting-item button-row">
+            <button id="export-data" class="btn-secondary">匯出遊戲數據</button>
+            <button id="import-data" class="btn-secondary">匯入遊戲數據</button>
+            <button id="reset-data" class="btn-danger">重置所有數據</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-links">
+            <a href="profile.html#achievements">成就一覽</a>
+            <a href="profile.html#statistics">遊戲統計</a>
+            <a href="profile.html#settings">設定</a>
+          </div>
+          <div class="install-container">
+            <button id="install-button" class="install-button hidden">
+              安裝應用程式
+            </button>
+          </div>
+          <p>&copy; 2025 網頁小遊戲合集 | 使用純 JavaScript 開發</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="gameUtils.js"></script>
+    <script src="themeManager.js"></script>
+    <script src="achievements.js"></script>
+    <script src="gameStats.js"></script>
+    <script src="pwa.js"></script>
+    <script src="profile.js"></script>
+  </body>
+</html>

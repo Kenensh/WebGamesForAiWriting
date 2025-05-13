@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>貪食蛇 - 網頁小遊戲</title>
+    <meta name="game-id" content="snake" />
+    <meta name="game-name" content="貪食蛇" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="notification-styles.css" />
+    <style>
+      /* 觸控控制樣式 */
+      .virtual-dpad {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        width: 150px;
+        height: 150px;
+        display: none;
+        z-index: 100;
+      }
+
+      .dpad-button {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background-color: rgba(100, 100, 100, 0.7);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .dpad-button.up {
+        top: 0;
+        left: 50px;
+      }
+
+      .dpad-button.down {
+        bottom: 0;
+        left: 50px;
+      }
+
+      .dpad-button.left {
+        left: 0;
+        top: 50px;
+      }
+
+      .dpad-button.right {
+        right: 0;
+        top: 50px;
+      }
+
+      .virtual-action-button {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        width: 70px;
+        height: 70px;
+        background-color: rgba(0, 150, 250, 0.7);
+        color: white;
+        border-radius: 50%;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        font-size: 28px;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        z-index: 100;
+      }
+
+      @media (max-width: 768px) {
+        /* 在移動設備上顯示虛擬控制器 */
+        .virtual-dpad,
+        .virtual-action-button {
+          display: flex;
+        }
+
+        /* 調整遊戲佈局以適應移動屏幕 */
+        .snake-game-container {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html">返回首頁</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container game-container">
+      <h1>貪食蛇</h1>
+      <div class="score-display">分數: <span id="scoreValue">0</span></div>
+
+      <div class="snake-game-container">
+        <div class="snake-board" id="snakeBoard">
+          <!-- 遊戲棋盤會在這裡動態生成 -->
+        </div>
+
+        <div class="game-controls">
+          <button id="pauseButton" class="primary-button">暫停</button>
+          <button id="restartButton" class="primary-button">重新開始</button>
+          <button id="helpButton" class="secondary-button">遊戲說明</button>
+          <button id="homeButton" class="secondary-button">返回首頁</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>&copy; 2025 網頁小遊戲合集 | 使用純 JavaScript 開發</p>
+      </div>
+    </footer>
+    <script src="gameUtils.js"></script>
+    <script src="touchControls.js"></script>
+    <script>
+      // 等待DOM載入完成
+      document.addEventListener("DOMContentLoaded", () => {
+        // 遊戲設置
+        const gameSettings = {
+          boardSize: 20, // 棋盤大小
+          initialSnakeLength: 3, // 初始蛇的長度
+          speed: 180, // 遊戲初始速度 (毫秒)，調整為更合適的初始速度
+          snake: [], // 蛇的身體坐標
+          food: null, // 食物坐標
+          direction: "right", // 初始方向
+          nextDirection: "right", // 下一步方向
+          gameInterval: null, // 遊戲間隔計時器
+          score: 0, // 分數
+        };
+
+        // 創建遊戲控制器
+        const gameController = new GameUtils.GameController();
+
+        // 創建分數管理器
+        const scoreManager = new GameUtils.ScoreManager("scoreValue");
+
+        // 創建說明模態框
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "貪食蛇 - 遊戲說明",
+          `
+        <h3>遊戲規則：</h3>
+        <p>控制蛇移動並吃掉食物來增加長度和得分。</p>
+        <p>如果蛇撞到牆壁或自己的身體，遊戲就結束了。</p>
+        
+        <h3>計分方式：</h3>
+        <p>每吃一個食物得10分</p>
+        
+        <h3>操作方法：</h3>
+        <p>使用鍵盤的方向鍵控制蛇的移動方向：</p>
+        <ul>
+          <li>↑ - 向上移動</li>
+          <li>↓ - 向下移動</li>
+          <li>← - 向左移動</li>
+          <li>→ - 向右移動</li>
+        </ul>
+        <p>按空格鍵可以暫停/繼續遊戲</p>
+      `
+        );
+
+        // 獲取DOM元素
+        const snakeBoard = document.getElementById("snakeBoard");
+        const pauseButton = document.getElementById("pauseButton");
+        const restartButton = document.getElementById("restartButton");
+        const helpButton = document.getElementById("helpButton");
+        const homeButton = document.getElementById("homeButton"); // 保存遊戲狀態
+        function saveGameState() {
+          const gameState = {
+            snake: JSON.parse(JSON.stringify(gameSettings.snake)),
+            food: { ...gameSettings.food },
+            direction: gameSettings.direction,
+            nextDirection: gameSettings.nextDirection,
+            score: gameSettings.score,
+            speed: gameSettings.speed,
+            timestamp: Date.now(),
+          };
+
+          localStorage.setItem("snakeGameState", JSON.stringify(gameState));
+        }
+
+        // 載入已保存的遊戲狀態
+        function loadGameState() {
+          const savedState = localStorage.getItem("snakeGameState");
+          if (!savedState) return false;
+
+          try {
+            const gameState = JSON.parse(savedState);
+
+            // 檢查存檔是否過期 (超過24小時)
+            const now = Date.now();
+            if (now - gameState.timestamp > 24 * 60 * 60 * 1000) {
+              localStorage.removeItem("snakeGameState");
+              return false;
+            }
+
+            // 恢復遊戲狀態
+            gameSettings.snake = gameState.snake;
+            gameSettings.food = gameState.food;
+            gameSettings.direction = gameState.direction;
+            gameSettings.nextDirection = gameSettings.nextDirection;
+            gameSettings.score = gameState.score;
+            gameSettings.speed = gameState.speed;
+
+            // 更新分數顯示
+            scoreManager.set(gameSettings.score);
+
+            return true;
+          } catch (e) {
+            console.error("載入遊戲狀態失敗:", e);
+            localStorage.removeItem("snakeGameState");
+            return false;
+          }
+        }
+
+        // 初始化遊戲
+        function initGame() {
+          // 嘗試載入已保存的遊戲狀態
+          const hasLoadedState = loadGameState();
+
+          if (!hasLoadedState) {
+            // 重設分數
+            scoreManager.reset();
+            gameSettings.score = 0;
+
+            // 設置蛇的初始位置
+            const centerX = Math.floor(gameSettings.boardSize / 2);
+            const centerY = Math.floor(gameSettings.boardSize / 2);
+
+            gameSettings.snake = [];
+            for (let i = 0; i < gameSettings.initialSnakeLength; i++) {
+              gameSettings.snake.push({ x: centerX - i, y: centerY });
+            }
+
+            // 設置初始方向
+            gameSettings.direction = "right";
+            gameSettings.nextDirection = "right";
+
+            // 重置遊戲速度
+            gameSettings.speed = 200;
+
+            // 生成食物
+            generateFood();
+          } else {
+            // 如果載入了保存的狀態，顯示通知
+            const continueNotification = document.createElement("div");
+            continueNotification.className = "achievement-notification";
+            continueNotification.innerHTML = `
+              <div class="achievement-content">
+                <div class="achievement-icon">⏱️</div>
+                <div class="achievement-info">
+                  <div class="achievement-title">繼續遊戲</div>
+                  <div class="achievement-description">已載入之前的遊戲進度</div>
+                </div>
+              </div>
+            `;
+
+            document.body.appendChild(continueNotification);
+
+            // 顯示通知
+            setTimeout(() => {
+              continueNotification.classList.add("show");
+            }, 100);
+
+            // 3秒後移除通知
+            setTimeout(() => {
+              continueNotification.classList.remove("show");
+              setTimeout(() => {
+                continueNotification.remove();
+              }, 500);
+            }, 3000);
+          }
+
+          // 初始化遊戲棋盤
+          initBoard();
+
+          // 開始遊戲循環
+          startGameLoop();
+        }
+
+        // 初始化遊戲棋盤
+        function initBoard() {
+          // 清空棋盤
+          snakeBoard.innerHTML = "";
+
+          // 設置棋盤大小
+          snakeBoard.style.gridTemplateColumns = `repeat(${gameSettings.boardSize}, 20px)`;
+          snakeBoard.style.gridTemplateRows = `repeat(${gameSettings.boardSize}, 20px)`;
+
+          // 創建棋盤格子
+          for (let y = 0; y < gameSettings.boardSize; y++) {
+            for (let x = 0; x < gameSettings.boardSize; x++) {
+              const cell = document.createElement("div");
+              cell.className = "snake-cell";
+              cell.id = `cell-${x}-${y}`;
+              snakeBoard.appendChild(cell);
+            }
+          }
+
+          // 更新蛇和食物位置
+          updateBoard();
+        }
+
+        // 生成食物
+        function generateFood() {
+          // 隨機生成位置
+          let x, y;
+          let validPosition = false;
+
+          while (!validPosition) {
+            x = Math.floor(Math.random() * gameSettings.boardSize);
+            y = Math.floor(Math.random() * gameSettings.boardSize);
+
+            // 確保食物不會出現在蛇身上
+            validPosition = gameSettings.snake.every(
+              (segment) => segment.x !== x || segment.y !== y
+            );
+          }
+
+          gameSettings.food = { x, y };
+        }
+
+        // 更新棋盤顯示
+        function updateBoard() {
+          // 首先清除所有單元格的蛇和食物類
+          for (let y = 0; y < gameSettings.boardSize; y++) {
+            for (let x = 0; x < gameSettings.boardSize; x++) {
+              const cell = document.getElementById(`cell-${x}-${y}`);
+              if (cell) {
+                cell.className = "snake-cell";
+              }
+            }
+          }
+
+          // 更新蛇的位置
+          gameSettings.snake.forEach((segment, index) => {
+            const cell = document.getElementById(
+              `cell-${segment.x}-${segment.y}`
+            );
+            if (cell) {
+              if (index === 0) {
+                cell.classList.add("snake-head");
+              } else {
+                cell.classList.add("snake-body");
+              }
+            }
+          });
+
+          // 更新食物位置
+          const foodCell = document.getElementById(
+            `cell-${gameSettings.food.x}-${gameSettings.food.y}`
+          );
+          if (foodCell) {
+            foodCell.classList.add("snake-food");
+          }
+        }
+
+        // 移動蛇
+        function moveSnake() {
+          // 取得蛇頭位置
+          const head = { ...gameSettings.snake[0] };
+
+          // 更新方向
+          gameSettings.direction = gameSettings.nextDirection;
+
+          // 根據方向移動蛇頭
+          switch (gameSettings.direction) {
+            case "up":
+              head.y--;
+              break;
+            case "down":
+              head.y++;
+              break;
+            case "left":
+              head.x--;
+              break;
+            case "right":
+              head.x++;
+              break;
+          }
+
+          // 檢查碰撞
+          if (checkCollision(head)) {
+            // 遊戲結束
+            gameOver();
+            return;
+          }
+
+          // 將新的頭部添加到蛇身
+          gameSettings.snake.unshift(head);
+
+          // 檢查是否吃到食物
+          if (
+            head.x === gameSettings.food.x &&
+            head.y === gameSettings.food.y
+          ) {
+            // 吃到食物，增加分數
+            gameSettings.score += 10;
+            scoreManager.add(10);
+
+            // 生成新的食物
+            generateFood(); // 增加遊戲速度，調整為更平緩的加速曲線
+            if (gameSettings.score % 30 === 0 && gameSettings.speed > 80) {
+              // 每得30分降低速度，但最低不小於80ms
+              gameSettings.speed -= 10;
+
+              // 重新開始遊戲間隔以更新速度
+              if (gameSettings.gameInterval) {
+                clearInterval(gameSettings.gameInterval);
+                startGameLoop();
+              }
+            }
+          } else {
+            // 未吃到食物，移除蛇尾
+            gameSettings.snake.pop();
+          } // 更新棋盤
+          updateBoard();
+
+          // 每 10 次移動保存一次遊戲狀態
+          if (gameSettings.score % 10 === 0) {
+            saveGameState();
+          }
+        }
+
+        // 檢查碰撞
+        function checkCollision(head) {
+          // 檢查是否撞牆
+          if (
+            head.x < 0 ||
+            head.x >= gameSettings.boardSize ||
+            head.y < 0 ||
+            head.y >= gameSettings.boardSize
+          ) {
+            return true;
+          }
+
+          // 檢查是否撞到自己的身體
+          return gameSettings.snake.some(
+            (segment) => segment.x === head.x && segment.y === head.y
+          );
+        }
+
+        // 開始遊戲循環
+        function startGameLoop() {
+          if (gameSettings.gameInterval) {
+            clearInterval(gameSettings.gameInterval);
+          }
+
+          gameSettings.gameInterval = setInterval(() => {
+            moveSnake();
+          }, gameSettings.speed);
+
+          // 設置遊戲循環給遊戲控制器
+          gameController.setGameLoop(() => {
+            moveSnake();
+          });
+        } // 處理按鍵輸入
+        document.addEventListener("keydown", (e) => {
+          // 如果遊戲暫停，不處理方向變換
+          if (gameController.paused || gameController.gameOver) return;
+
+          switch (e.key) {
+            case "ArrowUp":
+              if (gameSettings.direction !== "down") {
+                gameSettings.nextDirection = "up";
+              }
+              break;
+            case "ArrowDown":
+              if (gameSettings.direction !== "up") {
+                gameSettings.nextDirection = "down";
+              }
+              break;
+            case "ArrowLeft":
+              if (gameSettings.direction !== "right") {
+                gameSettings.nextDirection = "left";
+              }
+              break;
+            case "ArrowRight":
+              if (gameSettings.direction !== "left") {
+                gameSettings.nextDirection = "right";
+              }
+              break;
+            case " ":
+              // 空格鍵暫停/繼續
+              gameController.togglePause();
+              break;
+          }
+        });
+
+        // 初始化觸控控制
+        const gameTouchController = new GameTouchController(snakeBoard, {
+          enableKeyboardFallback: true,
+          addVirtualControls: true,
+        });
+
+        // 設置觸控操作的回調函數
+        gameTouchController.on("up", () => {
+          if (gameController.paused || gameController.gameOver) return;
+          if (gameSettings.direction !== "down") {
+            gameSettings.nextDirection = "up";
+          }
+        });
+
+        gameTouchController.on("down", () => {
+          if (gameController.paused || gameController.gameOver) return;
+          if (gameSettings.direction !== "up") {
+            gameSettings.nextDirection = "down";
+          }
+        });
+
+        gameTouchController.on("left", () => {
+          if (gameController.paused || gameController.gameOver) return;
+          if (gameSettings.direction !== "right") {
+            gameSettings.nextDirection = "left";
+          }
+        });
+
+        gameTouchController.on("right", () => {
+          if (gameController.paused || gameController.gameOver) return;
+          if (gameSettings.direction !== "left") {
+            gameSettings.nextDirection = "right";
+          }
+        });
+
+        gameTouchController.on("action", () => {
+          if (gameController.gameOver) return;
+          // 動作按鈕觸發暫停/繼續
+          gameController.togglePause();
+        }); // 遊戲結束
+        function gameOver() {
+          if (gameSettings.gameInterval) {
+            clearInterval(gameSettings.gameInterval);
+            gameSettings.gameInterval = null;
+          }
+
+          // 清除已保存的遊戲狀態
+          localStorage.removeItem("snakeGameState");
+
+          gameController.endGame(gameSettings.score, "遊戲結束！");
+        }
+
+        // 重新開始遊戲
+        function restartGame() {
+          if (gameSettings.gameInterval) {
+            clearInterval(gameSettings.gameInterval);
+          }
+
+          initGame();
+        } // 添加事件監聽器
+        pauseButton.addEventListener("click", () => {
+          gameController.togglePause();
+
+          // 暫停時保存遊戲狀態
+          if (!gameController.gameOver) {
+            saveGameState();
+          }
+        });
+
+        restartButton.addEventListener("click", restartGame);
+
+        helpButton.addEventListener("click", () => {
+          helpModal.show();
+        });
+
+        homeButton.addEventListener("click", () => {
+          window.location.href = "index.html";
+        });
+
+        // 設置重啟處理程序
+        gameController.setRestartHandler(restartGame); // 監聽頁面關閉事件，保存遊戲狀態
+        window.addEventListener("beforeunload", () => {
+          if (!gameController.gameOver && !gameController.paused) {
+            saveGameState();
+          }
+        });
+
+        // 顯示開始動畫，然後開始遊戲
+        gameController.showStartAnimation(() => {
+          initGame();
+        });
+      });
+    </script>
+  </body>
+</html>

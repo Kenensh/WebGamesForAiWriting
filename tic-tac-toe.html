@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>井字遊戲 - 網頁小遊戲</title>
+    <meta name="game-id" content="tic-tac-toe" />
+    <meta name="game-name" content="井字遊戲" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .game-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .tic-tac-toe-board {
+        display: grid;
+        grid-template-columns: repeat(3, 100px);
+        grid-template-rows: repeat(3, 100px);
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .tic-tac-toe-cell {
+        width: 100px;
+        height: 100px;
+        background-color: #f0f0f0;
+        border-radius: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 48px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .tic-tac-toe-cell:hover {
+        background-color: #e0e0e0;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .tic-tac-toe-cell.x {
+        color: var(--primary-color);
+      }
+
+      .tic-tac-toe-cell.o {
+        color: var(--secondary-color);
+      }
+
+      .game-info {
+        background-color: #fff;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .game-status {
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 10px;
+      }
+
+      .game-stats {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .stat-box {
+        padding: 10px 15px;
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        flex: 1;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: #666;
+      }
+
+      .stat-value {
+        font-size: 18px;
+        font-weight: bold;
+        color: var(--primary-color);
+      }
+
+      .game-controls {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .control-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .primary-btn {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .primary-btn:hover {
+        background-color: var(--primary-hover);
+      }
+
+      @media (max-width: 480px) {
+        .tic-tac-toe-board {
+          grid-template-columns: repeat(3, 80px);
+          grid-template-rows: repeat(3, 80px);
+        }
+
+        .tic-tac-toe-cell {
+          width: 80px;
+          height: 80px;
+          font-size: 36px;
+        }
+
+        .game-stats {
+          flex-direction: column;
+          gap: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>井字遊戲</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="game-container">
+        <div class="game-info">
+          <div id="gameStatus" class="game-status">輪到玩家 X</div>
+          <div class="game-stats">
+            <div class="stat-box">
+              <div class="stat-label">玩家 X 勝場</div>
+              <div id="xWins" class="stat-value">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">玩家 O 勝場</div>
+              <div id="oWins" class="stat-value">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">平局</div>
+              <div id="draws" class="stat-value">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tic-tac-toe-board" id="gameBoard">
+          <div class="tic-tac-toe-cell" data-index="0"></div>
+          <div class="tic-tac-toe-cell" data-index="1"></div>
+          <div class="tic-tac-toe-cell" data-index="2"></div>
+          <div class="tic-tac-toe-cell" data-index="3"></div>
+          <div class="tic-tac-toe-cell" data-index="4"></div>
+          <div class="tic-tac-toe-cell" data-index="5"></div>
+          <div class="tic-tac-toe-cell" data-index="6"></div>
+          <div class="tic-tac-toe-cell" data-index="7"></div>
+          <div class="tic-tac-toe-cell" data-index="8"></div>
+        </div>
+
+        <div class="game-controls">
+          <button id="switchModeBtn" class="control-btn primary-btn">
+            切換為 AI 模式
+          </button>
+        </div>
+      </div>
+
+      <div id="gamePaused" class="game-paused">暫停中</div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "遊戲說明",
+          `
+          <h3>井字遊戲說明</h3>
+          <p>井字遊戲是一種兩人玩的紙筆遊戲，使用 3×3 的格子。</p>
+          <h4>遊戲規則：</h4>
+          <ul>
+            <li>玩家交替在格子中放置自己的標記 (X 或 O)</li>
+            <li>先把自己的三個標記連成一條直線的玩家獲勝</li>
+            <li>連線可以是水平、垂直或對角線</li>
+            <li>如果格子全部填滿但沒有玩家獲勝，則為平局</li>
+          </ul>
+          <h4>遊戲模式：</h4>
+          <ul>
+            <li>雙人模式：兩位玩家交替操作</li>
+            <li>AI 模式：玩家對抗電腦AI</li>
+          </ul>
+        `
+        );
+
+        const gameController = new GameUtils.GameController();
+        const scoreManager = new GameUtils.ScoreManager("scoreDisplay", 0);
+
+        // 遊戲變數
+        let currentPlayer = "X";
+        let board = Array(9).fill("");
+        let gameActive = false;
+        let againstAI = false;
+        let xWins = 0;
+        let oWins = 0;
+        let draws = 0;
+
+        // DOM 元素
+        const gameBoard = document.getElementById("gameBoard");
+        const cells = document.querySelectorAll(".tic-tac-toe-cell");
+        const gameStatus = document.getElementById("gameStatus");
+        const xWinsElement = document.getElementById("xWins");
+        const oWinsElement = document.getElementById("oWins");
+        const drawsElement = document.getElementById("draws");
+        const switchModeBtn = document.getElementById("switchModeBtn");
+        const pauseIndicator = document.getElementById("gamePaused");
+
+        // 初始化遊戲
+        function initGame() {
+          board = Array(9).fill("");
+          currentPlayer = "X";
+          gameActive = true;
+
+          // 清除棋盤
+          cells.forEach((cell) => {
+            cell.textContent = "";
+            cell.classList.remove("x", "o");
+          });
+
+          // 更新遊戲狀態
+          updateStatus();
+        }
+
+        // 更新遊戲狀態顯示
+        function updateStatus() {
+          if (gameActive) {
+            gameStatus.textContent = `輪到玩家 ${currentPlayer}`;
+            if (currentPlayer === "O" && againstAI) {
+              gameStatus.textContent = "電腦思考中...";
+              setTimeout(makeAIMove, 800);
+            }
+          }
+        }
+
+        // 處理玩家移動
+        function handleMove(index) {
+          if (
+            !gameActive ||
+            board[index] !== "" ||
+            (currentPlayer === "O" && againstAI)
+          ) {
+            return;
+          }
+
+          // 更新棋盤
+          board[index] = currentPlayer;
+          const cell = cells[index];
+          cell.textContent = currentPlayer;
+          cell.classList.add(currentPlayer.toLowerCase());
+
+          // 檢查遊戲結果
+          if (checkWin()) {
+            gameActive = false;
+            gameStatus.textContent = `玩家 ${currentPlayer} 獲勝！`;
+
+            // 更新勝場數
+            if (currentPlayer === "X") {
+              xWins++;
+              xWinsElement.textContent = xWins;
+              scoreManager.add(10);
+            } else {
+              oWins++;
+              oWinsElement.textContent = oWins;
+            }
+
+            // 記錄遊戲結果
+            localStorage.setItem(
+              "ticTacToeStats",
+              JSON.stringify({
+                xWins,
+                oWins,
+                draws,
+              })
+            );
+
+            return;
+          }
+
+          // 檢查平局
+          if (checkDraw()) {
+            gameActive = false;
+            gameStatus.textContent = "平局！";
+            draws++;
+            drawsElement.textContent = draws;
+
+            // 記錄遊戲結果
+            localStorage.setItem(
+              "ticTacToeStats",
+              JSON.stringify({
+                xWins,
+                oWins,
+                draws,
+              })
+            );
+
+            return;
+          }
+
+          // 切換玩家
+          currentPlayer = currentPlayer === "X" ? "O" : "X";
+          updateStatus();
+        }
+
+        // AI 移動
+        function makeAIMove() {
+          if (!gameActive || currentPlayer !== "O" || !againstAI) {
+            return;
+          }
+
+          // 簡單的 AI：找出空格並隨機選擇
+          const emptyIndices = board
+            .map((val, idx) => (val === "" ? idx : -1))
+            .filter((idx) => idx !== -1);
+
+          // 如果有勝利機會，AI 會選擇勝利移動
+          let bestMove = findBestMove();
+
+          if (bestMove !== -1) {
+            handleMove(bestMove);
+            return;
+          }
+
+          // 隨機選擇一個空格
+          if (emptyIndices.length > 0) {
+            const randomIndex =
+              emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+            handleMove(randomIndex);
+          }
+        }
+
+        // 找出最佳移動
+        function findBestMove() {
+          // 檢查 AI 可以贏的移動
+          for (let i = 0; i < 9; i++) {
+            if (board[i] === "") {
+              board[i] = "O"; // 嘗試移動
+              if (checkWin()) {
+                board[i] = ""; // 恢復
+                return i; // 找到贏的移動
+              }
+              board[i] = ""; // 恢復
+            }
+          }
+
+          // 阻止玩家贏的移動
+          for (let i = 0; i < 9; i++) {
+            if (board[i] === "") {
+              board[i] = "X"; // 嘗試玩家的移動
+              if (checkWin()) {
+                board[i] = ""; // 恢復
+                return i; // 阻止玩家贏
+              }
+              board[i] = ""; // 恢復
+            }
+          }
+
+          // 優先選擇中心
+          if (board[4] === "") {
+            return 4;
+          }
+
+          return -1; // 沒有最佳移動
+        }
+
+        // 檢查勝利條件
+        function checkWin() {
+          const winPatterns = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8], // 橫行
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8], // 直行
+            [0, 4, 8],
+            [2, 4, 6], // 對角線
+          ];
+
+          for (const pattern of winPatterns) {
+            const [a, b, c] = pattern;
+            if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+              // 高亮顯示獲勝線
+              cells[a].style.backgroundColor = "#c8e6c9";
+              cells[b].style.backgroundColor = "#c8e6c9";
+              cells[c].style.backgroundColor = "#c8e6c9";
+              return true;
+            }
+          }
+
+          return false;
+        }
+
+        // 檢查平局
+        function checkDraw() {
+          return !board.includes("");
+        }
+
+        // 切換遊戲模式
+        function toggleGameMode() {
+          againstAI = !againstAI;
+          switchModeBtn.textContent = againstAI
+            ? "切換為雙人模式"
+            : "切換為 AI 模式";
+          initGame();
+        }
+
+        // 載入先前的遊戲統計
+        function loadStats() {
+          const savedStats = localStorage.getItem("ticTacToeStats");
+          if (savedStats) {
+            const stats = JSON.parse(savedStats);
+            xWins = stats.xWins || 0;
+            oWins = stats.oWins || 0;
+            draws = stats.draws || 0;
+            xWinsElement.textContent = xWins;
+            oWinsElement.textContent = oWins;
+            drawsElement.textContent = draws;
+          }
+        }
+
+        // 添加事件監聽器
+        cells.forEach((cell) => {
+          cell.addEventListener("click", () => {
+            const index = parseInt(cell.getAttribute("data-index"));
+            handleMove(index);
+          });
+        });
+
+        switchModeBtn.addEventListener("click", toggleGameMode);
+
+        // 設置遊戲控制器
+        gameController.setRestartHandler(() => {
+          initGame();
+        });
+
+        // 開始遊戲動畫
+        gameController.showStartAnimation(() => {
+          loadStats();
+          initGame();
+        });
+      });
+    </script>
+  </body>
+</html>

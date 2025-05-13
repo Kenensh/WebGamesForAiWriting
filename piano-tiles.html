@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>音樂鋼琴 - 網頁小遊戲</title>
+    <meta name="game-id" content="piano-tiles" />
+    <meta name="game-name" content="音樂鋼琴" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .game-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .piano-tiles-container {
+        width: 100%;
+        max-width: 500px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        position: relative;
+        margin: 0 auto;
+      }
+
+      .game-stats {
+        display: flex;
+        justify-content: space-between;
+        background-color: var(--primary-color);
+        color: white;
+        padding: 15px;
+      }
+
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        margin-bottom: 5px;
+      }
+
+      .stat-value {
+        font-size: 22px;
+        font-weight: bold;
+      }
+
+      .game-board {
+        position: relative;
+        width: 100%;
+        height: 500px;
+        background-color: #f5f5f5;
+        overflow: hidden;
+        touch-action: none;
+      }
+
+      .tile {
+        position: absolute;
+        width: 25%;
+        background-color: #212121;
+        border: 1px solid #121212;
+        box-sizing: border-box;
+      }
+
+      .tile.active {
+        background-color: var(--primary-color);
+      }
+
+      .tile.missed {
+        background-color: #f44336;
+      }
+
+      .tile-column {
+        position: absolute;
+        width: 25%;
+        height: 100%;
+        border-right: 1px solid #ddd;
+      }
+
+      .tile-column:last-child {
+        border-right: none;
+      }
+
+      .song-selector {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .song-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 10px;
+      }
+
+      .song-btn {
+        background-color: #e0e0e0;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 15px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .song-btn:hover {
+        background-color: #d0d0d0;
+      }
+
+      .song-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .difficulty-selector {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .difficulty-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 10px;
+      }
+
+      .difficulty-btn {
+        background-color: #e0e0e0;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 15px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .difficulty-btn:hover {
+        background-color: #d0d0d0;
+      }
+
+      .difficulty-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .game-message {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 8px;
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        z-index: 100;
+      }
+
+      .start-area {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 100px;
+        background-color: rgba(0, 0, 0, 0.05);
+        border-top: 2px dashed #aaa;
+      }
+
+      .finish-line {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 5px;
+        background-color: #f44336;
+      }
+
+      .column-marker {
+        position: absolute;
+        bottom: 0;
+        width: 25%;
+        height: 40px;
+        background-color: #e0e0e0;
+        border-top: 2px solid #ccc;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: #666;
+      }
+
+      .column-marker:nth-child(1) {
+        left: 0;
+      }
+      .column-marker:nth-child(2) {
+        left: 25%;
+      }
+      .column-marker:nth-child(3) {
+        left: 50%;
+      }
+      .column-marker:nth-child(4) {
+        left: 75%;
+      }
+
+      .game-controls {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .control-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .control-btn:hover {
+        background-color: var(--primary-hover);
+      }
+
+      @media (max-width: 480px) {
+        .game-stats {
+          flex-wrap: wrap;
+        }
+
+        .stat-item {
+          width: 50%;
+          margin-bottom: 10px;
+        }
+
+        .game-board {
+          height: 400px;
+        }
+
+        .tile {
+          width: 25%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>音樂鋼琴</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="game-container">
+        <div class="song-selector">
+          <h3>選擇歌曲</h3>
+          <div class="song-buttons">
+            <button class="song-btn active" data-song="little-star">
+              小星星
+            </button>
+            <button class="song-btn" data-song="happy-birthday">
+              生日快樂
+            </button>
+            <button class="song-btn" data-song="jingle-bells">聖誕鈴聲</button>
+            <button class="song-btn" data-song="random">隨機模式</button>
+          </div>
+        </div>
+
+        <div class="difficulty-selector">
+          <h3>選擇難度</h3>
+          <div class="difficulty-buttons">
+            <button class="difficulty-btn active" data-speed="slow">
+              簡單
+            </button>
+            <button class="difficulty-btn" data-speed="medium">中等</button>
+            <button class="difficulty-btn" data-speed="fast">困難</button>
+          </div>
+        </div>
+
+        <div class="piano-tiles-container">
+          <div class="game-stats">
+            <div class="stat-item">
+              <div class="stat-label">分數</div>
+              <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">連擊</div>
+              <div class="stat-value" id="combo">0</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">最高連擊</div>
+              <div class="stat-value" id="maxCombo">0</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">準確率</div>
+              <div class="stat-value" id="accuracy">100%</div>
+            </div>
+          </div>
+
+          <div class="game-board" id="gameBoard">
+            <div class="tile-column" style="left: 0"></div>
+            <div class="tile-column" style="left: 25%"></div>
+            <div class="tile-column" style="left: 50%"></div>
+            <div class="tile-column" style="left: 75%"></div>
+
+            <div class="finish-line"></div>
+
+            <div class="column-marker">D</div>
+            <div class="column-marker">F</div>
+            <div class="column-marker">J</div>
+            <div class="column-marker">K</div>
+
+            <div class="game-message" id="gameMessage">點擊開始遊戲</div>
+          </div>
+        </div>
+
+        <div class="game-controls">
+          <button id="startBtn" class="control-btn">開始遊戲</button>
+        </div>
+      </div>
+
+      <div id="gamePaused" class="game-paused">暫停中</div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "遊戲說明",
+          `
+          <h3>音樂鋼琴遊戲說明</h3>
+          <p>音樂鋼琴是一款節奏遊戲，玩家需要在黑色方塊到達底部時，及時點擊對應的位置。</p>
+          <h4>遊戲規則：</h4>
+          <ul>
+            <li>黑色方塊會從上方落下</li>
+            <li>在方塊到達底部時點擊它</li>
+            <li>如果方塊通過底部而沒被點擊，則視為失誤</li>
+            <li>連續成功點擊可以獲得連擊加成分數</li>
+            <li>完成一首歌曲或達到目標分數即可獲勝</li>
+          </ul>
+          <h4>操作方法：</h4>
+          <ul>
+            <li><strong>電腦</strong>：使用 D、F、J、K 鍵分別對應左起第1至4列</li>
+            <li><strong>手機</strong>：直接點擊螢幕對應位置的方塊</li>
+          </ul>
+          <h4>難度說明：</h4>
+          <ul>
+            <li><strong>簡單</strong>：方塊下落速度較慢</li>
+            <li><strong>中等</strong>：方塊下落速度中等</li>
+            <li><strong>困難</strong>：方塊下落速度較快</li>
+          </ul>
+          <h4>計分方式：</h4>
+          <ul>
+            <li>每成功點擊一個方塊：+1分</li>
+            <li>連擊獎勵：每5連擊額外+1分</li>
+            <li>準確率獎勵：遊戲結束時，準確率高於95%可獲得額外分數</li>
+          </ul>
+        `
+        );
+
+        const gameController = new GameUtils.GameController();
+        const scoreManager = new GameUtils.ScoreManager("pianoTilesScore", 0);
+
+        // 音效資源
+        const audioContext = new (window.AudioContext ||
+          window.webkitAudioContext)();
+        const noteFrequencies = {
+          C: 261.63,
+          "C#": 277.18,
+          D: 293.66,
+          "D#": 311.13,
+          E: 329.63,
+          F: 349.23,
+          "F#": 369.99,
+          G: 392.0,
+          "G#": 415.3,
+          A: 440.0,
+          "A#": 466.16,
+          B: 493.88,
+          C5: 523.25,
+        };
+
+        // 播放音符
+        function playNote(note, duration = 0.2) {
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+
+          oscillator.type = "sine";
+          oscillator.frequency.value = noteFrequencies[note] || 440;
+
+          gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(
+            0.01,
+            audioContext.currentTime + duration
+          );
+
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        // DOM 元素
+        const gameBoard = document.getElementById("gameBoard");
+        const gameMessage = document.getElementById("gameMessage");
+        const scoreDisplay = document.getElementById("score");
+        const comboDisplay = document.getElementById("combo");
+        const maxComboDisplay = document.getElementById("maxCombo");
+        const accuracyDisplay = document.getElementById("accuracy");
+        const startBtn = document.getElementById("startBtn");
+        const songButtons = document.querySelectorAll(".song-btn");
+        const difficultyButtons = document.querySelectorAll(".difficulty-btn");
+
+        // 遊戲變數
+        let intervalId = null;
+        let gameActive = false;
+        let tiles = [];
+        let score = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let hits = 0;
+        let misses = 0;
+        let noteIndex = 0;
+        let difficulty = "slow"; // slow, medium, fast
+        let currentSong = "little-star"; // 或其他歌曲
+        let speed = 2; // 方塊下落速度
+        let interval = 600; // 生成方塊的間隔時間(毫秒)
+        let lastTimestamp = 0;
+        let animationId = 0;
+
+        // 歌曲數據 - 音符和對應的列號(0-3)
+        const songs = {
+          "little-star": {
+            notes: [
+              { column: 0, note: "C" },
+              { column: 0, note: "C" },
+              { column: 4, note: "G" },
+              { column: 4, note: "G" },
+              { column: 5, note: "A" },
+              { column: 5, note: "A" },
+              { column: 4, note: "G" },
+              { column: 3, note: "F" },
+              { column: 3, note: "F" },
+              { column: 2, note: "E" },
+              { column: 2, note: "E" },
+              { column: 1, note: "D" },
+              { column: 1, note: "D" },
+              { column: 0, note: "C" },
+            ],
+            name: "小星星",
+            tempo: 1.0,
+          },
+          "happy-birthday": {
+            notes: [
+              { column: 0, note: "C" },
+              { column: 0, note: "C" },
+              { column: 1, note: "D" },
+              { column: 0, note: "C" },
+              { column: 3, note: "F" },
+              { column: 2, note: "E" },
+              { column: 0, note: "C" },
+              { column: 0, note: "C" },
+              { column: 1, note: "D" },
+              { column: 0, note: "C" },
+              { column: 4, note: "G" },
+              { column: 3, note: "F" },
+              { column: 0, note: "C" },
+              { column: 0, note: "C" },
+              { column: 7, note: "C5" },
+              { column: 5, note: "A" },
+              { column: 3, note: "F" },
+              { column: 2, note: "E" },
+              { column: 1, note: "D" },
+            ],
+            name: "生日快樂",
+            tempo: 1.2,
+          },
+          "jingle-bells": {
+            notes: [
+              { column: 2, note: "E" },
+              { column: 2, note: "E" },
+              { column: 2, note: "E" },
+              { column: 2, note: "E" },
+              { column: 2, note: "E" },
+              { column: 2, note: "E" },
+              { column: 2, note: "E" },
+              { column: 4, note: "G" },
+              { column: 0, note: "C" },
+              { column: 1, note: "D" },
+              { column: 2, note: "E" },
+              { column: 3, note: "F" },
+              { column: 3, note: "F" },
+              { column: 3, note: "F" },
+              { column: 3, note: "F" },
+              { column: 3, note: "F" },
+              { column: 2, note: "E" },
+              { column: 2, note: "E" },
+              { column: 2, note: "E" },
+              { column: 1, note: "D" },
+              { column: 1, note: "D" },
+              { column: 2, note: "E" },
+              { column: 1, note: "D" },
+              { column: 4, note: "G" },
+            ],
+            name: "聖誕鈴聲",
+            tempo: 1.3,
+          },
+          random: {
+            notes: [],
+            name: "隨機模式",
+            tempo: 1.0,
+          },
+        };
+
+        // 生成隨機歌曲
+        function generateRandomSong(length = 50) {
+          const randomSong = { notes: [], name: "隨機模式", tempo: 1.0 };
+          for (let i = 0; i < length; i++) {
+            const column = Math.floor(Math.random() * 4);
+            const noteKeys = Object.keys(noteFrequencies);
+            const note = noteKeys[Math.floor(Math.random() * noteKeys.length)];
+            randomSong.notes.push({ column, note });
+          }
+          return randomSong;
+        }
+
+        // 根據難度設置遊戲參數
+        function setDifficultyParameters() {
+          switch (difficulty) {
+            case "slow":
+              speed = 2;
+              interval = 600;
+              break;
+            case "medium":
+              speed = 3;
+              interval = 500;
+              break;
+            case "fast":
+              speed = 4;
+              interval = 400;
+              break;
+            default:
+              speed = 2;
+              interval = 600;
+          }
+
+          // 根據歌曲調整速度
+          if (currentSong !== "random") {
+            interval = interval / songs[currentSong].tempo;
+          }
+        }
+
+        // 創建方塊
+        function createTile() {
+          if (!gameActive) return;
+
+          // 在隨機模式下，需要提前生成歌曲
+          if (currentSong === "random" && songs.random.notes.length === 0) {
+            songs.random = generateRandomSong();
+          }
+
+          // 獲取當前歌曲的音符數據
+          const song = songs[currentSong];
+          if (noteIndex >= song.notes.length) {
+            // 所有音符都已生成，歌曲即將結束
+            if (tiles.length === 0) {
+              completeGame(); // 當最後一個方塊也被點擊或離開屏幕後，完成遊戲
+            }
+            return;
+          }
+
+          const noteData = song.notes[noteIndex];
+          const column = noteData.column % 4; // 確保列在0-3之間
+
+          // 創建新方塊
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          tile.style.left = column * 25 + "%";
+          tile.style.height = "80px";
+          tile.style.top = "-80px"; // 從屏幕上方開始
+          tile.dataset.column = column;
+          tile.dataset.note = noteData.note;
+
+          // 將方塊添加到遊戲板
+          gameBoard.appendChild(tile);
+
+          // 將方塊添加到管理陣列
+          tiles.push({
+            element: tile,
+            column: column,
+            y: -80,
+            hit: false,
+            missed: false,
+            note: noteData.note,
+          });
+
+          noteIndex++;
+
+          // 設置下一個方塊的生成
+          setTimeout(createTile, interval);
+        }
+
+        // 更新方塊位置
+        function updateTiles(timestamp) {
+          if (!gameActive) return;
+
+          // 計算時間差以平滑動畫
+          const deltaTime = timestamp - lastTimestamp;
+          lastTimestamp = timestamp;
+
+          // 移動所有方塊
+          for (let i = 0; i < tiles.length; i++) {
+            const tile = tiles[i];
+            if (!tile.hit && !tile.missed) {
+              tile.y += (speed * deltaTime) / 16; // 根據時間差調整速度
+              tile.element.style.top = tile.y + "px";
+
+              // 檢查是否錯過了方塊
+              const boardHeight = gameBoard.clientHeight;
+              if (tile.y > boardHeight - 40) {
+                // 40是底部標記的高度
+                if (!tile.missed) {
+                  tile.missed = true;
+                  tile.element.classList.add("missed");
+
+                  // 更新統計數據
+                  misses++;
+                  combo = 0;
+                  comboDisplay.textContent = combo;
+                  updateAccuracy();
+
+                  // 移除超出屏幕的方塊
+                  setTimeout(() => {
+                    tile.element.remove();
+                  }, 300);
+                }
+              }
+            }
+          }
+
+          // 移除已經被處理過的方塊
+          tiles = tiles.filter((tile) => {
+            const boardHeight = gameBoard.clientHeight;
+            if ((tile.hit || tile.missed) && tile.y > boardHeight) {
+              tile.element.remove();
+              return false;
+            }
+            return true;
+          });
+
+          // 持續動畫循環
+          animationId = requestAnimationFrame(updateTiles);
+        }
+
+        // 點擊方塊
+        function hitTile(column) {
+          if (!gameActive) return;
+
+          // 查找最接近底部的可點擊方塊
+          const boardHeight = gameBoard.clientHeight;
+          let hitIndex = -1;
+          let minDistance = Infinity;
+
+          for (let i = 0; i < tiles.length; i++) {
+            const tile = tiles[i];
+            if (tile.column === column && !tile.hit && !tile.missed) {
+              // 計算方塊底部距離遊戲板底部的距離
+              const distance = Math.abs(tile.y + 80 - (boardHeight - 40));
+
+              // 只有當方塊接近底部時才能點擊(允許一定的誤差)
+              if (distance < 100 && distance < minDistance) {
+                hitIndex = i;
+                minDistance = distance;
+              }
+            }
+          }
+
+          if (hitIndex !== -1) {
+            const tile = tiles[hitIndex];
+            tile.hit = true;
+            tile.element.classList.add("active");
+
+            // 播放音符
+            playNote(tile.note);
+
+            // 更新統計數據
+            score += 1 + Math.floor(combo / 5); // 連擊獎勵
+            hits++;
+            combo++;
+            maxCombo = Math.max(maxCombo, combo);
+
+            // 更新顯示
+            scoreDisplay.textContent = score;
+            comboDisplay.textContent = combo;
+            maxComboDisplay.textContent = maxCombo;
+            updateAccuracy();
+
+            // 移除被點擊的方塊
+            setTimeout(() => {
+              tile.element.remove();
+            }, 100);
+          }
+        }
+
+        // 更新準確率
+        function updateAccuracy() {
+          const total = hits + misses;
+          const accuracy =
+            total > 0 ? ((hits / total) * 100).toFixed(1) : "100.0";
+          accuracyDisplay.textContent = accuracy + "%";
+        }
+
+        // 完成遊戲
+        function completeGame() {
+          gameActive = false;
+          cancelAnimationFrame(animationId);
+
+          // 計算最終分數
+          const accuracyValue = parseFloat(accuracyDisplay.textContent);
+          let finalScore = score;
+
+          // 準確率獎勵
+          if (accuracyValue >= 95) {
+            const accuracyBonus = Math.round(
+              (score * (accuracyValue - 95)) / 5
+            );
+            finalScore += accuracyBonus;
+          }
+
+          // 難度獎勵
+          let difficultyMultiplier = 1;
+          switch (difficulty) {
+            case "medium":
+              difficultyMultiplier = 1.5;
+              break;
+            case "fast":
+              difficultyMultiplier = 2;
+              break;
+          }
+
+          finalScore = Math.round(finalScore * difficultyMultiplier);
+
+          // 更新分數
+          scoreManager.add(finalScore);
+
+          // 保存最高分
+          const bestScoreKey = `pianoTiles_best_score_${currentSong}_${difficulty}`;
+          const currentBestScore = localStorage.getItem(bestScoreKey) || 0;
+
+          if (finalScore > currentBestScore) {
+            localStorage.setItem(bestScoreKey, finalScore);
+          }
+
+          // 顯示完成訊息
+          gameMessage.textContent = "遊戲結束！";
+          gameMessage.style.display = "block";
+
+          // 顯示遊戲結束訊息
+          gameController.endGame(
+            finalScore,
+            `恭喜！你完成了【${songs[currentSong].name}】！\n` +
+              `最終分數: ${finalScore}\n` +
+              `最高連擊: ${maxCombo}\n` +
+              `準確率: ${accuracyDisplay.textContent}`
+          );
+        }
+
+        // 遊戲結束
+        function gameOver() {
+          gameActive = false;
+          cancelAnimationFrame(animationId);
+
+          // 清除所有方塊
+          tiles.forEach((tile) => {
+            tile.element.remove();
+          });
+          tiles = [];
+
+          // 顯示遊戲結束訊息
+          gameMessage.textContent = "遊戲結束！";
+          gameMessage.style.display = "block";
+
+          // 顯示遊戲結束訊息
+          gameController.endGame(
+            score,
+            `遊戲結束！\n` +
+              `分數: ${score}\n` +
+              `最高連擊: ${maxCombo}\n` +
+              `準確率: ${accuracyDisplay.textContent}`
+          );
+        }
+
+        // 切換歌曲
+        function switchSong(songId) {
+          currentSong = songId;
+
+          // 更新按鈕狀態
+          songButtons.forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.song === currentSong);
+          });
+        }
+
+        // 切換難度
+        function switchDifficulty(newDifficulty) {
+          difficulty = newDifficulty;
+
+          // 更新按鈕狀態
+          difficultyButtons.forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.speed === difficulty);
+          });
+        }
+
+        // 開始遊戲
+        function startGame() {
+          // 初始化遊戲變數
+          score = 0;
+          combo = 0;
+          maxCombo = 0;
+          hits = 0;
+          misses = 0;
+          noteIndex = 0;
+
+          // 清空方塊
+          tiles.forEach((tile) => {
+            tile.element.remove();
+          });
+          tiles = [];
+
+          // 更新顯示
+          scoreDisplay.textContent = "0";
+          comboDisplay.textContent = "0";
+          maxComboDisplay.textContent = "0";
+          accuracyDisplay.textContent = "100%";
+
+          // 設置難度參數
+          setDifficultyParameters();
+
+          // 重置隨機歌曲
+          if (currentSong === "random") {
+            songs.random.notes = [];
+          }
+
+          // 啟動遊戲
+          gameActive = true;
+          gameMessage.style.display = "none";
+
+          // 開始生成方塊
+          lastTimestamp = performance.now();
+          createTile();
+
+          // 開始動畫
+          animationId = requestAnimationFrame(updateTiles);
+        }
+
+        // 初始化遊戲
+        function initGame() {
+          // 設置鍵盤操作
+          document.addEventListener("keydown", (e) => {
+            if (!gameActive || gameController.paused) return;
+
+            switch (e.key.toUpperCase()) {
+              case "D":
+                hitTile(0);
+                break;
+              case "F":
+                hitTile(1);
+                break;
+              case "J":
+                hitTile(2);
+                break;
+              case "K":
+                hitTile(3);
+                break;
+            }
+          });
+
+          // 設置點擊操作
+          gameBoard.addEventListener("click", (e) => {
+            if (!gameActive || gameController.paused) return;
+
+            const boardRect = gameBoard.getBoundingClientRect();
+            const clickX = e.clientX - boardRect.left;
+            const column = Math.floor(clickX / (boardRect.width / 4));
+
+            hitTile(column);
+          });
+
+          // 設置觸摸操作
+          gameBoard.addEventListener("touchstart", (e) => {
+            if (!gameActive || gameController.paused) return;
+
+            e.preventDefault();
+            const touch = e.touches[0];
+            const boardRect = gameBoard.getBoundingClientRect();
+            const touchX = touch.clientX - boardRect.left;
+            const column = Math.floor(touchX / (boardRect.width / 4));
+
+            hitTile(column);
+          });
+        }
+
+        // 設置事件監聽器
+        startBtn.addEventListener("click", () => {
+          // 需要用戶首次互動來啟動音頻上下文
+          if (audioContext.state === "suspended") {
+            audioContext.resume();
+          }
+          startGame();
+        });
+
+        songButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            switchSong(btn.dataset.song);
+          });
+        });
+
+        difficultyButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            switchDifficulty(btn.dataset.speed);
+          });
+        });
+
+        // 設置遊戲控制器
+        gameController.setRestartHandler(() => {
+          startGame();
+        });
+
+        // 初始化遊戲
+        gameController.showStartAnimation(() => {
+          initGame();
+        });
+      });
+    </script>
+  </body>
+</html>

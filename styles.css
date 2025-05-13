@@ -1,0 +1,775 @@
+/* 
+ * 全局樣式 - 網頁小遊戲集合
+ */
+
+/* ----- 基礎樣式 ----- */
+:root {
+  --primary-color: #4a6bff;
+  --primary-hover: #3a56d4;
+  --secondary-color: #ff5b5b;
+  --secondary-hover: #e04141;
+  --bg-color: #f9f9f9;
+  --text-color: #333333;
+  --header-bg: #2c3e50;
+  --card-bg: #ffffff;
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --border-radius: 8px;
+  --transition-speed: 0.3s;
+  --success-color: #4caf50;
+  --success-hover: #388e3c;
+  --warning-color: #ffc107;
+  --warning-hover: #ffa000;
+  --info-color: #2196f3;
+  --info-hover: #1976d2;
+  --danger-color: #f44336;
+  --danger-hover: #d32f2f;
+  --neutral-color: #607d8b;
+  --neutral-hover: #455a64;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+a {
+  text-decoration: none;
+  color: var(--primary-color);
+  transition: color var(--transition-speed);
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition-speed);
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  min-height: calc(100vh - 140px);
+}
+
+/* ----- 標題和導航 ----- */
+.site-header {
+  background-color: var(--header-bg);
+  color: white;
+  padding: 1rem 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.site-header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.site-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: white;
+  text-decoration: none;
+}
+
+.site-nav ul {
+  display: flex;
+  list-style: none;
+}
+
+.site-nav li {
+  margin-left: 1.5rem;
+}
+
+.site-nav a {
+  color: #fff;
+  font-weight: 500;
+  padding: 5px;
+  position: relative;
+}
+
+.site-nav a:hover {
+  color: #fff;
+}
+
+.site-nav a::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: #fff;
+  transition: width var(--transition-speed);
+}
+
+.site-nav a:hover::after {
+  width: 100%;
+}
+
+/* ----- 卡片樣式 ----- */
+.game-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  padding: 30px 0;
+}
+
+.game-card {
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.game-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.12);
+}
+
+.game-card-image {
+  width: 100%;
+  height: 160px;
+  background-color: #eee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.game-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.game-card-content {
+  padding: 16px;
+}
+
+.game-card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.game-card-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.game-card-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.game-card-button:hover {
+  background-color: var(--primary-hover);
+}
+
+/* ----- 按鈕樣式 ----- */
+.primary-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.primary-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.secondary-button {
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.secondary-button:hover {
+  background-color: var(--secondary-hover);
+}
+
+.game-controls {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+  justify-content: center;
+}
+
+/* ----- 模態框樣式 ----- */
+.game-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background-color: white;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.close-button {
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.2s;
+}
+
+.close-button:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+  text-align: right;
+}
+
+.modal-button {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-button:hover {
+  background-color: var(--primary-hover);
+}
+
+/* ----- 遊戲訊息樣式 ----- */
+.game-message-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.game-message {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+}
+
+.game-message h2 {
+  margin-bottom: 15px;
+  color: var(--primary-color);
+}
+
+.game-over-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}
+
+.highlight-score {
+  font-weight: bold;
+  color: var(--primary-color);
+  font-size: 1.2em;
+}
+
+/* ----- 遊戲開始動畫 ----- */
+.game-start-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  color: white;
+}
+
+.start-animation-content {
+  text-align: center;
+}
+
+.start-animation-content h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  animation: fadeInUp 0.5s forwards;
+}
+
+.countdown {
+  font-size: 6rem;
+  font-weight: bold;
+  animation: pulse 1s;
+}
+
+/* ----- 頁腳樣式 ----- */
+.site-footer {
+  background-color: var(--header-bg);
+  color: white;
+  padding: 1.5rem 0;
+  text-align: center;
+  margin-top: 30px;
+}
+
+.site-footer p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* ----- 分數顯示 ----- */
+.score-display {
+  font-size: 1.2rem;
+  font-weight: bold;
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+/* ----- 工具按鈕 ----- */
+.tool-button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 10px 15px;
+  margin-left: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-speed);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tool-button:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.tool-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+#helpButton {
+  background-color: var(--info-color);
+}
+
+#helpButton:hover {
+  background-color: var(--info-hover);
+}
+
+#pauseButton,
+#restartButton {
+  background-color: var(--warning-color);
+  color: var(--text-color);
+}
+
+#pauseButton:hover,
+#restartButton:hover {
+  background-color: var(--warning-hover);
+}
+
+#homeButton {
+  background-color: var(--neutral-color);
+  color: white;
+}
+
+#homeButton:hover {
+  background-color: var(--neutral-hover);
+}
+
+.game-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+.game-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+
+/* ----- 動畫 ----- */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOutUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ----- 遊戲特定樣式 ----- */
+/* 終極密碼 */
+.guessing-game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.game-input {
+  padding: 10px 15px;
+  border: 2px solid var(--primary-color);
+  border-radius: 4px;
+  font-size: 16px;
+  width: 200px;
+  text-align: center;
+}
+
+.guess-history {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 300px;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 10px;
+  background-color: #eee;
+  border-radius: 4px;
+}
+
+/* 貪食蛇遊戲 */
+.snake-game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.snake-board {
+  background-color: #222;
+  display: grid;
+  grid-template-columns: repeat(20, 20px);
+  grid-template-rows: repeat(20, 20px);
+  gap: 1px;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.snake-cell {
+  width: 20px;
+  height: 20px;
+  border-radius: 2px;
+  transition: background-color 0.1s;
+}
+
+.snake-head {
+  background-color: #4caf50;
+  border-radius: 4px;
+}
+
+.snake-body {
+  background-color: #81c784;
+}
+
+.snake-food {
+  background-color: #ff5722;
+  border-radius: 50%;
+}
+
+/* 打磚塊遊戲 */
+.breakout-game-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.breakout-canvas {
+  background-color: #222;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  display: block;
+  margin: 0 auto;
+}
+
+/* 打飛機遊戲 */
+.shooter-game-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.shooter-canvas {
+  background-color: #111;
+  background-image: url("images/space-bg.jpg");
+  background-size: cover;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  display: block;
+  margin: 0 auto;
+}
+
+/* 塔防遊戲 */
+.tower-defense-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tower-defense-canvas {
+  background-color: #2c3e50;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  display: block;
+  margin: 0 auto;
+}
+
+.tower-controls {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background-color: #eee;
+  border-radius: 5px;
+  margin-top: 15px;
+}
+
+.tower-button {
+  padding: 8px 12px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tower-button:hover {
+  background-color: var(--primary-hover);
+}
+
+.tower-button.selected {
+  background-color: var(--secondary-color);
+}
+
+/* 瑪利歐遊戲 */
+.mario-game-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mario-canvas {
+  background-color: #5c94fc;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  display: block;
+  margin: 0 auto;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .game-cards {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+
+  .site-header .container {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .site-nav ul {
+    justify-content: center;
+  }
+
+  .site-nav li {
+    margin: 0 10px;
+  }
+
+  .game-container {
+    padding: 10px;
+  }
+
+  .snake-board {
+    grid-template-columns: repeat(15, 15px);
+    grid-template-rows: repeat(15, 15px);
+  }
+
+  .snake-cell {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .game-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .score-display {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  .modal-content {
+    width: 95%;
+  }
+}

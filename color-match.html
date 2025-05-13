@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>彩色配對 - 網頁小遊戲</title>
+    <meta name="game-id" content="color-match" />
+    <meta name="game-name" content="彩色配對" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .game-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .color-match-container {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+      }
+
+      .game-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .stat-item {
+        padding: 10px 15px;
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        text-align: center;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 5px;
+      }
+
+      .stat-value {
+        font-size: 22px;
+        font-weight: bold;
+        color: var(--primary-color);
+      }
+
+      .target-color {
+        height: 80px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      }
+
+      .color-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .color-sliders {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 15px;
+        background-color: #f9f9f9;
+        border-radius: 8px;
+      }
+
+      .slider-group {
+        display: flex;
+        align-items: center;
+      }
+
+      .slider-label {
+        width: 25px;
+        font-weight: bold;
+        text-align: center;
+        margin-right: 10px;
+      }
+
+      .slider-label.red {
+        color: #e53935;
+      }
+      .slider-label.green {
+        color: #43a047;
+      }
+      .slider-label.blue {
+        color: #1e88e5;
+      }
+
+      .color-slider {
+        flex-grow: 1;
+        height: 10px;
+        -webkit-appearance: none;
+        appearance: none;
+        border-radius: 5px;
+        outline: none;
+      }
+
+      .color-slider.red {
+        background: linear-gradient(to right, #000000, #e53935);
+      }
+
+      .color-slider.green {
+        background: linear-gradient(to right, #000000, #43a047);
+      }
+
+      .color-slider.blue {
+        background: linear-gradient(to right, #000000, #1e88e5);
+      }
+
+      .color-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: white;
+        border: 2px solid #666;
+        cursor: pointer;
+      }
+
+      .slider-value {
+        width: 40px;
+        text-align: center;
+        margin-left: 10px;
+      }
+
+      .current-color {
+        height: 60px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      }
+
+      .submit-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 12px 25px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        width: 100%;
+      }
+
+      .submit-btn:hover {
+        background-color: var(--primary-hover);
+        transform: translateY(-2px);
+      }
+
+      .feedback {
+        text-align: center;
+        padding: 10px;
+        margin: 15px 0;
+        border-radius: 5px;
+        font-weight: 500;
+      }
+
+      .feedback.success {
+        background-color: rgba(76, 175, 80, 0.2);
+        color: #2e7d32;
+      }
+
+      .feedback.close {
+        background-color: rgba(255, 193, 7, 0.2);
+        color: #ff8f00;
+      }
+
+      .feedback.far {
+        background-color: rgba(244, 67, 54, 0.2);
+        color: #c62828;
+      }
+
+      .level-indicator {
+        display: flex;
+        justify-content: center;
+        margin: 15px 0;
+      }
+
+      .level-indicator span {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #e0e0e0;
+        margin: 0 5px;
+      }
+
+      .level-indicator span.active {
+        background-color: var(--primary-color);
+      }
+
+      .difficulty-selector {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .difficulty-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 10px;
+      }
+
+      .difficulty-btn {
+        background-color: #e0e0e0;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 15px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .difficulty-btn:hover {
+        background-color: #d0d0d0;
+      }
+
+      .difficulty-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .mode-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        justify-content: center;
+      }
+
+      .mode-btn {
+        background-color: #e0e0e0;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex: 1;
+        max-width: 200px;
+      }
+
+      .mode-btn:hover {
+        background-color: #d0d0d0;
+      }
+
+      .mode-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .game-controls {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .control-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .control-btn:hover {
+        background-color: var(--primary-hover);
+      }
+
+      @media (max-width: 480px) {
+        .game-stats {
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .stat-item {
+          width: 100%;
+        }
+
+        .slider-value {
+          width: 30px;
+        }
+
+        .level-indicator span {
+          width: 8px;
+          height: 8px;
+          margin: 0 3px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>彩色配對</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="game-container">
+        <div class="difficulty-selector">
+          <h3>選擇難度</h3>
+          <div class="difficulty-buttons">
+            <button class="difficulty-btn active" data-difficulty="easy">
+              簡單
+            </button>
+            <button class="difficulty-btn" data-difficulty="medium">
+              中等
+            </button>
+            <button class="difficulty-btn" data-difficulty="hard">困難</button>
+          </div>
+        </div>
+
+        <div class="mode-selector">
+          <button class="mode-btn active" data-mode="rgb">RGB 模式</button>
+          <button class="mode-btn" data-mode="hsl">HSL 模式</button>
+        </div>
+
+        <div class="color-match-container">
+          <div class="game-stats">
+            <div class="stat-item">
+              <div class="stat-label">分數</div>
+              <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">關卡</div>
+              <div class="stat-value" id="level">1</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">色差</div>
+              <div class="stat-value" id="colorDiff">-</div>
+            </div>
+          </div>
+
+          <div class="target-color" id="targetColor">目標顏色</div>
+
+          <div class="level-indicator" id="levelIndicator">
+            <!-- 動態生成關卡指示器 -->
+          </div>
+
+          <div class="color-controls">
+            <div id="rgbControls">
+              <div class="color-sliders">
+                <div class="slider-group">
+                  <div class="slider-label red">R</div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="255"
+                    value="127"
+                    class="color-slider red"
+                    id="redSlider"
+                  />
+                  <div class="slider-value" id="redValue">127</div>
+                </div>
+
+                <div class="slider-group">
+                  <div class="slider-label green">G</div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="255"
+                    value="127"
+                    class="color-slider green"
+                    id="greenSlider"
+                  />
+                  <div class="slider-value" id="greenValue">127</div>
+                </div>
+
+                <div class="slider-group">
+                  <div class="slider-label blue">B</div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="255"
+                    value="127"
+                    class="color-slider blue"
+                    id="blueSlider"
+                  />
+                  <div class="slider-value" id="blueValue">127</div>
+                </div>
+              </div>
+            </div>
+
+            <div id="hslControls" style="display: none">
+              <div class="color-sliders">
+                <div class="slider-group">
+                  <div class="slider-label" style="color: #e91e63">H</div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="360"
+                    value="180"
+                    class="color-slider"
+                    id="hueSlider"
+                    style="
+                      background: linear-gradient(
+                        to right,
+                        #ff0000,
+                        #ffff00,
+                        #00ff00,
+                        #00ffff,
+                        #0000ff,
+                        #ff00ff,
+                        #ff0000
+                      );
+                    "
+                  />
+                  <div class="slider-value" id="hueValue">180</div>
+                </div>
+
+                <div class="slider-group">
+                  <div class="slider-label" style="color: #9c27b0">S</div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value="50"
+                    class="color-slider"
+                    id="satSlider"
+                    style="
+                      background: linear-gradient(to right, #808080, #ff0000);
+                    "
+                  />
+                  <div class="slider-value" id="satValue">50</div>
+                </div>
+
+                <div class="slider-group">
+                  <div class="slider-label" style="color: #607d8b">L</div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value="50"
+                    class="color-slider"
+                    id="lightSlider"
+                    style="
+                      background: linear-gradient(to right, #000000, #ffffff);
+                    "
+                  />
+                  <div class="slider-value" id="lightValue">50</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="current-color" id="currentColor">你的顏色</div>
+
+            <button class="submit-btn" id="submitBtn">提交</button>
+          </div>
+
+          <div class="feedback" id="feedback" style="display: none">
+            請調整顏色，使其與目標顏色相匹配
+          </div>
+        </div>
+
+        <div class="game-controls">
+          <button id="newGameBtn" class="control-btn">新遊戲</button>
+        </div>
+      </div>
+
+      <div id="gamePaused" class="game-paused">暫停中</div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "遊戲說明",
+          `
+          <h3>彩色配對遊戲說明</h3>
+          <p>彩色配對是一款測試你色彩感知能力的遊戲，嘗試調整色彩滑桿使其與目標顏色完全匹配。</p>
+          <h4>遊戲規則：</h4>
+          <ul>
+            <li>觀察目標顏色，然後調整RGB或HSL滑桿以創建匹配的顏色</li>
+            <li>點擊提交按鈕檢查你的顏色與目標顏色的相似度</li>
+            <li>色差越低，得分越高</li>
+            <li>成功通過一個關卡後，難度會增加</li>
+          </ul>
+          <h4>遊戲模式：</h4>
+          <ul>
+            <li><strong>RGB模式</strong>：使用紅、綠、藍三原色組合調整顏色</li>
+            <li><strong>HSL模式</strong>：使用色相、飽和度、亮度調整顏色</li>
+          </ul>
+          <h4>難度說明：</h4>
+          <ul>
+            <li><strong>簡單</strong>：需要較低的匹配精度</li>
+            <li><strong>中等</strong>：需要更高的匹配精度</li>
+            <li><strong>困難</strong>：需要非常精確的匹配，且限制提交次數</li>
+          </ul>
+          <h4>計分方式：</h4>
+          <ul>
+            <li>每關基礎分：10分</li>
+            <li>色差獎勵：0-10分 (色差越小獎勵越高)</li>
+            <li>難度獎勵：簡單 x1，中等 x1.5，困難 x2</li>
+            <li>完成所有關卡可獲得額外獎勵</li>
+          </ul>
+        `
+        );
+
+        const gameController = new GameUtils.GameController();
+        const scoreManager = new GameUtils.ScoreManager("colorMatchScore", 0);
+
+        // DOM 元素
+        const targetColor = document.getElementById("targetColor");
+        const currentColor = document.getElementById("currentColor");
+        const scoreDisplay = document.getElementById("score");
+        const levelDisplay = document.getElementById("level");
+        const colorDiffDisplay = document.getElementById("colorDiff");
+        const levelIndicator = document.getElementById("levelIndicator");
+        const feedback = document.getElementById("feedback");
+        const submitBtn = document.getElementById("submitBtn");
+        const newGameBtn = document.getElementById("newGameBtn");
+        const difficultyButtons = document.querySelectorAll(".difficulty-btn");
+        const modeButtons = document.querySelectorAll(".mode-btn");
+
+        // RGB 控制
+        const rgbControls = document.getElementById("rgbControls");
+        const redSlider = document.getElementById("redSlider");
+        const greenSlider = document.getElementById("greenSlider");
+        const blueSlider = document.getElementById("blueSlider");
+        const redValue = document.getElementById("redValue");
+        const greenValue = document.getElementById("greenValue");
+        const blueValue = document.getElementById("blueValue");
+
+        // HSL 控制
+        const hslControls = document.getElementById("hslControls");
+        const hueSlider = document.getElementById("hueSlider");
+        const satSlider = document.getElementById("satSlider");
+        const lightSlider = document.getElementById("lightSlider");
+        const hueValue = document.getElementById("hueValue");
+        const satValue = document.getElementById("satValue");
+        const lightValue = document.getElementById("lightValue");
+
+        // 遊戲變數
+        let currentMode = "rgb"; // 或 "hsl"
+        let difficulty = "easy";
+        let currentLevel = 1;
+        let maxLevels = 5;
+        let targetRgb = { r: 0, g: 0, b: 0 };
+        let currentRgb = { r: 127, g: 127, b: 127 };
+        let currentHsl = { h: 180, s: 50, l: 50 };
+        let gameActive = false;
+        let attemptsLeft = 10;
+        let matchThreshold = 15; // 目標色差閾值，小於則算匹配
+
+        // 更新滑桿顏色函數
+        function updateSliderColors() {
+          // 更新HSL的色相滑塊背景
+          const hue = parseInt(hueSlider.value);
+          const sat = parseInt(satSlider.value);
+          const light = parseInt(lightSlider.value);
+
+          // 更新飽和度滑塊背景
+          satSlider.style.background = `linear-gradient(to right, 
+            hsl(${hue}, 0%, ${light}%), 
+            hsl(${hue}, 100%, ${light}%))`;
+
+          // 更新亮度滑塊背景
+          lightSlider.style.background = `linear-gradient(to right, 
+            hsl(${hue}, ${sat}%, 0%), 
+            hsl(${hue}, ${sat}%, 50%), 
+            hsl(${hue}, ${sat}%, 100%))`;
+        }
+
+        // 根據難度設置遊戲參數
+        function setDifficultyParameters() {
+          switch (difficulty) {
+            case "easy":
+              matchThreshold = 15;
+              maxLevels = 5;
+              break;
+            case "medium":
+              matchThreshold = 10;
+              maxLevels = 7;
+              break;
+            case "hard":
+              matchThreshold = 5;
+              maxLevels = 10;
+              attemptsLeft = 5;
+              break;
+            default:
+              matchThreshold = 15;
+              maxLevels = 5;
+          }
+        }
+
+        // 生成隨機顏色
+        function generateRandomColor() {
+          return {
+            r: Math.floor(Math.random() * 256),
+            g: Math.floor(Math.random() * 256),
+            b: Math.floor(Math.random() * 256),
+          };
+        }
+
+        // 更新關卡指示器
+        function updateLevelIndicator() {
+          levelIndicator.innerHTML = "";
+          for (let i = 1; i <= maxLevels; i++) {
+            const indicator = document.createElement("span");
+            if (i < currentLevel) {
+              indicator.className = "active";
+            }
+            levelIndicator.appendChild(indicator);
+          }
+        }
+
+        // RGB轉HSL
+        function rgbToHsl(r, g, b) {
+          r /= 255;
+          g /= 255;
+          b /= 255;
+
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          let h,
+            s,
+            l = (max + min) / 2;
+
+          if (max === min) {
+            h = s = 0; // 灰色
+          } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+            switch (max) {
+              case r:
+                h = (g - b) / d + (g < b ? 6 : 0);
+                break;
+              case g:
+                h = (b - r) / d + 2;
+                break;
+              case b:
+                h = (r - g) / d + 4;
+                break;
+            }
+
+            h /= 6;
+          }
+
+          return {
+            h: Math.round(h * 360),
+            s: Math.round(s * 100),
+            l: Math.round(l * 100),
+          };
+        }
+
+        // HSL轉RGB
+        function hslToRgb(h, s, l) {
+          h /= 360;
+          s /= 100;
+          l /= 100;
+
+          let r, g, b;
+
+          if (s === 0) {
+            r = g = b = l; // 灰色
+          } else {
+            const hue2rgb = (p, q, t) => {
+              if (t < 0) t += 1;
+              if (t > 1) t -= 1;
+              if (t < 1 / 6) return p + (q - p) * 6 * t;
+              if (t < 1 / 2) return q;
+              if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+              return p;
+            };
+
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+
+            r = hue2rgb(p, q, h + 1 / 3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1 / 3);
+          }
+
+          return {
+            r: Math.round(r * 255),
+            g: Math.round(g * 255),
+            b: Math.round(b * 255),
+          };
+        }
+
+        // 計算顏色差異
+        function calculateColorDifference(color1, color2) {
+          // 使用歐幾里得距離計算
+          const rDiff = color1.r - color2.r;
+          const gDiff = color1.g - color2.g;
+          const bDiff = color1.b - color2.b;
+
+          return Math.sqrt(rDiff * rDiff + gDiff * gDiff + bDiff * bDiff);
+        }
+
+        // 更新當前顏色顯示
+        function updateCurrentColor() {
+          let rgb;
+
+          if (currentMode === "rgb") {
+            rgb = currentRgb;
+          } else {
+            rgb = hslToRgb(currentHsl.h, currentHsl.s, currentHsl.l);
+            currentRgb = rgb;
+          }
+
+          const colorString = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+          currentColor.style.backgroundColor = colorString;
+
+          // 計算文字顏色，亮色背景用黑字，暗色背景用白字
+          const brightness = (rgb.r * 299 + rgb.g * 587 + rgb.b * 114) / 1000;
+          currentColor.style.color = brightness > 128 ? "#000" : "#fff";
+
+          // 顯示RGB值
+          currentColor.textContent = `R: ${rgb.r}, G: ${rgb.g}, B: ${rgb.b}`;
+        }
+
+        // 提交顏色
+        function submitColor() {
+          if (!gameActive || gameController.paused) return;
+
+          // 計算顏色差異
+          const colorDiff = calculateColorDifference(targetRgb, currentRgb);
+          colorDiffDisplay.textContent = Math.round(colorDiff);
+
+          // 顯示反饋
+          feedback.style.display = "block";
+
+          if (colorDiff <= matchThreshold) {
+            // 成功匹配
+            feedback.className = "feedback success";
+            feedback.textContent = `完美！色差為 ${Math.round(
+              colorDiff
+            )}，低於閾值 ${matchThreshold}！`;
+
+            // 計算分數
+            let baseScore = 10;
+            let accuracyBonus = Math.max(0, 10 - Math.floor(colorDiff));
+            let difficultyMultiplier;
+
+            switch (difficulty) {
+              case "easy":
+                difficultyMultiplier = 1;
+                break;
+              case "medium":
+                difficultyMultiplier = 1.5;
+                break;
+              case "hard":
+                difficultyMultiplier = 2;
+                break;
+              default:
+                difficultyMultiplier = 1;
+            }
+
+            const levelScore = Math.round(
+              (baseScore + accuracyBonus) * difficultyMultiplier
+            );
+            scoreManager.add(levelScore);
+            scoreDisplay.textContent = scoreManager.getCurrentScore();
+
+            // 進入下一關或完成遊戲
+            if (currentLevel >= maxLevels) {
+              completeGame();
+            } else {
+              currentLevel++;
+              levelDisplay.textContent = currentLevel;
+              updateLevelIndicator();
+
+              // 延遲生成新的目標顏色
+              setTimeout(generateLevel, 1500);
+            }
+          } else if (colorDiff <= matchThreshold * 2) {
+            // 接近
+            feedback.className = "feedback close";
+            feedback.textContent = `接近了！色差為 ${Math.round(
+              colorDiff
+            )}，還需要再調整。`;
+
+            if (difficulty === "hard") {
+              attemptsLeft--;
+              checkAttemptsLeft();
+            }
+          } else {
+            // 差距較大
+            feedback.className = "feedback far";
+            feedback.textContent = `差距較大，色差為 ${Math.round(
+              colorDiff
+            )}，繼續調整！`;
+
+            if (difficulty === "hard") {
+              attemptsLeft--;
+              checkAttemptsLeft();
+            }
+          }
+        }
+
+        // 檢查剩餘嘗試次數
+        function checkAttemptsLeft() {
+          if (attemptsLeft <= 0) {
+            gameOver("嘗試次數已用完！");
+          } else {
+            feedback.textContent += ` 剩餘嘗試次數: ${attemptsLeft}`;
+          }
+        }
+
+        // 生成新關卡
+        function generateLevel() {
+          targetRgb = generateRandomColor();
+          const colorString = `rgb(${targetRgb.r}, ${targetRgb.g}, ${targetRgb.b})`;
+          targetColor.style.backgroundColor = colorString;
+
+          // 根據顏色亮度決定文字顏色
+          const brightness =
+            (targetRgb.r * 299 + targetRgb.g * 587 + targetRgb.b * 114) / 1000;
+          targetColor.style.color = brightness > 128 ? "#000" : "#fff";
+
+          // 顯示目標RGB值
+          targetColor.textContent = `R: ${targetRgb.r}, G: ${targetRgb.g}, B: ${targetRgb.b}`;
+
+          // 重置反饋
+          feedback.style.display = "none";
+
+          // 重置顏色差異顯示
+          colorDiffDisplay.textContent = "-";
+
+          // 更新關卡指示器
+          updateLevelIndicator();
+        }
+
+        // 完成遊戲
+        function completeGame() {
+          gameActive = false;
+
+          // 完成獎勵
+          const completionBonus =
+            50 * (difficulty === "easy" ? 1 : difficulty === "medium" ? 2 : 3);
+          scoreManager.add(completionBonus);
+          scoreDisplay.textContent = scoreManager.getCurrentScore();
+
+          // 保存最高分
+          const bestScoreKey = `colorMatch_best_score_${difficulty}`;
+          const currentBestScore = localStorage.getItem(bestScoreKey) || 0;
+
+          if (scoreManager.getCurrentScore() > currentBestScore) {
+            localStorage.setItem(bestScoreKey, scoreManager.getCurrentScore());
+          }
+
+          // 顯示完成訊息
+          gameController.endGame(
+            scoreManager.getCurrentScore(),
+            `恭喜！你成功完成了所有 ${maxLevels} 個關卡！\n` +
+              `最終分數: ${scoreManager.getCurrentScore()}\n` +
+              `完成獎勵: +${completionBonus} 分`
+          );
+        }
+
+        // 遊戲結束
+        function gameOver(message) {
+          gameActive = false;
+          gameController.endGame(scoreManager.getCurrentScore(), message);
+        }
+
+        // 切換難度
+        function switchDifficulty(newDifficulty) {
+          difficulty = newDifficulty;
+
+          // 更新按鈕狀態
+          difficultyButtons.forEach((btn) => {
+            btn.classList.toggle(
+              "active",
+              btn.dataset.difficulty === difficulty
+            );
+          });
+
+          // 設置難度參數
+          setDifficultyParameters();
+
+          // 重新開始遊戲
+          initGame();
+        }
+
+        // 切換模式
+        function switchMode(newMode) {
+          currentMode = newMode;
+
+          // 更新按鈕狀態
+          modeButtons.forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.mode === currentMode);
+          });
+
+          // 顯示對應控制區
+          if (currentMode === "rgb") {
+            rgbControls.style.display = "block";
+            hslControls.style.display = "none";
+
+            // 從HSL更新RGB
+            if (currentHsl) {
+              const rgb = hslToRgb(currentHsl.h, currentHsl.s, currentHsl.l);
+              currentRgb = rgb;
+              redSlider.value = rgb.r;
+              greenSlider.value = rgb.g;
+              blueSlider.value = rgb.b;
+              redValue.textContent = rgb.r;
+              greenValue.textContent = rgb.g;
+              blueValue.textContent = rgb.b;
+            }
+          } else {
+            rgbControls.style.display = "none";
+            hslControls.style.display = "block";
+
+            // 從RGB更新HSL
+            if (currentRgb) {
+              const hsl = rgbToHsl(currentRgb.r, currentRgb.g, currentRgb.b);
+              currentHsl = hsl;
+              hueSlider.value = hsl.h;
+              satSlider.value = hsl.s;
+              lightSlider.value = hsl.l;
+              hueValue.textContent = hsl.h;
+              satValue.textContent = hsl.s;
+              lightValue.textContent = hsl.l;
+
+              updateSliderColors();
+            }
+          }
+
+          updateCurrentColor();
+        }
+
+        // 初始化遊戲
+        function initGame() {
+          // 重置遊戲變數
+          currentLevel = 1;
+          levelDisplay.textContent = currentLevel;
+          scoreManager.reset();
+          scoreDisplay.textContent = "0";
+          gameActive = true;
+
+          // 重置嘗試次數
+          if (difficulty === "hard") {
+            attemptsLeft = 5;
+          }
+
+          // 生成新關卡
+          generateLevel();
+
+          // 重置滑桿
+          if (currentMode === "rgb") {
+            redSlider.value = 127;
+            greenSlider.value = 127;
+            blueSlider.value = 127;
+            redValue.textContent = "127";
+            greenValue.textContent = "127";
+            blueValue.textContent = "127";
+            currentRgb = { r: 127, g: 127, b: 127 };
+          } else {
+            hueSlider.value = 180;
+            satSlider.value = 50;
+            lightSlider.value = 50;
+            hueValue.textContent = "180";
+            satValue.textContent = "50";
+            lightValue.textContent = "50";
+            currentHsl = { h: 180, s: 50, l: 50 };
+            updateSliderColors();
+          }
+
+          updateCurrentColor();
+          updateLevelIndicator();
+        }
+
+        // 設置事件監聽器
+        // RGB 滑桿
+        redSlider.addEventListener("input", () => {
+          const val = parseInt(redSlider.value);
+          redValue.textContent = val;
+          currentRgb.r = val;
+          updateCurrentColor();
+        });
+
+        greenSlider.addEventListener("input", () => {
+          const val = parseInt(greenSlider.value);
+          greenValue.textContent = val;
+          currentRgb.g = val;
+          updateCurrentColor();
+        });
+
+        blueSlider.addEventListener("input", () => {
+          const val = parseInt(blueSlider.value);
+          blueValue.textContent = val;
+          currentRgb.b = val;
+          updateCurrentColor();
+        });
+
+        // HSL 滑桿
+        hueSlider.addEventListener("input", () => {
+          const val = parseInt(hueSlider.value);
+          hueValue.textContent = val;
+          currentHsl.h = val;
+          updateSliderColors();
+          updateCurrentColor();
+        });
+
+        satSlider.addEventListener("input", () => {
+          const val = parseInt(satSlider.value);
+          satValue.textContent = val;
+          currentHsl.s = val;
+          updateSliderColors();
+          updateCurrentColor();
+        });
+
+        lightSlider.addEventListener("input", () => {
+          const val = parseInt(lightSlider.value);
+          lightValue.textContent = val;
+          currentHsl.l = val;
+          updateSliderColors();
+          updateCurrentColor();
+        });
+
+        // 提交按鈕
+        submitBtn.addEventListener("click", submitColor);
+
+        // 新遊戲按鈕
+        newGameBtn.addEventListener("click", initGame);
+
+        // 難度按鈕
+        difficultyButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            if (
+              gameActive &&
+              !confirm("切換難度將重新開始遊戲，確定要繼續嗎？")
+            ) {
+              return;
+            }
+            switchDifficulty(btn.dataset.difficulty);
+          });
+        });
+
+        // 模式按鈕
+        modeButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            switchMode(btn.dataset.mode);
+          });
+        });
+
+        // 設置遊戲控制器
+        gameController.setRestartHandler(() => {
+          initGame();
+        });
+
+        // 初始化滑桿顏色
+        updateSliderColors();
+
+        // 開始遊戲
+        gameController.showStartAnimation(() => {
+          setDifficultyParameters();
+          initGame();
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>點擊速度測試 - 網頁小遊戲</title>
+    <meta name="game-id" content="click-speed" />
+    <meta name="game-name" content="點擊速度測試" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .game-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .click-speed-container {
+        width: 400px;
+        max-width: 90%;
+        text-align: center;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+      }
+
+      .time-display {
+        font-size: 42px;
+        font-weight: bold;
+        color: var(--primary-color);
+        margin: 20px 0;
+      }
+
+      .click-button {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        border: none;
+        cursor: pointer;
+        margin: 30px auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 12px rgba(74, 107, 255, 0.4);
+        transition: all 0.2s ease;
+        user-select: none;
+      }
+
+      .click-button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 16px rgba(74, 107, 255, 0.5);
+      }
+
+      .click-button:active {
+        transform: scale(0.95);
+        box-shadow: 0 3px 6px rgba(74, 107, 255, 0.3);
+      }
+
+      .click-button.ready {
+        background-color: var(--secondary-color);
+      }
+
+      .click-button.wait {
+        background-color: var(--warning-color);
+        color: var(--text-color);
+      }
+
+      .click-info {
+        margin: 20px 0;
+        padding: 15px;
+        background-color: #f5f5f5;
+        border-radius: 8px;
+      }
+
+      .click-stats {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        margin-top: 20px;
+      }
+
+      .stat-box {
+        width: calc(33% - 10px);
+        padding: 10px;
+        background-color: #f0f0f0;
+        border-radius: 5px;
+        margin-bottom: 10px;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: #666;
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: bold;
+        color: var(--primary-color);
+      }
+
+      .mode-select {
+        margin: 20px 0;
+      }
+
+      .mode-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 10px;
+      }
+
+      .mode-btn {
+        padding: 8px 16px;
+        border: 2px solid var(--primary-color);
+        background-color: transparent;
+        color: var(--primary-color);
+        border-radius: 5px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .mode-btn:hover {
+        background-color: rgba(74, 107, 255, 0.1);
+      }
+
+      .mode-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      @media (max-width: 480px) {
+        .click-speed-container {
+          width: 320px;
+        }
+
+        .click-button {
+          width: 150px;
+          height: 150px;
+          font-size: 20px;
+        }
+
+        .stat-box {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>點擊速度測試</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="game-container">
+        <div class="click-speed-container">
+          <div class="mode-select">
+            <h3>選擇測試模式</h3>
+            <div class="mode-buttons">
+              <button class="mode-btn active" data-mode="10clicks">
+                10 次點擊
+              </button>
+              <button class="mode-btn" data-mode="10seconds">
+                10 秒內點擊
+              </button>
+              <button class="mode-btn" data-mode="reaction">反應速度</button>
+            </div>
+          </div>
+
+          <div id="timeDisplay" class="time-display">0.00</div>
+          <button id="clickButton" class="click-button">點擊開始</button>
+          <div id="clickInfo" class="click-info">
+            點擊上方按鈕開始測試，看看你的點擊速度有多快！
+          </div>
+
+          <div class="click-stats">
+            <div class="stat-box">
+              <div class="stat-label">點擊次數</div>
+              <div id="clickCount" class="stat-value">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">平均速度</div>
+              <div id="clickSpeed" class="stat-value">0.00 次/秒</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">最佳紀錄</div>
+              <div id="bestScore" class="stat-value">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="gamePaused" class="game-paused">暫停中</div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "遊戲說明",
+          `
+          <h3>點擊速度測試說明</h3>
+          <p>這個遊戲可以測試你的點擊速度和反應能力。</p>
+          <h4>遊戲模式：</h4>
+          <ul>
+            <li><strong>10 次點擊</strong>：測量完成 10 次點擊所需的時間</li>
+            <li><strong>10 秒內點擊</strong>：測量在 10 秒內能點擊多少次</li>
+            <li><strong>反應速度</strong>：測量你的反應時間，從綠色變為紅色的時間</li>
+          </ul>
+          <h4>遊戲玩法：</h4>
+          <ul>
+            <li>點擊按鈕開始測試</li>
+            <li>根據選擇的模式執行點擊</li>
+            <li>遊戲會記錄你的最佳成績</li>
+            <li>嘗試挑戰自己的極限，創造新的紀錄！</li>
+          </ul>
+        `
+        );
+
+        const gameController = new GameUtils.GameController();
+        const scoreManager = new GameUtils.ScoreManager("clickScore", 0);
+
+        // DOM 元素
+        const clickButton = document.getElementById("clickButton");
+        const timeDisplay = document.getElementById("timeDisplay");
+        const clickInfo = document.getElementById("clickInfo");
+        const clickCount = document.getElementById("clickCount");
+        const clickSpeed = document.getElementById("clickSpeed");
+        const bestScore = document.getElementById("bestScore");
+        const modeButtons = document.querySelectorAll(".mode-btn");
+
+        // 遊戲變數
+        let gameMode = "10clicks"; // 默認模式：10 次點擊
+        let isActive = false;
+        let startTime = 0;
+        let endTime = 0;
+        let clickCounter = 0;
+        let timeoutId = null;
+        let countdownTimer = null;
+        let waitForReaction = false;
+        let reactionTimeout = null;
+        let bestTimes = {
+          "10clicks": localStorage.getItem("bestTime_10clicks") || 999,
+          "10seconds": localStorage.getItem("bestClicks_10seconds") || 0,
+          reaction: localStorage.getItem("bestReaction") || 999,
+        };
+
+        // 更新最佳分數顯示
+        function updateBestScore() {
+          switch (gameMode) {
+            case "10clicks":
+              bestScore.textContent =
+                bestTimes["10clicks"] !== 999
+                  ? `${bestTimes["10clicks"]} 秒`
+                  : "-";
+              break;
+            case "10seconds":
+              bestScore.textContent =
+                bestTimes["10seconds"] > 0
+                  ? `${bestTimes["10seconds"]} 次`
+                  : "-";
+              break;
+            case "reaction":
+              bestScore.textContent =
+                bestTimes["reaction"] !== 999
+                  ? `${bestTimes["reaction"]} ms`
+                  : "-";
+              break;
+          }
+        }
+
+        // 更新模式按鈕
+        function updateModeButtons(activeMode) {
+          modeButtons.forEach((btn) => {
+            if (btn.dataset.mode === activeMode) {
+              btn.classList.add("active");
+            } else {
+              btn.classList.remove("active");
+            }
+          });
+        }
+
+        // 初始化遊戲
+        function initGame() {
+          isActive = false;
+          clickCounter = 0;
+          startTime = 0;
+          endTime = 0;
+          clickButton.textContent = "點擊開始";
+          clickButton.classList.remove("ready", "wait");
+          clickCount.textContent = "0";
+          clickSpeed.textContent = "0.00 次/秒";
+
+          updateBestScore();
+
+          switch (gameMode) {
+            case "10clicks":
+              timeDisplay.textContent = "0.00";
+              clickInfo.textContent =
+                "點擊上方按鈕開始測試，看看完成 10 次點擊需要多少時間！";
+              break;
+            case "10seconds":
+              timeDisplay.textContent = "10.00";
+              clickInfo.textContent =
+                "點擊上方按鈕開始測試，看看你在 10 秒內能點擊多少次！";
+              break;
+            case "reaction":
+              timeDisplay.textContent = "0.000";
+              clickInfo.textContent =
+                "點擊按鈕開始測試，等待按鈕變綠色後立即點擊！";
+              break;
+          }
+
+          clearTimeout(timeoutId);
+          clearInterval(countdownTimer);
+          clearTimeout(reactionTimeout);
+        }
+
+        // 開始 10 次點擊測試
+        function start10ClicksTest() {
+          isActive = true;
+          clickCounter = 0;
+          startTime = performance.now();
+          clickButton.textContent = "點擊！";
+          clickButton.classList.add("ready");
+          clickInfo.textContent = "快速點擊按鈕 10 次！";
+        }
+
+        // 開始 10 秒計時測試
+        function start10SecondsTest() {
+          isActive = true;
+          clickCounter = 0;
+          startTime = performance.now();
+          clickButton.textContent = "點擊！";
+          clickButton.classList.add("ready");
+          clickInfo.textContent = "在 10 秒內盡可能多地點擊！";
+
+          // 開始倒數計時
+          let timeLeft = 10.0;
+          timeDisplay.textContent = timeLeft.toFixed(2);
+
+          countdownTimer = setInterval(() => {
+            timeLeft -= 0.01;
+            if (timeLeft <= 0) {
+              timeLeft = 0;
+              complete10SecondsTest();
+            }
+            timeDisplay.textContent = timeLeft.toFixed(2);
+          }, 10);
+
+          // 10 秒後結束
+          timeoutId = setTimeout(complete10SecondsTest, 10000);
+        }
+
+        // 開始反應測試
+        function startReactionTest() {
+          waitForReaction = true;
+          clickButton.textContent = "等待...";
+          clickButton.classList.add("wait");
+          clickInfo.textContent = "等待按鈕變成綠色，然後立即點擊！";
+
+          // 隨機延遲 1-5 秒
+          const randomDelay = Math.floor(Math.random() * 4000) + 1000;
+          reactionTimeout = setTimeout(() => {
+            if (waitForReaction) {
+              startTime = performance.now();
+              clickButton.classList.remove("wait");
+              clickButton.classList.add("ready");
+              clickButton.textContent = "現在點擊！";
+              clickInfo.textContent = "立即點擊！";
+            }
+          }, randomDelay);
+        }
+
+        // 完成 10 次點擊測試
+        function complete10ClicksTest() {
+          isActive = false;
+          endTime = performance.now();
+          const totalTime = (endTime - startTime) / 1000; // 轉換為秒
+          timeDisplay.textContent = totalTime.toFixed(2);
+          clickButton.classList.remove("ready");
+          clickButton.textContent = "再試一次";
+
+          const clicksPerSecond = 10 / totalTime;
+          clickSpeed.textContent = clicksPerSecond.toFixed(2) + " 次/秒";
+          clickInfo.textContent = `測試完成！你完成 10 次點擊用了 ${totalTime.toFixed(
+            2
+          )} 秒，平均每秒 ${clicksPerSecond.toFixed(2)} 次點擊。`;
+
+          // 更新最佳記錄
+          if (totalTime < bestTimes["10clicks"]) {
+            bestTimes["10clicks"] = totalTime;
+            localStorage.setItem("bestTime_10clicks", totalTime);
+            bestScore.textContent = totalTime.toFixed(2) + " 秒";
+            clickInfo.textContent += " 新記錄！";
+            scoreManager.add(Math.floor(100 / totalTime));
+          }
+        }
+
+        // 完成 10 秒計時測試
+        function complete10SecondsTest() {
+          isActive = false;
+          clearTimeout(timeoutId);
+          clearInterval(countdownTimer);
+          timeDisplay.textContent = "0.00";
+          clickButton.classList.remove("ready");
+          clickButton.textContent = "再試一次";
+
+          const totalTime = (performance.now() - startTime) / 1000; // 實際經過的時間
+          const clicksPerSecond = clickCounter / totalTime;
+          clickSpeed.textContent = clicksPerSecond.toFixed(2) + " 次/秒";
+          clickInfo.textContent = `測試完成！你在 10 秒內點擊了 ${clickCounter} 次，平均每秒 ${clicksPerSecond.toFixed(
+            2
+          )} 次點擊。`;
+
+          // 更新最佳記錄
+          if (clickCounter > bestTimes["10seconds"]) {
+            bestTimes["10seconds"] = clickCounter;
+            localStorage.setItem("bestClicks_10seconds", clickCounter);
+            bestScore.textContent = clickCounter + " 次";
+            clickInfo.textContent += " 新記錄！";
+            scoreManager.add(clickCounter);
+          }
+        }
+
+        // 完成反應測試
+        function completeReactionTest(tooSoon) {
+          waitForReaction = false;
+          clearTimeout(reactionTimeout);
+
+          if (tooSoon) {
+            clickButton.classList.remove("wait");
+            clickButton.textContent = "太早了！";
+            clickInfo.textContent = "你點擊太早了！等待按鈕變綠色再點擊。";
+            timeoutId = setTimeout(() => {
+              clickButton.textContent = "再試一次";
+            }, 1500);
+            return;
+          }
+
+          endTime = performance.now();
+          const reactionTime = endTime - startTime; // 毫秒
+          timeDisplay.textContent = reactionTime.toFixed(1);
+          clickButton.classList.remove("ready");
+          clickButton.textContent = "再試一次";
+          clickInfo.textContent = `測試完成！你的反應時間是 ${reactionTime.toFixed(
+            1
+          )} 毫秒。`;
+
+          // 更新最佳記錄
+          if (reactionTime < bestTimes["reaction"]) {
+            bestTimes["reaction"] = reactionTime;
+            localStorage.setItem("bestReaction", reactionTime);
+            bestScore.textContent = reactionTime.toFixed(1) + " ms";
+            clickInfo.textContent += " 新記錄！";
+            scoreManager.add(Math.floor(500 / reactionTime));
+          }
+        }
+
+        // 點擊按鈕事件處理
+        clickButton.addEventListener("click", function () {
+          // 如果遊戲暫停，不做任何操作
+          if (gameController.paused) return;
+
+          // 反應測試模式的特殊處理
+          if (gameMode === "reaction") {
+            if (waitForReaction) {
+              // 如果還在等待變綠色（按鈕是黃色的）
+              if (!clickButton.classList.contains("ready")) {
+                completeReactionTest(true); // 太早點擊
+                return;
+              }
+              // 按鈕已經變綠色
+              completeReactionTest(false);
+              return;
+            }
+
+            // 開始新的反應測試
+            startReactionTest();
+            return;
+          }
+
+          // 其他模式
+          if (!isActive) {
+            // 開始新的測試
+            clickCount.textContent = "0";
+            if (gameMode === "10clicks") {
+              start10ClicksTest();
+            } else if (gameMode === "10seconds") {
+              start10SecondsTest();
+            }
+          } else {
+            // 已經在測試中，計數點擊
+            clickCounter++;
+            clickCount.textContent = clickCounter;
+
+            // 如果是 10 次點擊模式且達到 10 次
+            if (gameMode === "10clicks" && clickCounter >= 10) {
+              complete10ClicksTest();
+            }
+          }
+        });
+
+        // 模式切換按鈕事件處理
+        modeButtons.forEach((btn) => {
+          btn.addEventListener("click", function () {
+            if (gameController.paused) return;
+
+            gameMode = this.dataset.mode;
+            updateModeButtons(gameMode);
+            initGame();
+          });
+        });
+
+        // 設置遊戲控制器
+        gameController.setRestartHandler(() => {
+          initGame();
+        });
+
+        // 開始遊戲動畫
+        gameController.showStartAnimation(() => {
+          initGame();
+        });
+      });
+    </script>
+  </body>
+</html>

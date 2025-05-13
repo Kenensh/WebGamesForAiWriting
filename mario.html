@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>瑪利歐 - 網頁小遊戲</title>
+    <meta name="game-id" content="mario" />
+    <meta name="game-name" content="瑪利歐" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html">返回首頁</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container game-container">
+      <h1>瑪利歐</h1>
+      <div class="score-display">分數: <span id="scoreValue">0</span></div>
+
+      <div class="mario-game-container">
+        <canvas
+          id="marioCanvas"
+          class="mario-canvas"
+          width="640"
+          height="480"
+        ></canvas>
+
+        <div class="game-controls">
+          <button id="pauseButton" class="primary-button">暫停</button>
+          <button id="restartButton" class="primary-button">重新開始</button>
+          <button id="helpButton" class="secondary-button">遊戲說明</button>
+          <button id="homeButton" class="secondary-button">返回首頁</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>&copy; 2025 網頁小遊戲合集 | 使用純 JavaScript 開發</p>
+      </div>
+    </footer>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      // 等待DOM載入完成
+      document.addEventListener("DOMContentLoaded", () => {
+        // 獲取DOM元素
+        const canvas = document.getElementById("marioCanvas");
+        const ctx = canvas.getContext("2d");
+        const pauseButton = document.getElementById("pauseButton");
+        const restartButton = document.getElementById("restartButton");
+        const helpButton = document.getElementById("helpButton");
+        const homeButton = document.getElementById("homeButton");
+
+        // 創建遊戲控制器
+        const gameController = new GameUtils.GameController();
+
+        // 創建分數管理器
+        const scoreManager = new GameUtils.ScoreManager("scoreValue"); // 遊戲設置 - 讓馬力歐遊戲變慢一些
+        const gameSettings = {
+          gravity: 0.4, // 降低重力
+          friction: 0.8,
+          playerSpeed: 4, // 降低玩家速度
+          jumpForce: 12, // 降低跳躍力度
+          platformSpeed: 1.6, // 降低平台移動速度
+          groundHeight: 80,
+          platformWidth: 80,
+          platformHeight: 15,
+          obstacleWidth: 50,
+          obstacleHeight: 50,
+          coinSize: 25,
+          score: 0,
+          spawnInterval: 2000, // 平台生成間隔(毫秒)
+          lastSpawnTime: 0,
+        };
+
+        // 遊戲狀態
+        let player,
+          platforms,
+          obstacles,
+          coins,
+          rightPressed,
+          leftPressed,
+          spacePressed,
+          backgroundOffset;
+
+        // 創建說明模態框
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "瑪利歐 - 遊戲說明",
+          `
+        <h3>遊戲規則：</h3>
+        <p>控制瑪利歐跳上平台，收集金幣並避開障礙物。</p>
+        <p>如果瑪利歐撞到障礙物或掉落太低，遊戲就結束了。</p>
+        
+        <h3>計分方式：</h3>
+        <p>每收集一枚金幣得10分</p>
+        <p>每秒生存得1分</p>
+        
+        <h3>操作方法：</h3>
+        <ul>
+          <li>← - 向左移動</li>
+          <li>→ - 向右移動</li>
+          <li>空格鍵 - 跳躍</li>
+        </ul>
+      `
+        );
+
+        // 初始化遊戲
+        function initGame() {
+          // 重設分數
+          scoreManager.reset();
+          gameSettings.score = 0;
+
+          // 初始化玩家
+          player = {
+            x: 100,
+            y: canvas.height - gameSettings.groundHeight - 50,
+            width: 40,
+            height: 60,
+            speedX: 0,
+            speedY: 0,
+            jumping: false,
+            grounded: false,
+            facingRight: true,
+          };
+
+          // 初始化平台、障礙物和金幣
+          platforms = [
+            // 初始平台
+            {
+              x: 100,
+              y: canvas.height - gameSettings.groundHeight - 120,
+              width: gameSettings.platformWidth,
+              height: gameSettings.platformHeight,
+            },
+            {
+              x: 230,
+              y: canvas.height - gameSettings.groundHeight - 180,
+              width: gameSettings.platformWidth,
+              height: gameSettings.platformHeight,
+            },
+            {
+              x: 380,
+              y: canvas.height - gameSettings.groundHeight - 150,
+              width: gameSettings.platformWidth,
+              height: gameSettings.platformHeight,
+            },
+          ];
+
+          obstacles = [];
+          coins = [];
+
+          // 初始化背景偏移
+          backgroundOffset = 0;
+
+          // 重置按鍵狀態
+          rightPressed = false;
+          leftPressed = false;
+          spacePressed = false;
+
+          // 初始化最後生成時間
+          gameSettings.lastSpawnTime = Date.now();
+
+          // 設置遊戲循環
+          gameController.setGameLoop(() => {
+            updateGame();
+            drawGame();
+          });
+
+          // 開始遊戲循環
+          gameController.startGameLoop();
+
+          // 啟動分數計時器 (每秒+1分)
+          startScoreTimer();
+        }
+
+        // 分數計時器
+        let scoreTimerId;
+
+        function startScoreTimer() {
+          // 清除先前的計時器
+          if (scoreTimerId) {
+            clearInterval(scoreTimerId);
+          }
+
+          // 每秒加一分
+          scoreTimerId = setInterval(() => {
+            if (!gameController.paused && !gameController.gameOver) {
+              gameSettings.score += 1;
+              scoreManager.add(1);
+            }
+          }, 1000);
+        }
+
+        // 更新遊戲狀態
+        function updateGame() {
+          // 更新玩家位置
+          updatePlayer();
+
+          // 生成新的平台、障礙物和金幣
+          spawnGameObjects();
+
+          // 移動平台、障礙物和金幣
+          moveGameObjects();
+
+          // 檢測碰撞
+          checkCollisions();
+
+          // 清除超出屏幕的物體
+          cleanupObjects();
+
+          // 檢查遊戲結束條件
+          checkGameOver();
+        }
+
+        // 更新玩家
+        function updatePlayer() {
+          // 左右移動
+          if (rightPressed) {
+            player.speedX = gameSettings.playerSpeed;
+            player.facingRight = true;
+          } else if (leftPressed) {
+            player.speedX = -gameSettings.playerSpeed;
+            player.facingRight = false;
+          } else {
+            player.speedX *= gameSettings.friction;
+          }
+
+          // 跳躍
+          if (spacePressed && !player.jumping && player.grounded) {
+            player.jumping = true;
+            player.grounded = false;
+            player.speedY = -gameSettings.jumpForce;
+          }
+
+          // 應用重力
+          player.speedY += gameSettings.gravity;
+
+          // 更新位置
+          player.x += player.speedX;
+          player.y += player.speedY;
+
+          // 限制玩家不會超出左邊界
+          if (player.x < 0) {
+            player.x = 0;
+          }
+
+          // 當玩家向右移動超過一定位置，則移動背景而不是玩家
+          if (player.x > canvas.width * 0.6) {
+            backgroundOffset += player.speedX;
+            player.x = canvas.width * 0.6;
+          }
+
+          // 重置接觸地面標記
+          player.grounded = false;
+        }
+
+        // 生成遊戲物體
+        function spawnGameObjects() {
+          const now = Date.now();
+
+          // 每隔一段時間生成新的平台和物體
+          if (now - gameSettings.lastSpawnTime > gameSettings.spawnInterval) {
+            // 更新最後生成時間
+            gameSettings.lastSpawnTime = now;
+
+            // 生成新的平台
+            const platformY =
+              Math.random() * (canvas.height * 0.5) + canvas.height * 0.3;
+            platforms.push({
+              x: canvas.width + Math.random() * 100,
+              y: platformY,
+              width: gameSettings.platformWidth * (0.8 + Math.random() * 0.8), // 隨機寬度
+              height: gameSettings.platformHeight,
+            });
+
+            // 在某些平台上生成金幣
+            if (Math.random() > 0.4) {
+              coins.push({
+                x: canvas.width + Math.random() * 200,
+                y: platformY - gameSettings.coinSize - 10,
+                size: gameSettings.coinSize,
+                rotation: 0,
+              });
+            }
+
+            // 隨機生成障礙物
+            if (Math.random() > 0.7) {
+              obstacles.push({
+                x: canvas.width + Math.random() * 300 + 100,
+                y:
+                  canvas.height -
+                  gameSettings.groundHeight -
+                  gameSettings.obstacleHeight,
+                width: gameSettings.obstacleWidth,
+                height: gameSettings.obstacleHeight,
+              });
+            }
+          }
+        }
+
+        // 移動遊戲物體
+        function moveGameObjects() {
+          // 移動平台
+          for (const platform of platforms) {
+            platform.x -= gameSettings.platformSpeed;
+          }
+
+          // 移動障礙物
+          for (const obstacle of obstacles) {
+            obstacle.x -= gameSettings.platformSpeed;
+          }
+
+          // 移動金幣
+          for (const coin of coins) {
+            coin.x -= gameSettings.platformSpeed;
+
+            // 使金幣旋轉
+            coin.rotation += 0.05;
+
+            // 使金幣浮動
+            coin.y += Math.sin(Date.now() / 200) * 0.5;
+          }
+        }
+
+        // 檢測碰撞
+        function checkCollisions() {
+          // 玩家與地面碰撞
+          if (
+            player.y + player.height >
+            canvas.height - gameSettings.groundHeight
+          ) {
+            player.y =
+              canvas.height - gameSettings.groundHeight - player.height;
+            player.speedY = 0;
+            player.jumping = false;
+            player.grounded = true;
+          }
+
+          // 玩家與平台碰撞
+          for (const platform of platforms) {
+            if (
+              player.x + player.width > platform.x &&
+              player.x < platform.x + platform.width &&
+              player.y + player.height > platform.y &&
+              player.y < platform.y + platform.height &&
+              player.speedY > 0
+            ) {
+              player.y = platform.y - player.height;
+              player.speedY = 0;
+              player.jumping = false;
+              player.grounded = true;
+            }
+          }
+
+          // 玩家與障礙物碰撞
+          for (let i = 0; i < obstacles.length; i++) {
+            const obstacle = obstacles[i];
+            if (
+              player.x + player.width > obstacle.x &&
+              player.x < obstacle.x + obstacle.width &&
+              player.y + player.height > obstacle.y &&
+              player.y < obstacle.y + obstacle.height
+            ) {
+              // 碰到障礙物，遊戲結束
+              gameOver();
+              return;
+            }
+          }
+
+          // 玩家與金幣碰撞
+          for (let i = 0; i < coins.length; i++) {
+            const coin = coins[i];
+            if (
+              player.x + player.width > coin.x &&
+              player.x < coin.x + coin.size &&
+              player.y + player.height > coin.y &&
+              player.y < coin.y + coin.size
+            ) {
+              // 收集金幣
+              coins.splice(i, 1);
+              gameSettings.score += 10;
+              scoreManager.add(10);
+              i--;
+            }
+          }
+        }
+
+        // 清除超出屏幕的物體
+        function cleanupObjects() {
+          // 清除超出屏幕左側的平台
+          platforms = platforms.filter(
+            (platform) => platform.x + platform.width > -50
+          );
+
+          // 清除超出屏幕左側的障礙物
+          obstacles = obstacles.filter(
+            (obstacle) => obstacle.x + obstacle.width > -50
+          );
+
+          // 清除超出屏幕左側的金幣
+          coins = coins.filter((coin) => coin.x + coin.size > -50);
+        }
+
+        // 檢查遊戲結束條件
+        function checkGameOver() {
+          // 如果玩家掉出屏幕底部，遊戲結束
+          if (player.y > canvas.height) {
+            gameOver();
+          }
+        }
+
+        // 繪製遊戲
+        function drawGame() {
+          // 清除畫布
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // 繪製背景 (簡單藍色背景)
+          ctx.fillStyle = "#5c94fc";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // 繪製雲朵
+          drawClouds();
+
+          // 繪製地面
+          drawGround();
+
+          // 繪製平台
+          drawPlatforms();
+
+          // 繪製障礙物
+          drawObstacles();
+
+          // 繪製金幣
+          drawCoins();
+
+          // 繪製玩家
+          drawPlayer();
+        }
+
+        // 繪製雲朵
+        function drawClouds() {
+          // 簡單雲朵
+          ctx.fillStyle = "#ffffff";
+
+          // 第一組雲
+          const cloudX1 =
+            ((100 - backgroundOffset * 0.2) % (canvas.width * 1.5)) - 100;
+          drawCloud(cloudX1, 50, 80);
+
+          // 第二組雲
+          const cloudX2 =
+            ((400 - backgroundOffset * 0.2) % (canvas.width * 1.5)) - 100;
+          drawCloud(cloudX2, 100, 120);
+
+          // 第三組雲
+          const cloudX3 =
+            ((700 - backgroundOffset * 0.2) % (canvas.width * 1.5)) - 100;
+          drawCloud(cloudX3, 70, 60);
+        }
+
+        // 繪製單個雲
+        function drawCloud(x, y, size) {
+          ctx.beginPath();
+          ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+          ctx.arc(x + size / 2, y - size / 4, size / 3, 0, Math.PI * 2);
+          ctx.arc(x + size, y, size / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 繪製地面
+        function drawGround() {
+          ctx.fillStyle = "#5D94FB"; // 藍色部分（背景延伸）
+          ctx.fillRect(
+            0,
+            canvas.height - gameSettings.groundHeight,
+            canvas.width,
+            gameSettings.groundHeight
+          );
+
+          // 地面
+          ctx.fillStyle = "#59311D";
+          ctx.fillRect(
+            0,
+            canvas.height - gameSettings.groundHeight,
+            canvas.width,
+            20
+          );
+
+          // 草地
+          ctx.fillStyle = "#5EAE5E";
+          ctx.fillRect(
+            0,
+            canvas.height - gameSettings.groundHeight,
+            canvas.width,
+            10
+          );
+
+          // 繪製背景的山丘 (使用背景偏移來移動)
+          drawHills();
+        }
+
+        // 繪製山丘背景
+        function drawHills() {
+          // 前景山丘
+          ctx.fillStyle = "#8CC453";
+
+          // 用正弦波形狀創建山丘
+          ctx.beginPath();
+          ctx.moveTo(0, canvas.height - gameSettings.groundHeight);
+
+          for (let x = 0; x < canvas.width; x++) {
+            // 根據背景偏移調整山丘
+            const adjustedX = x + backgroundOffset * 0.5;
+            // 使用正弦函數創建山形
+            const hill =
+              Math.sin(adjustedX * 0.01) * 50 + Math.sin(adjustedX * 0.02) * 20;
+            const y =
+              canvas.height - gameSettings.groundHeight - Math.abs(hill) - 10;
+            ctx.lineTo(x, y);
+          }
+
+          ctx.lineTo(canvas.width, canvas.height - gameSettings.groundHeight);
+          ctx.fill();
+        }
+
+        // 繪製平台
+        function drawPlatforms() {
+          ctx.fillStyle = "#5EAE5E"; // 使用綠色
+
+          for (const platform of platforms) {
+            ctx.fillRect(
+              platform.x,
+              platform.y,
+              platform.width,
+              platform.height
+            );
+
+            // 平台上邊緣
+            ctx.fillStyle = "#8CC453";
+            ctx.fillRect(platform.x, platform.y, platform.width, 5);
+
+            // 恢復填充顏色
+            ctx.fillStyle = "#5EAE5E";
+          }
+        }
+
+        // 繪製障礙物
+        function drawObstacles() {
+          for (const obstacle of obstacles) {
+            // 繪製障礙物 (簡單的紅色方塊)
+            ctx.fillStyle = "#D84315";
+            ctx.fillRect(
+              obstacle.x,
+              obstacle.y,
+              obstacle.width,
+              obstacle.height
+            );
+
+            // 添加細節
+            ctx.fillStyle = "#BF360C";
+            ctx.fillRect(
+              obstacle.x + 5,
+              obstacle.y + 5,
+              obstacle.width - 10,
+              obstacle.height - 10
+            );
+
+            // 繪製眼睛
+            ctx.fillStyle = "#FFFFFF";
+            ctx.beginPath();
+            ctx.arc(
+              obstacle.x + obstacle.width * 0.3,
+              obstacle.y + obstacle.height * 0.3,
+              5,
+              0,
+              Math.PI * 2
+            );
+            ctx.arc(
+              obstacle.x + obstacle.width * 0.7,
+              obstacle.y + obstacle.height * 0.3,
+              5,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+
+            // 繪製瞳孔
+            ctx.fillStyle = "#000000";
+            ctx.beginPath();
+            ctx.arc(
+              obstacle.x + obstacle.width * 0.3,
+              obstacle.y + obstacle.height * 0.3,
+              2,
+              0,
+              Math.PI * 2
+            );
+            ctx.arc(
+              obstacle.x + obstacle.width * 0.7,
+              obstacle.y + obstacle.height * 0.3,
+              2,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+          }
+        }
+
+        // 繪製金幣
+        function drawCoins() {
+          for (const coin of coins) {
+            // 保存當前狀態
+            ctx.save();
+
+            // 移動到硬幣中心
+            ctx.translate(coin.x + coin.size / 2, coin.y + coin.size / 2);
+
+            // 旋轉
+            ctx.rotate(coin.rotation);
+
+            // 縮放 (模擬3D旋轉效果)
+            const scale = 0.7 + Math.abs(Math.sin(coin.rotation)) * 0.3;
+            ctx.scale(scale, 1);
+
+            // 繪製金幣 (金色圓圈)
+            ctx.fillStyle = "#FFD700";
+            ctx.beginPath();
+            ctx.arc(0, 0, coin.size / 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 硬幣內部細節
+            ctx.fillStyle = "#FFC107";
+            ctx.beginPath();
+            ctx.arc(0, 0, coin.size / 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 恢復狀態
+            ctx.restore();
+          }
+        }
+
+        // 繪製玩家
+        function drawPlayer() {
+          // 簡化的瑪利歐角色
+
+          // 主體
+          ctx.fillStyle = "#FF0000"; // 紅色衣服
+          ctx.fillRect(
+            player.x,
+            player.y + player.height * 0.4,
+            player.width,
+            player.height * 0.6
+          );
+
+          // 頭部
+          ctx.fillStyle = "#FFA07A"; // 膚色
+          ctx.fillRect(
+            player.x + player.width * 0.1,
+            player.y,
+            player.width * 0.8,
+            player.height * 0.4
+          );
+
+          // 帽子
+          ctx.fillStyle = "#FF0000"; // 紅色帽子
+          ctx.fillRect(
+            player.x,
+            player.y,
+            player.width * 0.9,
+            player.height * 0.2
+          );
+
+          // 瑪利歐的眼睛
+          ctx.fillStyle = "#000000";
+
+          // 根據面向方向繪製不同位置的眼睛
+          if (player.facingRight) {
+            ctx.fillRect(
+              player.x + player.width * 0.6,
+              player.y + player.height * 0.15,
+              player.width * 0.15,
+              player.height * 0.08
+            );
+          } else {
+            ctx.fillRect(
+              player.x + player.width * 0.25,
+              player.y + player.height * 0.15,
+              player.width * 0.15,
+              player.height * 0.08
+            );
+          }
+
+          // 添加手和腳的簡單表示
+          ctx.fillStyle = "#FFA07A"; // 膚色
+
+          // 腿部
+          ctx.fillRect(
+            player.x + player.width * 0.2,
+            player.y + player.height * 0.85,
+            player.width * 0.2,
+            player.height * 0.15
+          );
+
+          ctx.fillRect(
+            player.x + player.width * 0.6,
+            player.y + player.height * 0.85,
+            player.width * 0.2,
+            player.height * 0.15
+          );
+        }
+
+        // 遊戲結束
+        function gameOver() {
+          // 停止分數計時器
+          if (scoreTimerId) {
+            clearInterval(scoreTimerId);
+            scoreTimerId = null;
+          }
+
+          gameController.endGame(gameSettings.score, "遊戲結束！");
+        }
+
+        // 鍵盤事件處理
+        document.addEventListener("keydown", (e) => {
+          if (gameController.gameOver) return;
+
+          if (e.key === "Right" || e.key === "ArrowRight") {
+            rightPressed = true;
+          } else if (e.key === "Left" || e.key === "ArrowLeft") {
+            leftPressed = true;
+          } else if (e.key === " ") {
+            spacePressed = true;
+
+            // 防止空格鍵滾動頁面
+            e.preventDefault();
+          }
+        });
+
+        document.addEventListener("keyup", (e) => {
+          if (e.key === "Right" || e.key === "ArrowRight") {
+            rightPressed = false;
+          } else if (e.key === "Left" || e.key === "ArrowLeft") {
+            leftPressed = false;
+          } else if (e.key === " ") {
+            spacePressed = false;
+          }
+        });
+
+        // 添加觸控控制
+        let touchStartX = null;
+        let touchJumpArea = null;
+
+        canvas.addEventListener("touchstart", (e) => {
+          const touch = e.touches[0];
+          touchStartX = touch.clientX;
+
+          // 判斷觸摸區域
+          if (touch.clientY < canvas.height * 0.5) {
+            // 上半部分 - 跳躍
+            spacePressed = true;
+            touchJumpArea = true;
+          } else {
+            touchJumpArea = false;
+          }
+
+          e.preventDefault();
+        });
+
+        canvas.addEventListener("touchmove", (e) => {
+          const touch = e.touches[0];
+
+          if (!touchJumpArea && touchStartX !== null) {
+            // 下半部分 - 左右移動
+            const currentX = touch.clientX;
+            const diff = currentX - touchStartX;
+
+            // 設定移動方向
+            if (diff > 20) {
+              rightPressed = true;
+              leftPressed = false;
+            } else if (diff < -20) {
+              leftPressed = true;
+              rightPressed = false;
+            }
+          }
+
+          e.preventDefault();
+        });
+
+        canvas.addEventListener("touchend", () => {
+          rightPressed = false;
+          leftPressed = false;
+          spacePressed = false;
+          touchStartX = null;
+          touchJumpArea = null;
+        });
+
+        // 添加按鈕事件
+        pauseButton.addEventListener("click", () => {
+          gameController.togglePause();
+        });
+
+        restartButton.addEventListener("click", () => {
+          // 停止舊的分數計時器
+          if (scoreTimerId) {
+            clearInterval(scoreTimerId);
+          }
+
+          initGame();
+        });
+
+        helpButton.addEventListener("click", () => {
+          helpModal.show();
+        });
+
+        homeButton.addEventListener("click", () => {
+          window.location.href = "index.html";
+        });
+
+        // 設置重啟處理程序
+        gameController.setRestartHandler(() => {
+          // 停止舊的分數計時器
+          if (scoreTimerId) {
+            clearInterval(scoreTimerId);
+          }
+
+          initGame();
+        });
+
+        // 顯示開始動畫，然後開始遊戲
+        gameController.showStartAnimation(() => {
+          initGame();
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>離線模式 - 網頁小遊戲合集</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="notification-styles.css" />
+    <style>
+      .offline-container {
+        min-height: calc(100vh - 180px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        text-align: center;
+      }
+
+      .offline-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+      }
+
+      .offline-title {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: var(--primary-color);
+      }
+
+      .offline-message {
+        font-size: 18px;
+        max-width: 600px;
+        margin-bottom: 30px;
+      }
+
+      .offline-actions {
+        margin-top: 20px;
+      }
+
+      .available-games {
+        margin-top: 40px;
+        width: 100%;
+        max-width: 800px;
+      }
+
+      .available-games h3 {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .offline-game-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+      }
+
+      .offline-game-card {
+        background-color: var(--card-background);
+        border-radius: var(--border-radius);
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: var(--card-shadow);
+        text-align: left;
+      }
+
+      .offline-game-title {
+        font-weight: 700;
+        font-size: 18px;
+        margin-bottom: 10px;
+        color: var(--text-color);
+      }
+
+      .offline-game-button {
+        display: inline-block;
+        padding: 8px 15px;
+        margin-top: 15px;
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 4px;
+        text-decoration: none;
+        text-align: center;
+        transition: background-color 0.3s;
+      }
+
+      .offline-game-button:hover {
+        background-color: var(--primary-hover);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+            <li><a href="profile.html">個人檔案</a></li>
+            <li>
+              <button id="theme-toggle" aria-label="切換主題">
+                <span class="theme-icon light-icon">☀️</span>
+                <span class="theme-icon dark-icon">🌙</span>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container offline-container">
+      <div class="offline-icon">📶</div>
+      <h1 class="offline-title">您現在處於離線模式</h1>
+      <p class="offline-message">
+        看起來您的網路連線已中斷，但別擔心！您可以繼續遊玩已緩存的遊戲。
+        部分功能可能受限，但您的遊戲進度和成就仍會保存，並在下次連接網路時同步。
+      </p>
+      <div class="offline-actions">
+        <button id="retry-connection" class="btn-primary">重試連接</button>
+      </div>
+
+      <div class="available-games">
+        <h3>可用的離線遊戲</h3>
+        <div id="offline-game-list" class="offline-game-list">
+          <!-- 由 JavaScript 動態填充可用遊戲 -->
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-links">
+            <a href="profile.html#achievements">成就一覽</a>
+            <a href="profile.html#statistics">遊戲統計</a>
+            <a href="profile.html#settings">設定</a>
+          </div>
+          <p>&copy; 2025 網頁小遊戲合集 | 使用純 JavaScript 開發</p>
+        </div>
+      </div>
+    </footer>
+    <script src="gameUtils.js"></script>
+    <script src="themeManager.js"></script>
+    <script src="offline.js"></script>
+  </body>
+</html>

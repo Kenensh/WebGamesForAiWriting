@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小精靈 - 網頁小遊戲</title>
+    <meta name="game-id" content="pacman" />
+    <meta name="game-name" content="小精靈" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .game-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .pacman-canvas-container {
+        border: 2px solid #333;
+        border-radius: 5px;
+        background-color: #000;
+        position: relative;
+        width: 450px;
+        height: 500px;
+        overflow: hidden;
+      }
+
+      #pacmanCanvas {
+        display: block;
+        background-color: #000;
+      }
+
+      .game-stats {
+        display: flex;
+        justify-content: space-between;
+        width: 450px;
+        margin-top: 20px;
+      }
+
+      .stats-box {
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        padding: 10px 20px;
+        text-align: center;
+        width: 30%;
+      }
+
+      .stats-label {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .lives-container {
+        display: flex;
+        gap: 5px;
+        justify-content: center;
+        align-items: center;
+        margin-top: 5px;
+      }
+
+      .life-icon {
+        width: 15px;
+        height: 15px;
+        background-color: #ffeb3b;
+        border-radius: 50%;
+        position: relative;
+      }
+
+      .life-icon:after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 50%;
+        height: 50%;
+        background-color: #000;
+        border-radius: 0 100% 0 0;
+      }
+
+      .game-controls {
+        display: none; /* 預設隱藏，手機上才顯示 */
+        margin-top: 20px;
+        width: 250px;
+        height: 150px;
+        position: relative;
+      }
+
+      .control-button {
+        position: absolute;
+        background-color: rgba(74, 107, 255, 0.7);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .control-button:hover {
+        background-color: rgba(58, 86, 212, 0.8);
+      }
+
+      .up-button {
+        top: 0;
+        left: 95px;
+      }
+
+      .left-button {
+        top: 70px;
+        left: 25px;
+      }
+
+      .down-button {
+        top: 70px;
+        left: 95px;
+      }
+
+      .right-button {
+        top: 70px;
+        left: 165px;
+      }
+
+      .game-paused {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        font-weight: bold;
+        display: none;
+        z-index: 100;
+      }
+
+      @media (max-width: 500px) {
+        .pacman-canvas-container {
+          width: 350px;
+          height: 400px;
+        }
+
+        .game-stats {
+          width: 350px;
+        }
+
+        .game-controls {
+          display: block;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>小精靈</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="game-container">
+        <div class="pacman-canvas-container">
+          <canvas id="pacmanCanvas" width="450" height="500"></canvas>
+          <div id="gamePaused" class="game-paused">暫停中</div>
+        </div>
+
+        <div class="game-stats">
+          <div class="stats-box">
+            <div class="stats-label">分數</div>
+            <div id="scoreDisplay">0</div>
+          </div>
+          <div class="stats-box">
+            <div class="stats-label">等級</div>
+            <div id="levelDisplay">1</div>
+          </div>
+          <div class="stats-box">
+            <div class="stats-label">生命</div>
+            <div class="lives-container" id="livesContainer">
+              <div class="life-icon"></div>
+              <div class="life-icon"></div>
+              <div class="life-icon"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 移動控制按鈕 (適用於手機設備) -->
+        <div class="game-controls">
+          <button id="upButton" class="control-button up-button">↑</button>
+          <button id="leftButton" class="control-button left-button">←</button>
+          <button id="downButton" class="control-button down-button">↓</button>
+          <button id="rightButton" class="control-button right-button">
+            →
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "遊戲說明",
+          `
+          <h3>小精靈遊戲說明</h3>
+          <p>在這個經典遊戲中，你需要操控小精靈吃光所有的點點，同時避開鬼魂的追擊。</p>
+          <h4>操作方式：</h4>
+          <ul>
+            <li>使用鍵盤的上下左右方向鍵來控制小精靈移動</li>
+            <li>在手機上可以使用螢幕下方的方向按鈕</li>
+            <li>吃掉所有小點點可以通關</li>
+            <li>吃到大力丸後可以暫時吃掉鬼魂</li>
+          </ul>
+          <h4>計分規則：</h4>
+          <ul>
+            <li>小點點：10分</li>
+            <li>大力丸：50分</li>
+            <li>吃掉鬼魂：200分起，連續吃掉會加倍</li>
+          </ul>
+        `
+        );
+
+        const scoreManager = new GameUtils.ScoreManager("scoreDisplay", 0);
+        const gameController = new GameUtils.GameController();
+
+        // 遊戲相關變數
+        const canvas = document.getElementById("pacmanCanvas");
+        const ctx = canvas.getContext("2d");
+        const pauseIndicator = document.getElementById("gamePaused");
+        const levelDisplay = document.getElementById("levelDisplay");
+        const livesContainer = document.getElementById("livesContainer");
+
+        // 遊戲參數
+        const tileSize = 20; // 每個格子的大小
+        const boardWidth = Math.floor(canvas.width / tileSize);
+        const boardHeight = Math.floor(canvas.height / tileSize);
+
+        // 遊戲狀態
+        let level = 1;
+        let lives = 3;
+        let direction = null; // 當前方向
+        let nextDirection = null; // 下一個方向
+        let gameActive = false;
+        let animationId = null;
+        let ghostBlue = false; // 鬼魂是否可被吃
+        let ghostBlueTimer = 0;
+        let ghostsEaten = 0; // 連續吃了幾個鬼魂
+
+        // 角色
+        let pacman = {
+          x: 10,
+          y: 15,
+          radius: tileSize / 2,
+          speed: 0.1,
+          angle: 0,
+          mouthOpen: 0.2,
+          mouthDir: 0.01,
+        };
+
+        // 鬼魂
+        let ghosts = [
+          { x: 9, y: 10, color: "#FF0000", direction: "right", speed: 0.07 }, // 紅
+          { x: 10, y: 10, color: "#FFB8FF", direction: "up", speed: 0.065 }, // 粉
+          { x: 11, y: 10, color: "#00FFDE", direction: "left", speed: 0.06 }, // 青
+          { x: 10, y: 9, color: "#FFB851", direction: "down", speed: 0.055 }, // 橙
+        ];
+
+        // 迷宮地圖
+        // 0: 空白, 1: 牆, 2: 點點, 3: 大力丸, 4: 鬼屋門
+        let maze = [
+          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+          [1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1],
+          [1, 3, 1, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0, 1, 3, 1],
+          [1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1],
+          [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+          [1, 2, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 1, 1, 2, 1],
+          [1, 2, 1, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 1, 1, 2, 1],
+          [1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 2, 1],
+          [1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1],
+          [0, 0, 0, 0, 0, 1, 2, 1, 1, 0, 0, 0, 0, 1, 1, 2, 1, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 1, 2, 1, 1, 0, 1, 1, 0, 1, 1, 2, 1, 0, 0, 0, 0, 0],
+          [1, 1, 1, 1, 1, 1, 2, 1, 1, 0, 1, 1, 0, 1, 1, 2, 1, 1, 1, 1, 1, 1],
+          [0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 1, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0],
+          [1, 1, 1, 1, 1, 1, 2, 1, 1, 0, 1, 1, 0, 1, 1, 2, 1, 1, 1, 1, 1, 1],
+          [0, 0, 0, 0, 0, 1, 2, 1, 1, 0, 0, 0, 0, 1, 1, 2, 1, 0, 0, 0, 0, 0],
+          [0, 0, 0, 0, 0, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0],
+          [1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1],
+          [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+          [1, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 2, 1],
+          [1, 3, 2, 2, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2, 3, 1],
+          [1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 1],
+          [1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 1, 1, 1],
+          [1, 2, 2, 2, 2, 2, 2, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 2, 1],
+          [1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1],
+          [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1],
+          [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        ];
+
+        // 初始化遊戲
+        function initGame() {
+          level = 1;
+          lives = 3;
+          scoreManager.reset();
+          levelDisplay.textContent = level;
+          updateLivesDisplay();
+
+          resetLevel();
+          gameActive = true;
+        }
+
+        // 重置關卡
+        function resetLevel() {
+          // 重置小精靈位置
+          pacman = {
+            x: 10,
+            y: 15,
+            radius: tileSize / 2,
+            speed: 0.1,
+            angle: 0,
+            mouthOpen: 0.2,
+            mouthDir: 0.01,
+          };
+
+          // 重置鬼魂位置
+          ghosts = [
+            { x: 9, y: 10, color: "#FF0000", direction: "right", speed: 0.07 }, // 紅
+            { x: 10, y: 10, color: "#FFB8FF", direction: "up", speed: 0.065 }, // 粉
+            { x: 11, y: 10, color: "#00FFDE", direction: "left", speed: 0.06 }, // 青
+            { x: 10, y: 9, color: "#FFB851", direction: "down", speed: 0.055 }, // 橙
+          ];
+
+          // 重置方向
+          direction = null;
+          nextDirection = null;
+
+          // 重置鬼魂狀態
+          ghostBlue = false;
+          ghostBlueTimer = 0;
+          ghostsEaten = 0;
+
+          // 檢查是否需要重置迷宮
+          if (checkMazeCleared()) {
+            resetMaze();
+          }
+        }
+
+        // 重置迷宮
+        function resetMaze() {
+          for (let y = 0; y < maze.length; y++) {
+            for (let x = 0; x < maze[y].length; x++) {
+              if (maze[y][x] === 0) {
+                maze[y][x] = 2; // 補充點點
+              } else if (maze[y][x] === 5) {
+                maze[y][x] = 3; // 補充大力丸
+              }
+            }
+          }
+        }
+
+        // 檢查迷宮是否已清空
+        function checkMazeCleared() {
+          for (let y = 0; y < maze.length; y++) {
+            for (let x = 0; x < maze[y].length; x++) {
+              if (maze[y][x] === 2 || maze[y][x] === 3) {
+                return false; // 還有點點或大力丸
+              }
+            }
+          }
+          return true; // 迷宮已清空
+        }
+
+        // 更新生命顯示
+        function updateLivesDisplay() {
+          livesContainer.innerHTML = "";
+          for (let i = 0; i < lives; i++) {
+            const lifeIcon = document.createElement("div");
+            lifeIcon.className = "life-icon";
+            livesContainer.appendChild(lifeIcon);
+          }
+        }
+
+        // 更新遊戲狀態
+        function updateGame() {
+          if (!gameActive) return;
+
+          // 更新小精靈的嘴巴動畫
+          pacman.mouthOpen += pacman.mouthDir;
+          if (pacman.mouthOpen >= 0.5 || pacman.mouthOpen <= 0) {
+            pacman.mouthDir *= -1;
+          }
+
+          // 處理輸入方向變更
+          if (nextDirection) {
+            const nx = Math.round(pacman.x);
+            const ny = Math.round(pacman.y);
+
+            // 當小精靈位於格子中心點時，才能轉向
+            if (
+              Math.abs(pacman.x - nx) < 0.1 &&
+              Math.abs(pacman.y - ny) < 0.1
+            ) {
+              let canChange = false;
+
+              switch (nextDirection) {
+                case "up":
+                  canChange = !isWall(nx, ny - 1);
+                  pacman.angle = 1.5 * Math.PI;
+                  break;
+                case "down":
+                  canChange = !isWall(nx, ny + 1);
+                  pacman.angle = 0.5 * Math.PI;
+                  break;
+                case "left":
+                  canChange = !isWall(nx - 1, ny);
+                  pacman.angle = Math.PI;
+                  break;
+                case "right":
+                  canChange = !isWall(nx + 1, ny);
+                  pacman.angle = 0;
+                  break;
+              }
+
+              if (canChange) {
+                direction = nextDirection;
+                nextDirection = null;
+                pacman.x = nx;
+                pacman.y = ny;
+              }
+            }
+          }
+
+          // 移動小精靈
+          if (direction) {
+            let newX = pacman.x;
+            let newY = pacman.y;
+
+            switch (direction) {
+              case "up":
+                newY -= pacman.speed;
+                break;
+              case "down":
+                newY += pacman.speed;
+                break;
+              case "left":
+                newX -= pacman.speed;
+                break;
+              case "right":
+                newX += pacman.speed;
+                break;
+            }
+
+            // 檢查碰撞
+            const nx = Math.round(newX);
+            const ny = Math.round(newY);
+
+            if (!isWall(nx, ny)) {
+              pacman.x = newX;
+              pacman.y = newY;
+
+              // 穿牆
+              if (pacman.x < 0) pacman.x = boardWidth - 1;
+              if (pacman.x >= boardWidth) pacman.x = 0;
+            }
+          }
+
+          // 收集點點
+          collectDots();
+
+          // 更新鬼魂
+          updateGhosts();
+
+          // 更新大力丸計時器
+          if (ghostBlue) {
+            ghostBlueTimer--;
+            if (ghostBlueTimer <= 0) {
+              ghostBlue = false;
+              ghostsEaten = 0;
+            }
+          }
+        }
+
+        // 收集點點
+        function collectDots() {
+          const nx = Math.round(pacman.x);
+          const ny = Math.round(pacman.y);
+
+          if (nx >= 0 && nx < boardWidth && ny >= 0 && ny < boardHeight) {
+            if (maze[ny][nx] === 2) {
+              // 小點點
+              maze[ny][nx] = 0;
+              scoreManager.add(10);
+
+              // 檢查是否完成關卡
+              if (checkMazeCleared()) {
+                levelUp();
+              }
+            } else if (maze[ny][nx] === 3) {
+              // 大力丸
+              maze[ny][nx] = 0;
+              scoreManager.add(50);              // 啟動大力丸效果，調整持續時間更加平衡
+              ghostBlue = true;
+              // 較低等級時持續時間較長，高等級時較短，但不會太短
+              const baseDuration = 8; // 8秒基礎時間
+              const scaleFactor = Math.max(0.5, 1 - (level * 0.08)); // 隨等級降低，但最低保持一半時間
+              ghostBlueTimer = baseDuration * 60 * scaleFactor; // 轉換為遊戲幀數
+              ghostsEaten = 0;
+
+              // 檢查是否完成關卡
+              if (checkMazeCleared()) {
+                levelUp();
+              }
+            }
+          }
+        }
+
+        // 升級
+        function levelUp() {
+          level++;
+          levelDisplay.textContent = level;
+
+          // 重置迷宮和角色位置
+          resetMaze();
+          resetLevel();
+
+          // 增加鬼魂速度
+          ghosts.forEach((ghost) => {
+            ghost.speed *= 1.1;
+          });
+        }
+
+        // 更新鬼魂
+        function updateGhosts() {
+          ghosts.forEach((ghost) => {
+            // 決定移動方向
+            const possibleDirections = getPossibleDirections(ghost);
+
+            if (possibleDirections.length > 0) {
+              // 如果在十字路口，重新選擇方向
+              if (possibleDirections.length > 1) {
+                if (!ghostBlue) {
+                  // 追逐模式: 傾向於朝向小精靈移動
+                  ghost.direction = chooseBestDirection(
+                    ghost,
+                    possibleDirections
+                  );
+                } else {
+                  // 逃跑模式: 隨機選擇方向
+                  const randomIndex = Math.floor(
+                    Math.random() * possibleDirections.length
+                  );
+                  ghost.direction = possibleDirections[randomIndex];
+                }
+              }
+
+              // 移動鬼魂
+              moveGhost(ghost);
+
+              // 檢查與小精靈的碰撞
+              if (checkGhostCollision(ghost)) {
+                if (ghostBlue) {
+                  // 吃掉鬼魂
+                  eatGhost(ghost);
+                } else {
+                  // 被鬼魂抓到
+                  loseLife();
+                }
+              }
+            }
+          });
+        }
+
+        // 獲取可能的移動方向
+        function getPossibleDirections(ghost) {
+          const gx = Math.round(ghost.x);
+          const gy = Math.round(ghost.y);
+          const possibleDirections = [];
+          const oppositeDir = getOppositeDirection(ghost.direction);
+
+          if (!isWall(gx, gy - 1) && oppositeDir !== "up") {
+            possibleDirections.push("up");
+          }
+
+          if (!isWall(gx, gy + 1) && oppositeDir !== "down") {
+            possibleDirections.push("down");
+          }
+
+          if (!isWall(gx - 1, gy) && oppositeDir !== "left") {
+            possibleDirections.push("left");
+          }
+
+          if (!isWall(gx + 1, gy) && oppositeDir !== "right") {
+            possibleDirections.push("right");
+          }
+
+          // 如果沒有其他選擇，可以掉頭
+          if (possibleDirections.length === 0) {
+            possibleDirections.push(oppositeDir);
+          }
+
+          return possibleDirections;
+        }
+
+        // 取得相反方向
+        function getOppositeDirection(dir) {
+          switch (dir) {
+            case "up":
+              return "down";
+            case "down":
+              return "up";
+            case "left":
+              return "right";
+            case "right":
+              return "left";
+            default:
+              return null;
+          }
+        }        // 改進的鬼魂 AI，使用不同策略
+        function chooseBestDirection(ghost, directions) {
+          // 每個鬼魂的行為特性不同，根據顏色設定不同策略
+          const ghostPersonality = getGhostPersonality(ghost);
+
+          // 概率性隨機移動（讓鬼魂行為不那麼可預測）
+          if (Math.random() < ghostPersonality.randomFactor) {
+            return directions[Math.floor(Math.random() * directions.length)];
+          }
+
+          let bestDirection = directions[0];
+          let bestScore = -Infinity;
+
+          // 在對玩家視為目標位置時，應用偏移量
+          let targetX = pacman.x + ghostPersonality.offsetX;
+          let targetY = pacman.y + ghostPersonality.offsetY;
+
+          // 某些鬼魂會在特定條件下瞄準特定位置而不是直接追玩家
+          if (ghostPersonality.alternateTargeting &&
+              Math.sqrt(Math.pow(ghost.x - pacman.x, 2) + Math.pow(ghost.y - pacman.y, 2)) < 5) {
+            // 當靠近玩家時轉向預測位置或包抄路線
+            targetX = pacman.x + (nextDirection ?
+              (nextDirection === "right" ? 4 : (nextDirection === "left" ? -4 : 0)) : 0);
+            targetY = pacman.y + (nextDirection ?
+              (nextDirection === "down" ? 4 : (nextDirection === "up" ? -4 : 0)) : 0);
+          }
+
+          directions.forEach((dir) => {
+            let testX = ghost.x;
+            let testY = ghost.y;
+
+            switch (dir) {
+              case "up": testY--; break;
+              case "down": testY++; break;
+              case "left": testX--; break;
+              case "right": testX++; break;
+            }
+
+            // 計算距離
+            const distance = Math.sqrt(
+              Math.pow(testX - targetX, 2) + Math.pow(testY - targetY, 2)
+            );
+
+            // 根據鬼魂性格計算方向得分
+            let dirScore = ghostPersonality.distanceWeight * (100 - distance);
+
+            // 考慮轉彎偏好（某些鬼魂更喜歡直線移動，某些更喜歡轉彎）
+            if ((ghost.direction === "left" || ghost.direction === "right") &&
+                (dir === "up" || dir === "down")) {
+              dirScore += ghostPersonality.turnPreference;
+            }
+            else if ((ghost.direction === "up" || ghost.direction === "down") &&
+                    (dir === "left" || dir === "right")) {
+              dirScore += ghostPersonality.turnPreference;
+            }
+
+            // 選擇最高得分的方向
+            if (dirScore > bestScore) {
+              bestScore = dirScore;
+              bestDirection = dir;
+            }
+          });
+
+          return bestDirection;
+        }
+
+        // 根據鬼魂顏色設定不同的行為特性
+        function getGhostPersonality(ghost) {
+          switch (ghost.color) {
+            case "#FF0000": // 紅色：直接追逐
+              return {
+                randomFactor: 0.1,
+                distanceWeight: 1.0,
+                turnPreference: -5, // 偏好直線移動
+                offsetX: 0,
+                offsetY: 0,
+                alternateTargeting: false
+              };
+            case "#FFB8FF": // 粉色：預測玩家位置
+              return {
+                randomFactor: 0.15,
+                distanceWeight: 0.9,
+                turnPreference: 2, // 稍微偏好轉彎
+                offsetX: pacman.direction === "right" ? 4 : (pacman.direction === "left" ? -4 : 0),
+                offsetY: pacman.direction === "down" ? 4 : (pacman.direction === "up" ? -4 : 0),
+                alternateTargeting: true
+              };
+            case "#00FFDE": // 青色：圍堵策略
+              return {
+                randomFactor: 0.2,
+                distanceWeight: 0.8,
+                turnPreference: 5, // 更偏好轉彎
+                offsetX: -pacman.direction === "right" ? 4 : (pacman.direction === "left" ? -4 : 0),
+                offsetY: -pacman.direction === "down" ? 4 : (pacman.direction === "up" ? -4 : 0),
+                alternateTargeting: false
+              };
+            case "#FFB851": // 橙色：更隨機
+              return {
+                randomFactor: 0.3,
+                distanceWeight: 0.7,
+                turnPreference: 0,
+                offsetX: Math.random() < 0.5 ? 2 : -2,
+                offsetY: Math.random() < 0.5 ? 2 : -2,
+                alternateTargeting: false
+              };
+            default: // 默認行為
+              return {
+                randomFactor: 0.2,
+                distanceWeight: 0.8,
+                turnPreference: 0,
+                offsetX: 0,
+                offsetY: 0,
+                alternateTargeting: false
+              };
+          }
+        }
+
+          return bestDirection;
+        }
+
+        // 移動鬼魂
+        function moveGhost(ghost) {
+          switch (ghost.direction) {
+            case "up":
+              ghost.y -= ghost.speed;
+              break;
+            case "down":
+              ghost.y += ghost.speed;
+              break;
+            case "left":
+              ghost.x -= ghost.speed;
+              break;
+            case "right":
+              ghost.x += ghost.speed;
+              break;
+          }
+
+          // 穿牆
+          if (ghost.x < 0) ghost.x = boardWidth - 1;
+          if (ghost.x >= boardWidth) ghost.x = 0;
+        }
+
+        // 檢查鬼魂碰撞
+        function checkGhostCollision(ghost) {
+          const distance = Math.sqrt(
+            Math.pow(ghost.x - pacman.x, 2) + Math.pow(ghost.y - pacman.y, 2)
+          );
+
+          return distance < 0.8;
+        }
+
+        // 吃掉鬼魂
+        function eatGhost(ghost) {
+          // 重置鬼魂位置
+          ghost.x = 10;
+          ghost.y = 10;
+
+          // 加分
+          ghostsEaten++;
+          const points = 200 * Math.pow(2, ghostsEaten - 1);
+          scoreManager.add(points);
+
+          // 顯示得分動畫 (簡單實現)
+          const pointsText = {
+            value: points,
+            x: pacman.x * tileSize,
+            y: pacman.y * tileSize,
+            life: 30, // 動畫持續30幀
+          };
+
+          pointsTexts.push(pointsText);
+        }
+
+        // 失去生命
+        function loseLife() {
+          lives--;
+          updateLivesDisplay();
+
+          if (lives <= 0) {
+            gameOver();
+          } else {
+            // 重置小精靈和鬼魂位置
+            resetLevel();
+            direction = null;
+            nextDirection = null;
+          }
+        }
+
+        // 遊戲結束
+        function gameOver() {
+          gameActive = false;
+          cancelAnimationFrame(animationId);
+
+          // 使用遊戲控制器顯示遊戲結束訊息
+          gameController.endGame(scoreManager.getCurrentScore(), "遊戲結束");
+        }
+
+        // 檢查是否是牆壁
+        function isWall(x, y) {
+          if (x < 0 || x >= boardWidth || y < 0 || y >= boardHeight) {
+            return true;
+          }
+
+          return maze[y][x] === 1;
+        }
+
+        // 儲存分數動畫陣列
+        let pointsTexts = [];
+
+        // 繪製遊戲畫面
+        function drawGame() {
+          // 清除畫布
+          ctx.fillStyle = "#000";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // 繪製迷宮
+          drawMaze();
+
+          // 繪製小精靈
+          drawPacman();
+
+          // 繪製鬼魂
+          drawGhosts();
+
+          // 繪製分數動畫
+          drawPointsTexts();
+        }
+
+        // 繪製迷宮
+        function drawMaze() {
+          for (let y = 0; y < maze.length; y++) {
+            for (let x = 0; x < maze[y].length; x++) {
+              const tileX = x * tileSize;
+              const tileY = y * tileSize;
+
+              switch (maze[y][x]) {
+                case 1: // 牆
+                  ctx.fillStyle = "#2121DE";
+                  ctx.fillRect(tileX, tileY, tileSize, tileSize);
+
+                  // 牆壁邊緣
+                  ctx.fillStyle = "#2525FF";
+                  ctx.fillRect(
+                    tileX + 2,
+                    tileY + 2,
+                    tileSize - 4,
+                    tileSize - 4
+                  );
+                  break;
+
+                case 2: // 點點
+                  ctx.fillStyle = "#FFEB3B";
+                  ctx.beginPath();
+                  ctx.arc(
+                    tileX + tileSize / 2,
+                    tileY + tileSize / 2,
+                    2,
+                    0,
+                    Math.PI * 2
+                  );
+                  ctx.fill();
+                  break;
+
+                case 3: // 大力丸
+                  ctx.fillStyle = "#FFEB3B";
+                  ctx.beginPath();
+                  ctx.arc(
+                    tileX + tileSize / 2,
+                    tileY + tileSize / 2,
+                    5,
+                    0,
+                    Math.PI * 2
+                  );
+                  ctx.fill();
+                  break;
+              }
+            }
+          }
+        }
+
+        // 繪製小精靈
+        function drawPacman() {
+          ctx.save();
+          ctx.translate(pacman.x * tileSize, pacman.y * tileSize);
+          ctx.rotate(pacman.angle);
+
+          ctx.fillStyle = "#FFEB3B";
+          ctx.beginPath();
+          ctx.arc(
+            0,
+            0,
+            pacman.radius,
+            pacman.mouthOpen * Math.PI,
+            (2 - pacman.mouthOpen) * Math.PI
+          );
+          ctx.lineTo(0, 0);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.restore();
+        }
+
+        // 繪製鬼魂
+        function drawGhosts() {
+          ghosts.forEach((ghost) => {
+            ctx.save();
+            ctx.translate(ghost.x * tileSize, ghost.y * tileSize);
+
+            // 鬼魂顏色
+            const ghostFillColor = ghostBlue
+              ? ghostBlueTimer < 90 && ghostBlueTimer % 10 < 5
+                ? "#FFF"
+                : "#2121DE"
+              : ghost.color;
+
+            // 鬼魂身體
+            ctx.fillStyle = ghostFillColor;
+            ctx.beginPath();
+            ctx.arc(0, 0, pacman.radius, Math.PI, 0, false);
+            ctx.lineTo(pacman.radius, pacman.radius);
+
+            // 鬼魂下方的波浪
+            const waveOffset = (Date.now() % 500) / 500; // 波浪動畫
+            for (let i = 0; i < 4; i++) {
+              const waveX = pacman.radius - (i * pacman.radius) / 2;
+              const waveHeight = Math.sin(waveOffset * Math.PI * 2 + i) * 2;
+              ctx.lineTo(waveX, pacman.radius + waveHeight);
+              ctx.lineTo(waveX - pacman.radius / 4, pacman.radius - waveHeight);
+            }
+
+            ctx.lineTo(-pacman.radius, pacman.radius);
+            ctx.closePath();
+            ctx.fill();
+
+            // 鬼魂眼睛
+            ctx.fillStyle = "#FFF";
+            ctx.beginPath();
+            ctx.arc(-4, -2, 4, 0, Math.PI * 2);
+            ctx.arc(4, -2, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 鬼魂眼球
+            ctx.fillStyle = "#000";
+
+            // 根據移動方向轉動眼球
+            let eyeX = 0;
+            let eyeY = 0;
+
+            switch (ghost.direction) {
+              case "up":
+                eyeY = -1;
+                break;
+              case "down":
+                eyeY = 1;
+                break;
+              case "left":
+                eyeX = -1;
+                break;
+              case "right":
+                eyeX = 1;
+                break;
+            }
+
+            ctx.beginPath();
+            ctx.arc(-4 + eyeX * 2, -2 + eyeY * 2, 2, 0, Math.PI * 2);
+            ctx.arc(4 + eyeX * 2, -2 + eyeY * 2, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+          });
+        }
+
+        // 繪製分數動畫
+        function drawPointsTexts() {
+          for (let i = pointsTexts.length - 1; i >= 0; i--) {
+            const pt = pointsTexts[i];
+
+            ctx.fillStyle = "#FFFF00";
+            ctx.font = "bold 16px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(pt.value, pt.x, pt.y - (30 - pt.life) / 2);
+
+            // 更新生命值
+            pt.life--;
+            pt.y--; // 向上飄動
+
+            if (pt.life <= 0) {
+              pointsTexts.splice(i, 1);
+            }
+          }
+        }
+
+        // 遊戲循環
+        function gameLoop() {
+          updateGame();
+          drawGame();
+
+          if (gameActive) {
+            animationId = requestAnimationFrame(gameLoop);
+          }
+        }
+
+        // 鍵盤控制
+        document.addEventListener("keydown", function (e) {
+          if (!gameActive || gameController.paused) return;
+
+          switch (e.key) {
+            case "ArrowUp":
+              nextDirection = "up";
+              break;
+            case "ArrowDown":
+              nextDirection = "down";
+              break;
+            case "ArrowLeft":
+              nextDirection = "left";
+              break;
+            case "ArrowRight":
+              nextDirection = "right";
+              break;
+          }
+        });
+
+        // 移動控制按鈕
+        document
+          .getElementById("upButton")
+          .addEventListener("click", function () {
+            if (!gameActive || gameController.paused) return;
+            nextDirection = "up";
+          });
+
+        document
+          .getElementById("downButton")
+          .addEventListener("click", function () {
+            if (!gameActive || gameController.paused) return;
+            nextDirection = "down";
+          });
+
+        document
+          .getElementById("leftButton")
+          .addEventListener("click", function () {
+            if (!gameActive || gameController.paused) return;
+            nextDirection = "left";
+          });
+
+        document
+          .getElementById("rightButton")
+          .addEventListener("click", function () {
+            if (!gameActive || gameController.paused) return;
+            nextDirection = "right";
+          });
+
+        // 設置遊戲控制器
+        gameController.setGameLoop(gameLoop);
+        gameController.setRestartHandler(function () {
+          initGame();
+          gameController.startGameLoop();
+        });
+
+        // 開始遊戲動畫
+        gameController.showStartAnimation(function () {
+          initGame();
+          gameController.startGameLoop();
+        });
+      });
+    </script>
+  </body>
+</html>

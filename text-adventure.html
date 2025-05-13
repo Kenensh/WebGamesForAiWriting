@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文字冒險 - 網頁小遊戲</title>
+    <meta name="game-id" content="text-adventure" />
+    <meta name="game-name" content="文字冒險" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .game-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .text-adventure-container {
+        width: 100%;
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .story-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .story-title {
+        margin: 0;
+        font-size: 1.5rem;
+      }
+
+      .story-stats {
+        display: flex;
+        gap: 20px;
+      }
+
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .stat-icon {
+        font-size: 1.2rem;
+      }
+
+      .story-display {
+        padding: 20px;
+        min-height: 300px;
+        max-height: 400px;
+        overflow-y: auto;
+        border-bottom: 1px solid #eee;
+        line-height: 1.6;
+      }
+
+      .story-paragraph {
+        margin-bottom: 15px;
+      }
+
+      .story-image {
+        width: 100%;
+        max-height: 200px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+
+      .choice-container {
+        padding: 20px;
+      }
+
+      .choice-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .choice-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .choice-btn {
+        background-color: #f5f5f5;
+        border: none;
+        border-radius: 5px;
+        padding: 12px 15px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 16px;
+      }
+
+      .choice-btn:hover {
+        background-color: #e0e0e0;
+        transform: translateY(-2px);
+      }
+
+      .inventory-btn {
+        background-color: var(--info-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .inventory-btn:hover {
+        background-color: var(--info-hover);
+      }
+
+      .game-controls {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .control-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .control-btn:hover {
+        background-color: var(--primary-hover);
+      }
+
+      .story-selection {
+        margin-bottom: 20px;
+      }
+
+      .story-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .story-select-btn {
+        background-color: #f0f0f0;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .story-select-btn:hover {
+        background-color: #e0e0e0;
+      }
+
+      .story-select-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      /* 提示文字淡入效果 */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.5s forwards;
+      }
+
+      .story-paragraph {
+        opacity: 0;
+        animation: fadeIn 0.5s forwards;
+      }
+
+      .story-paragraph:nth-child(2) {
+        animation-delay: 0.3s;
+      }
+
+      .story-paragraph:nth-child(3) {
+        animation-delay: 0.6s;
+      }
+
+      /* 健康和體力條 */
+      .status-bar {
+        width: 100%;
+        height: 12px;
+        background-color: #e0e0e0;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .status-bar-fill {
+        height: 100%;
+        transition: width 0.3s;
+      }
+
+      .health-bar .status-bar-fill {
+        background-color: #f44336;
+      }
+
+      .energy-bar .status-bar-fill {
+        background-color: #4caf50;
+      }
+
+      .inventory-modal .modal-body {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .inventory-item {
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer;
+      }
+
+      .inventory-item:hover {
+        background-color: #e0e0e0;
+      }
+
+      .inventory-item.active {
+        background-color: #bbdefb;
+      }
+
+      .item-icon {
+        font-size: 24px;
+        margin-bottom: 5px;
+      }
+
+      @media (max-width: 768px) {
+        .story-stats {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .story-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 10px;
+        }
+
+        .story-stats {
+          width: 100%;
+        }
+
+        .inventory-modal .modal-body {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>文字冒險</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="game-container">
+        <div class="story-selection">
+          <h3>選擇冒險故事</h3>
+          <div class="story-buttons">
+            <button class="story-select-btn active" data-story="forest">
+              神秘森林
+            </button>
+            <button class="story-select-btn" data-story="castle">
+              古堡探險
+            </button>
+            <button class="story-select-btn" data-story="space">
+              星際旅程
+            </button>
+          </div>
+        </div>
+
+        <div class="text-adventure-container">
+          <div class="story-header">
+            <h2 class="story-title" id="storyTitle">神秘森林</h2>
+            <div class="story-stats">
+              <div class="stat-item">
+                <span class="stat-icon">❤️</span>
+                <div class="status-bar health-bar">
+                  <div
+                    class="status-bar-fill"
+                    id="healthBar"
+                    style="width: 100%"
+                  ></div>
+                </div>
+              </div>
+              <div class="stat-item">
+                <span class="stat-icon">⚡</span>
+                <div class="status-bar energy-bar">
+                  <div
+                    class="status-bar-fill"
+                    id="energyBar"
+                    style="width: 100%"
+                  ></div>
+                </div>
+              </div>
+              <button class="inventory-btn" id="inventoryBtn">
+                <span class="stat-icon">🎒</span>
+                <span>物品</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="story-display" id="storyDisplay">
+            <div class="story-paragraph">
+              歡迎來到文字冒險遊戲！選擇一個故事開始你的旅程。
+            </div>
+          </div>
+
+          <div class="choice-container">
+            <div class="choice-title">選擇你的下一步：</div>
+            <div class="choice-list" id="choiceList">
+              <!-- 選項會在這裡動態生成 -->
+            </div>
+          </div>
+        </div>
+
+        <div class="game-controls">
+          <button id="resetBtn" class="control-btn">重置故事</button>
+        </div>
+      </div>
+
+      <div id="gamePaused" class="game-paused">暫停中</div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "遊戲說明",
+          `
+          <h3>文字冒險遊戲說明</h3>
+          <p>文字冒險是一種互動性敘事遊戲，你將透過文字描述和選擇進行冒險。</p>
+          <h4>遊戲玩法：</h4>
+          <ul>
+            <li>閱讀故事描述，理解當前情境</li>
+            <li>在提供的選項中選擇你想採取的行動</li>
+            <li>每個選擇都會影響故事的發展方向</li>
+            <li>管理你的健康和體力，確保不會在冒險中死亡</li>
+            <li>收集並使用物品來幫助你完成冒險</li>
+          </ul>
+          <h4>故事選擇：</h4>
+          <ul>
+            <li><strong>神秘森林</strong>：探索充滿魔法的森林，尋找失落的寶藏</li>
+            <li><strong>古堡探險</strong>：探索一座古老的城堡，揭開其中的秘密</li>
+            <li><strong>星際旅程</strong>：在浩瀚的宇宙中進行冒險，面對未知的危險</li>
+          </ul>
+          <h4>狀態指標：</h4>
+          <ul>
+            <li>健康值（❤️）：代表你的生命值，降至零則遊戲結束</li>
+            <li>體力值（⚡）：進行某些活動需要消耗體力，需要休息來恢復</li>
+            <li>物品欄（🎒）：收集到的物品，可以在適當的時候使用</li>
+          </ul>
+        `
+        );
+
+        // 創建物品欄模態框
+        const inventoryModal = new GameUtils.Modal(
+          "inventoryModal",
+          "物品欄",
+          `<div class="inventory-items-container"></div>`
+        );
+
+        const gameController = new GameUtils.GameController();
+        const scoreManager = new GameUtils.ScoreManager(
+          "textAdventureScore",
+          0
+        );
+
+        // DOM 元素
+        const storyTitle = document.getElementById("storyTitle");
+        const storyDisplay = document.getElementById("storyDisplay");
+        const choiceList = document.getElementById("choiceList");
+        const healthBar = document.getElementById("healthBar");
+        const energyBar = document.getElementById("energyBar");
+        const inventoryBtn = document.getElementById("inventoryBtn");
+        const resetBtn = document.getElementById("resetBtn");
+        const storyButtons = document.querySelectorAll(".story-select-btn");
+
+        // 遊戲變數
+        let currentStory = "forest";
+        let currentNode = "start";
+        let health = 100;
+        let energy = 100;
+        let inventory = [];
+        let gameActive = false;
+
+        // 故事數據
+        const stories = {
+          forest: {
+            title: "神秘森林",
+            nodes: {
+              start: {
+                text: [
+                  "你站在一片神秘森林的邊緣，傳說中這裡有一個失落已久的寶藏。森林中的樹木高大且密集，陽光只能透過樹葉間的縫隙灑落。",
+                  "你背包裡裝著少量的食物、一把小刀和一個水壺。前方有幾條小徑通向森林深處。",
+                ],
+                choices: [
+                  {
+                    text: "沿著最寬的小徑前進",
+                    nextNode: "widePath",
+                    effects: { energy: -5 },
+                  },
+                  {
+                    text: "選擇看起來較少人走過的小徑",
+                    nextNode: "narrowPath",
+                    effects: { energy: -10 },
+                  },
+                  {
+                    text: "先四周查看一下，尋找可能的線索",
+                    nextNode: "lookAround",
+                    effects: { energy: -5 },
+                  },
+                ],
+              },
+              lookAround: {
+                text: [
+                  "你決定先在森林邊緣探索一番。在附近的一棵大樹底下，你發現了一個有點褪色的地圖，上面標記了一些地點。",
+                  "此外，你還注意到地上有一些動物的足跡，似乎沿著最窄的小徑進入了森林。",
+                ],
+                choices: [
+                  {
+                    text: "查看地圖，然後沿著寬的小徑前進",
+                    nextNode: "widePath",
+                    effects: { energy: -5, items: ["地圖"] },
+                  },
+                  {
+                    text: "查看地圖，然後沿著窄的小徑前進",
+                    nextNode: "narrowPath",
+                    effects: { energy: -10, items: ["地圖"] },
+                  },
+                  {
+                    text: "跟隨動物足跡進入森林",
+                    nextNode: "animalTrack",
+                    effects: { energy: -15 },
+                  },
+                ],
+              },
+              widePath: {
+                text: [
+                  "你選擇了最寬的小徑，這條路似乎經常有人走過。前進了一段時間後，你來到一個小溪旁。",
+                  "小溪清澈見底，水流緩慢。對岸有一個小屋，看起來已經廢棄一段時間了。",
+                ],
+                choices: [
+                  {
+                    text: "渡過小溪，查看小屋",
+                    nextNode: "cabin",
+                    effects: { energy: -10, health: -5 },
+                  },
+                  {
+                    text: "在小溪邊休息一下",
+                    nextNode: "streamRest",
+                    effects: { energy: +20 },
+                  },
+                  {
+                    text: "沿著小溪繼續前進",
+                    nextNode: "streamPath",
+                    effects: { energy: -10 },
+                  },
+                ],
+              },
+              narrowPath: {
+                text: [
+                  "你選擇了較少人走過的小徑。這條路崎嶇不平，你必須小心翼翼地前進。",
+                  "經過一段時間的跋涉，你發現路邊有一個奇怪的石頭，上面刻著一些你看不懂的符號。同時，你注意到不遠處有一個山洞入口。",
+                ],
+                choices: [
+                  {
+                    text: "仔細查看石頭上的符號",
+                    nextNode: "strangeStone",
+                    effects: { energy: -5 },
+                  },
+                  {
+                    text: "探索山洞",
+                    nextNode: "cave",
+                    effects: { energy: -15, health: -10 },
+                  },
+                  {
+                    text: "繼續沿著小徑前進",
+                    nextNode: "deepForest",
+                    effects: { energy: -10 },
+                  },
+                ],
+              },
+              animalTrack: {
+                text: [
+                  "你追隨著動物的足跡進入森林。這條路沒有明顯的小徑，你必須穿過茂密的灌木叢。",
+                  "經過一段艱難的跋涉後，你來到一個小型的林間空地。在空地中央，有一隻受傷的鹿。它警惕地看著你，但似乎因為受傷而無法逃跑。",
+                ],
+                choices: [
+                  {
+                    text: "嘗試靠近並幫助鹿",
+                    nextNode: "helpDeer",
+                    effects: { energy: -10 },
+                  },
+                  {
+                    text: "離開空地，繼續探索森林",
+                    nextNode: "deepForest",
+                    effects: { energy: -15 },
+                  },
+                  {
+                    text: "在空地休息一會",
+                    nextNode: "clearingRest",
+                    effects: { energy: +25 },
+                  },
+                ],
+              },
+              helpDeer: {
+                text: [
+                  "你小心翼翼地靠近受傷的鹿。起初，它試圖站起來逃跑，但很快就放棄了。",
+                  "你發現它的腿被一個捕獸夾夾住了。你成功地解開了捕獸夾，並用背包裡的水清洗了它的傷口。",
+                  "鹿看起來感激地看了你一眼，然後站起來，緩緩地走向森林的一個方向，不時回頭看你，似乎希望你跟隨它。",
+                ],
+                choices: [
+                  {
+                    text: "跟隨鹿",
+                    nextNode: "followDeer",
+                    effects: { energy: -15, score: +20 },
+                  },
+                  {
+                    text: "向鹿告別，繼續自己的探索",
+                    nextNode: "deepForest",
+                    effects: { energy: -10 },
+                  },
+                ],
+              },
+              followDeer: {
+                text: [
+                  "你決定跟隨這隻鹿。它帶領你穿過森林中一條你沒有注意到的小徑。",
+                  "經過一段時間的跋涉，你們來到一個美麗的瀑布前。瀑布旁有一個隱蔽的洞穴，入口幾乎被藤蔓和灌木完全覆蓋。",
+                  "鹿指引你進入洞穴，然後消失在森林中。",
+                ],
+                choices: [
+                  {
+                    text: "進入洞穴",
+                    nextNode: "secretCave",
+                    effects: { energy: -10 },
+                  },
+                  {
+                    text: "在瀑布旁休息",
+                    nextNode: "waterfallRest",
+                    effects: { energy: +30, health: +10 },
+                  },
+                ],
+              },
+              secretCave: {
+                text: [
+                  "你進入了洞穴，裡面出乎意料地寬敞。陽光透過頂部的一個小開口照射進來，照亮了整個空間。",
+                  "在洞穴的中央，放置著一個古老的石箱。箱子上雕刻著與你之前在石頭上看到的相似的符號。",
+                ],
+                choices: [
+                  {
+                    text: "嘗試打開石箱",
+                    nextNode: "openChest",
+                    effects: { energy: -5 },
+                  },
+                  {
+                    text: "仔細研究洞穴牆壁上的符號",
+                    nextNode: "studySymbols",
+                    effects: { energy: -10 },
+                  },
+                ],
+              },
+              openChest: {
+                text: [
+                  "你小心翼翼地打開石箱。裡面放著一個閃閃發光的金色寶石，它似乎具有某種神秘的力量。",
+                  "當你拿起寶石時，它開始發出溫暖的光芒，你感到一股能量流入你的身體。",
+                  "恭喜！你找到了傳說中的森林寶藏！這個寶石據說可以實現持有者的一個心願。",
+                ],
+                choices: [
+                  {
+                    text: "帶著寶石離開森林",
+                    nextNode: "forestEnd",
+                    effects: { energy: +100, health: +100, score: +500 },
+                  },
+                ],
+              },
+              forestEnd: {
+                text: [
+                  "帶著神奇的寶石，你成功地走出了神秘森林。",
+                  "在回家的路上，你思考著如何使用這個能實現願望的寶石。不管你做出什麼決定，你知道你的生活將不再相同。",
+                  "恭喜你完成了神秘森林的冒險！",
+                ],
+                choices: [
+                  {
+                    text: "結束冒險",
+                    nextNode: "end",
+                    effects: { score: +500 },
+                  },
+                ],
+                isEnd: true,
+              },
+              // 其他節點 ...
+              cabin: {
+                text: [
+                  "你涉水渡過小溪，來到對岸的小屋前。小屋看起來已經廢棄多年，木材腐爛，窗戶破損。",
+                  "你推開吱呀作響的門，走進屋內。裡面積滿了灰塵，但你還是能看到一些基本的家具：一張桌子、一把椅子和一個老舊的櫥櫃。",
+                ],
+                choices: [
+                  {
+                    text: "搜查櫥櫃",
+                    nextNode: "searchCabinet",
+                    effects: { energy: -5 },
+                  },
+                  {
+                    text: "檢查桌子",
+                    nextNode: "examineTable",
+                    effects: { energy: -5 },
+                  },
+                  {
+                    text: "離開小屋，繼續探索",
+                    nextNode: "leaveCabin",
+                    effects: { energy: -10 },
+                  },
+                ],
+              },
+              // 添加更多節點...
+            },
+          },
+          castle: {
+            title: "古堡探險",
+            nodes: {
+              start: {
+                text: [
+                  "你站在一座巍峨古老的城堡前。城堡的石牆上爬滿了常春藤，主門上方的石雕已經被時間風化得難以辨認。",
+                  "傳說這座城堡曾經屬於一位神秘的伯爵，他在城堡的某處藏了無價的寶藏，但從來沒有人能找到它。",
+                ],
+                choices: [
+                  {
+                    text: "從正門進入城堡",
+                    nextNode: "frontDoor",
+                    effects: { energy: -5 },
+                  },
+                  {
+                    text: "尋找其他可能的入口",
+                    nextNode: "searchAlternative",
+                    effects: { energy: -10 },
+                  },
+                  {
+                    text: "先繞城堡一周，觀察環境",
+                    nextNode: "circleAround",
+                    effects: { energy: -15 },
+                  },
+                ],
+              },
+              frontDoor: {
+                text: [
+                  "你推開沉重的城堡大門，發出刺耳的吱嘎聲。城堡內部昏暗，只有透過高處窗戶的微光照亮這個巨大的入口大廳。",
+                  "大廳中央有一個宏偉的樓梯，通向上層。你還注意到左右兩側分別有通向城堡其他區域的走廊。",
+                ],
+                choices: [
+                  {
+                    text: "上樓梯",
+                    nextNode: "upstairs",
+                    effects: { energy: -10 },
+                  },
+                  {
+                    text: "走左邊的走廊",
+                    nextNode: "leftCorridor",
+                    effects: { energy: -5 },
+                  },
+                  {
+                    text: "走右邊的走廊",
+                    nextNode: "rightCorridor",
+                    effects: { energy: -5 },
+                  },
+                ],
+              },
+              // 更多城堡探險的節點...
+            },
+          },
+          space: {
+            title: "星際旅程",
+            nodes: {
+              start: {
+                text: [
+                  "你是星際探索船「曙光號」的指揮官。在一次例行任務中，你的飛船遇到了一個異常的空間波動，被傳送到了未知的星系。",
+                  "你的飛船受損，能源供應有限。船上的電腦顯示附近有三個可能提供幫助的星球。",
+                ],
+                choices: [
+                  {
+                    text: "前往藍色星球，它看起來有類地環境",
+                    nextNode: "bluePlanet",
+                    effects: { energy: -15 },
+                  },
+                  {
+                    text: "前往紅色星球，掃描顯示它可能有豐富的礦產資源",
+                    nextNode: "redPlanet",
+                    effects: { energy: -20 },
+                  },
+                  {
+                    text: "前往黃色星球，它發出奇怪的信號，可能是智能生命",
+                    nextNode: "yellowPlanet",
+                    effects: { energy: -25 },
+                  },
+                ],
+              },
+              // 更多星際旅程的節點...
+            },
+          },
+        };
+
+        // 處理選擇
+        function handleChoice(choice) {
+          if (!gameActive || gameController.paused) return;
+
+          // 應用選擇的效果
+          if (choice.effects) {
+            if (choice.effects.health) {
+              health = Math.max(
+                0,
+                Math.min(100, health + choice.effects.health)
+              );
+              updateHealthBar();
+            }
+
+            if (choice.effects.energy) {
+              energy = Math.max(
+                0,
+                Math.min(100, energy + choice.effects.energy)
+              );
+              updateEnergyBar();
+            }
+
+            if (choice.effects.items) {
+              choice.effects.items.forEach((item) => {
+                if (!inventory.includes(item)) {
+                  inventory.push(item);
+                }
+              });
+            }
+
+            if (choice.effects.score) {
+              scoreManager.add(choice.effects.score);
+            }
+          }
+
+          // 切換到下一個節點
+          currentNode = choice.nextNode;
+
+          // 檢查遊戲是否結束
+          if (health <= 0) {
+            gameOver("你的健康值降至零！遊戲結束。");
+            return;
+          }
+
+          // 更新故事顯示
+          updateStoryDisplay();
+        }
+
+        // 更新健康條
+        function updateHealthBar() {
+          healthBar.style.width = `${health}%`;
+        }
+
+        // 更新體力條
+        function updateEnergyBar() {
+          energyBar.style.width = `${energy}%`;
+        }
+
+        // 更新故事顯示
+        function updateStoryDisplay() {
+          const story = stories[currentStory];
+          const node = story.nodes[currentNode];
+
+          // 清空故事顯示區域
+          storyDisplay.innerHTML = "";
+
+          // 添加段落
+          node.text.forEach((paragraph, index) => {
+            const p = document.createElement("div");
+            p.className = "story-paragraph";
+            p.style.animationDelay = `${index * 0.3}s`;
+            p.textContent = paragraph;
+            storyDisplay.appendChild(p);
+          });
+
+          // 更新選項
+          updateChoices(node.choices);
+
+          // 如果是結束節點
+          if (node.isEnd) {
+            completeStory();
+          }
+        }
+
+        // 更新選項
+        function updateChoices(choices) {
+          choiceList.innerHTML = "";
+
+          choices.forEach((choice, index) => {
+            const btn = document.createElement("button");
+            btn.className = "choice-btn";
+            btn.textContent = choice.text;
+            btn.addEventListener("click", () => handleChoice(choice));
+
+            // 如果能量不足，禁用選項
+            if (
+              choice.effects &&
+              choice.effects.energy &&
+              Math.abs(choice.effects.energy) > energy
+            ) {
+              btn.disabled = true;
+              btn.textContent += " (需要更多體力)";
+            }
+
+            choiceList.appendChild(btn);
+          });
+        }
+
+        // 更新物品欄
+        function updateInventory() {
+          const inventoryContainer = document.querySelector(
+            ".inventory-items-container"
+          );
+          inventoryContainer.innerHTML = "";
+
+          if (inventory.length === 0) {
+            inventoryContainer.textContent = "物品欄為空";
+            return;
+          }
+
+          inventory.forEach((item) => {
+            const itemEl = document.createElement("div");
+            itemEl.className = "inventory-item";
+
+            const icon = document.createElement("div");
+            icon.className = "item-icon";
+
+            // 根據物品類型設置不同的圖標
+            switch (item) {
+              case "地圖":
+                icon.textContent = "🗺️";
+                break;
+              case "鑰匙":
+                icon.textContent = "🔑";
+                break;
+              case "食物":
+                icon.textContent = "🍎";
+                break;
+              case "水":
+                icon.textContent = "💧";
+                break;
+              case "藥水":
+                icon.textContent = "🧪";
+                break;
+              default:
+                icon.textContent = "📦";
+            }
+
+            const name = document.createElement("div");
+            name.textContent = item;
+
+            itemEl.appendChild(icon);
+            itemEl.appendChild(name);
+            inventoryContainer.appendChild(itemEl);
+          });
+        }
+
+        // 切換故事
+        function switchStory(storyId) {
+          currentStory = storyId;
+          currentNode = "start";
+          health = 100;
+          energy = 100;
+          inventory = [];
+
+          // 更新UI
+          storyTitle.textContent = stories[currentStory].title;
+          updateHealthBar();
+          updateEnergyBar();
+          updateStoryDisplay();
+
+          // 更新按鈕狀態
+          storyButtons.forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.story === currentStory);
+          });
+        }
+
+        // 重置當前故事
+        function resetStory() {
+          if (confirm("確定要重置當前故事嗎？所有進度都將丟失。")) {
+            switchStory(currentStory);
+          }
+        }
+
+        // 完成故事
+        function completeStory() {
+          gameActive = false;
+
+          // 根據健康和體力計算額外獎勵
+          const healthBonus = health * 2;
+          const energyBonus = energy;
+          const totalBonus = healthBonus + energyBonus;
+
+          // 添加分數
+          scoreManager.add(totalBonus);
+
+          // 保存最佳分數
+          const bestScoreKey = `textAdventure_best_score_${currentStory}`;
+          const currentBestScore = localStorage.getItem(bestScoreKey) || 0;
+
+          if (scoreManager.getCurrentScore() > currentBestScore) {
+            localStorage.setItem(bestScoreKey, scoreManager.getCurrentScore());
+          }
+
+          // 顯示完成訊息
+          gameController.endGame(
+            scoreManager.getCurrentScore(),
+            `恭喜！你完成了【${stories[currentStory].title}】的冒險！\n` +
+              `健康獎勵: +${healthBonus}\n` +
+              `體力獎勵: +${energyBonus}\n` +
+              `總分: ${scoreManager.getCurrentScore()}`
+          );
+        }
+
+        // 遊戲結束
+        function gameOver(message) {
+          gameActive = false;
+
+          // 顯示遊戲結束訊息
+          gameController.endGame(scoreManager.getCurrentScore(), message);
+        }
+
+        // 初始化遊戲
+        function initGame() {
+          // 重置遊戲變數
+          health = 100;
+          energy = 100;
+          inventory = [];
+          gameActive = true;
+
+          // 重置分數
+          scoreManager.reset();
+
+          // 更新UI
+          updateHealthBar();
+          updateEnergyBar();
+          updateStoryDisplay();
+        }
+
+        // 設置事件監聽器
+        inventoryBtn.addEventListener("click", () => {
+          updateInventory();
+          inventoryModal.show();
+        });
+
+        resetBtn.addEventListener("click", resetStory);
+
+        storyButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            if (
+              gameActive &&
+              !confirm("切換故事將重新開始遊戲，確定要繼續嗎？")
+            ) {
+              return;
+            }
+
+            switchStory(btn.dataset.story);
+          });
+        });
+
+        // 設置遊戲控制器
+        gameController.setRestartHandler(() => {
+          switchStory(currentStory);
+          gameActive = true;
+        });
+
+        // 開始遊戲動畫
+        gameController.showStartAnimation(() => {
+          switchStory("forest");
+          gameActive = true;
+        });
+      });
+    </script>
+  </body>
+</html>

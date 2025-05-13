@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flappy Bird - 網頁小遊戲</title>
+    <meta name="game-id" content="flappy-bird" />
+    <meta name="game-name" content="Flappy Bird" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .game-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .flappy-canvas-container {
+        border: 2px solid #333;
+        border-radius: 5px;
+        background-color: #70c5ce;
+        position: relative;
+        width: 400px;
+        height: 600px;
+        overflow: hidden;
+      }
+
+      #flappyCanvas {
+        display: block;
+        background-color: #70c5ce;
+      }
+
+      .game-stats {
+        display: flex;
+        justify-content: center;
+        width: 400px;
+        margin-top: 20px;
+      }
+
+      .stats-box {
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        padding: 10px 20px;
+        text-align: center;
+        width: 30%;
+      }
+
+      .stats-label {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .game-instructions {
+        margin-top: 20px;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      .game-paused {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        font-weight: bold;
+        display: none;
+        z-index: 100;
+      }
+
+      @media (max-width: 500px) {
+        .flappy-canvas-container {
+          width: 350px;
+        }
+
+        .game-stats {
+          width: 350px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>Flappy Bird</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="game-container">
+        <div class="flappy-canvas-container">
+          <canvas id="flappyCanvas" width="400" height="600"></canvas>
+          <div id="gamePaused" class="game-paused">暫停中</div>
+        </div>
+
+        <div class="game-stats">
+          <div class="stats-box">
+            <div class="stats-label">分數</div>
+            <div id="scoreDisplay">0</div>
+          </div>
+        </div>
+
+        <div class="game-instructions">點擊畫面或按空白鍵讓小鳥飛起</div>
+      </div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "遊戲說明",
+          `
+          <h3>Flappy Bird 遊戲說明</h3>
+          <p>在這個遊戲中，你需要控制一隻小鳥穿過管道的間隙，盡可能走得更遠來獲得高分。</p>
+          <h4>操作方式：</h4>
+          <ul>
+            <li>點擊畫面或按空白鍵讓小鳥向上飛</li>
+            <li>如果不操作，小鳥會因重力下落</li>
+            <li>飛過每一對管道可得1分</li>
+            <li>碰到管道或地面即遊戲結束</li>
+          </ul>
+          <h4>計分規則：</h4>
+          <ul>
+            <li>成功穿過一對管道可得1分</li>
+            <li>遊戲會記錄你的最高分數</li>
+          </ul>
+        `
+        );
+
+        const scoreManager = new GameUtils.ScoreManager("scoreDisplay", 0);
+        const gameController = new GameUtils.GameController();
+
+        // 遊戲相關變數
+        const canvas = document.getElementById("flappyCanvas");
+        const ctx = canvas.getContext("2d");
+        const pauseIndicator = document.getElementById("gamePaused"); // 遊戲參數 - 調整難度
+        const gravity = 0.4; // 降低重力使遊戲變慢
+        const jumpStrength = -9; // 減少跳躍強度
+        const pipeWidth = 65; // 稍微加寬管道，增加通過空間
+        const pipeGap = 160; // 增加間隙高度
+        const pipesDistance = 250; // 增加管道之間的距離
+        const floorHeight = 100;
+
+        // 遊戲狀態
+        let bird = {
+          x: canvas.width / 4,
+          y: canvas.height / 2,
+          width: 40,
+          height: 30,
+          velocity: 0,
+          radius: 15,
+        };
+
+        let pipes = [];
+        let gameActive = false;
+        let animationId = null;
+        let frameCount = 0;
+        let birdAngle = 0;
+
+        // 圖像資源
+        const birdImage = new Image();
+        birdImage.src =
+          'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 30"><ellipse cx="20" cy="15" rx="20" ry="15" fill="yellow"/><circle cx="30" cy="10" r="3" fill="black"/><path d="M 35 15 Q 40 18 35 20" stroke="orange" stroke-width="3" fill="transparent"/></svg>';
+
+        // 初始化遊戲
+        function initGame() {
+          bird = {
+            x: canvas.width / 4,
+            y: canvas.height / 2,
+            width: 40,
+            height: 30,
+            velocity: 0,
+            radius: 15,
+          };
+
+          pipes = [];
+          frameCount = 0;
+          scoreManager.reset();
+          gameActive = true;
+        }
+
+        // 更新遊戲狀態
+        function updateGame() {
+          if (!gameActive) return;
+
+          frameCount++;
+
+          // 更新小鳥位置
+          bird.velocity += gravity;
+          bird.y += bird.velocity;
+
+          // 計算小鳥角度
+          birdAngle = Math.min(
+            Math.PI / 4,
+            Math.max(-Math.PI / 4, bird.velocity * 0.05)
+          );
+
+          // 檢查碰到地面
+          if (bird.y + bird.radius > canvas.height - floorHeight) {
+            gameOver();
+            return;
+          }
+
+          // 檢查撞到頂部
+          if (bird.y - bird.radius < 0) {
+            bird.y = bird.radius;
+            bird.velocity = 0;
+          }
+
+          // 每120幀添加一對管道
+          if (frameCount % 120 === 0) {
+            // 管道高度隨機
+            const pipeHeight = Math.floor(Math.random() * 200) + 100;
+
+            pipes.push({
+              x: canvas.width,
+              width: pipeWidth,
+              topHeight: pipeHeight,
+              bottomY: pipeHeight + pipeGap,
+              passed: false,
+            });
+          }
+
+          // 更新管道位置
+          pipes.forEach((pipe, index) => {
+            pipe.x -= 2;
+
+            // 移除超出畫面的管道
+            if (pipe.x + pipe.width < 0) {
+              pipes.splice(index, 1);
+            }
+
+            // 檢查得分
+            if (!pipe.passed && pipe.x + pipe.width < bird.x - bird.radius) {
+              pipe.passed = true;
+              scoreManager.add(1);
+            }
+
+            // 檢查碰撞
+            if (
+              // 檢查左右碰撞
+              bird.x + bird.radius > pipe.x &&
+              bird.x - bird.radius < pipe.x + pipe.width &&
+              // 檢查上管道和下管道碰撞
+              (bird.y - bird.radius < pipe.topHeight ||
+                bird.y + bird.radius > pipe.bottomY)
+            ) {
+              gameOver();
+              return;
+            }
+          });
+        }
+
+        // 繪製遊戲畫面
+        function drawGame() {
+          // 清除畫布
+          ctx.fillStyle = "#70c5ce";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          // 繪製雲朵
+          ctx.fillStyle = "white";
+          ctx.beginPath();
+          ctx.ellipse(canvas.width / 4, 100, 40, 30, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(canvas.width / 2, 70, 50, 35, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse((3 * canvas.width) / 4, 120, 45, 30, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 繪製管道
+          ctx.fillStyle = "#2ecc71";
+          pipes.forEach((pipe) => {
+            // 上管道
+            ctx.fillRect(pipe.x, 0, pipe.width, pipe.topHeight);
+            // 管道頂部
+            ctx.fillRect(pipe.x - 5, pipe.topHeight - 20, pipe.width + 10, 20);
+
+            // 下管道
+            ctx.fillRect(
+              pipe.x,
+              pipe.bottomY,
+              pipe.width,
+              canvas.height - pipe.bottomY
+            );
+            // 管道頂部
+            ctx.fillRect(pipe.x - 5, pipe.bottomY, pipe.width + 10, 20);
+          });
+
+          // 繪製地面
+          ctx.fillStyle = "#deb887"; // 土黃色
+          ctx.fillRect(
+            0,
+            canvas.height - floorHeight,
+            canvas.width,
+            floorHeight
+          );
+
+          ctx.fillStyle = "#8B4513"; // 褐色線條
+          for (let i = 0; i < 10; i++) {
+            ctx.fillRect(
+              (i * canvas.width) / 10,
+              canvas.height - floorHeight,
+              2,
+              floorHeight
+            );
+          }
+
+          ctx.fillStyle = "#228B22"; // 草綠色
+          ctx.fillRect(0, canvas.height - floorHeight, canvas.width, 5);
+
+          // 繪製小鳥
+          ctx.save();
+          ctx.translate(bird.x, bird.y);
+          ctx.rotate(birdAngle);
+          ctx.drawImage(
+            birdImage,
+            -bird.width / 2,
+            -bird.height / 2,
+            bird.width,
+            bird.height
+          );
+          ctx.restore();
+        }
+
+        // 遊戲循環
+        function gameLoop() {
+          updateGame();
+          drawGame();
+
+          if (gameActive) {
+            animationId = requestAnimationFrame(gameLoop);
+          }
+        }
+
+        // 遊戲結束
+        function gameOver() {
+          gameActive = false;
+          cancelAnimationFrame(animationId);
+
+          // 使用遊戲控制器顯示遊戲結束訊息
+          gameController.endGame(scoreManager.getCurrentScore(), "遊戲結束");
+        }
+
+        // 點擊或按空白鍵讓小鳥飛起
+        canvas.addEventListener("click", function () {
+          if (!gameActive || gameController.paused) return;
+          bird.velocity = jumpStrength;
+        });
+
+        document.addEventListener("keydown", function (e) {
+          if (!gameActive || gameController.paused) return;
+
+          if (e.code === "Space") {
+            e.preventDefault(); // 防止滾動
+            bird.velocity = jumpStrength;
+          }
+        });
+
+        // 設置遊戲控制器
+        gameController.setGameLoop(gameLoop);
+        gameController.setRestartHandler(function () {
+          initGame();
+          gameController.startGameLoop();
+        });
+
+        // 開始遊戲動畫
+        gameController.showStartAnimation(function () {
+          initGame();
+          gameController.startGameLoop();
+        });
+      });
+    </script>
+  </body>
+</html>

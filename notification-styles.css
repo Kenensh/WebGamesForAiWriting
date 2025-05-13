@@ -1,0 +1,187 @@
+/* 
+ * 全局通知樣式
+ * 包含成就通知、應用程式安裝等通知元素的樣式
+ */
+
+/* 成就通知樣式 */
+.achievement-notification {
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  padding: 15px;
+  display: flex;
+  width: 300px;
+  z-index: 1000;
+  transform: translateY(-100px);
+  opacity: 0;
+  transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+.achievement-notification.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.achievement-notification .achievement-content {
+  display: flex;
+}
+
+.achievement-notification .achievement-icon {
+  font-size: 40px;
+  margin-right: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.achievement-notification .achievement-info {
+  flex: 1;
+}
+
+.achievement-notification .achievement-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: var(--text-color);
+}
+
+.achievement-notification .achievement-description {
+  font-size: 14px;
+  color: var(--secondary-color);
+}
+
+/* PWA 安裝按鈕 */
+.install-container {
+  margin: 10px 0;
+}
+
+.install-button {
+  background-color: var(--success-color);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.install-button:hover {
+  background-color: var(--success-hover);
+}
+
+/* 主題切換按鈕 */
+#theme-toggle {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+}
+
+.theme-icon {
+  transition: all 0.3s ease;
+}
+
+.light-mode .dark-icon,
+.dark-mode .light-icon {
+  display: none;
+}
+
+/* 頁尾樣式更新 */
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.footer-links a {
+  margin: 0 10px;
+  color: var(--text-color);
+  transition: color 0.3s;
+}
+
+.footer-links a:hover {
+  color: var(--primary-color);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* 離線提示樣式 */
+.offline-alert {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background-color: var(--card-background);
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  padding: 0;
+  width: 300px;
+  z-index: 1000;
+  opacity: 0;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+.offline-alert.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.offline-alert-content {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+}
+
+.offline-alert-icon {
+  font-size: 24px;
+  margin-right: 10px;
+}
+
+.offline-alert-text {
+  flex: 1;
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.offline-alert-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--secondary-color);
+  padding: 0 5px;
+}
+
+.offline-alert-close:hover {
+  color: var(--danger-color);
+}
+
+/* 響應式布局 */
+@media (max-width: 768px) {
+  .achievement-notification {
+    width: calc(100% - 40px);
+    left: 20px;
+    right: 20px;
+  }
+
+  .offline-alert {
+    width: calc(100% - 40px);
+    border-radius: 4px;
+  }
+}

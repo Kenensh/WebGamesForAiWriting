@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>網頁小遊戲合集</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="notification-styles.css" />
+    <link rel="stylesheet" href="game-icons.css" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <meta name="theme-color" content="#ffffff" />
+    <meta
+      name="description"
+      content="多款經典網頁小遊戲，包含終極密碼、貪食蛇、瑪利歐、打磚塊、打飛機以及塔防遊戲"
+    />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="#games">遊戲列表</a></li>
+            <li><a href="#about">關於</a></li>
+            <li><a href="profile.html">個人檔案</a></li>
+            <li>
+              <button id="theme-toggle" aria-label="切換主題">
+                <span class="theme-icon light-icon">☀️</span>
+                <span class="theme-icon dark-icon">🌙</span>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+      <div
+        id="achievement-notification"
+        class="achievement-notification hidden"
+      >
+        <div class="achievement-content">
+          <div class="achievement-icon"></div>
+          <div class="achievement-info">
+            <h3 class="achievement-title"></h3>
+            <p class="achievement-description"></p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <section id="banner">
+        <h1 style="text-align: center; margin: 30px 0">經典網頁小遊戲合集</h1>
+        <p style="text-align: center; max-width: 600px; margin: 0 auto 30px">
+          歡迎來到我們的網頁小遊戲合集！這裡收集了多款經典的小遊戲，讓您在閒暇時間輕鬆娛樂。所有遊戲均採用純
+          JavaScript 開發，無需安裝任何插件，即可在瀏覽器中直接遊玩。
+        </p>
+      </section>
+
+      <section id="games">
+        <h2 style="margin: 20px 0">遊戲列表</h2>
+        <div class="game-cards">
+          <!-- 終極密碼 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-question-circle fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">終極密碼</h3>
+              <p class="game-card-description">
+                猜數字遊戲！系統會在1-100間隨機產生一個數字，每次猜測後給予範圍提示，嘗試用最少次數猜中。
+              </p>
+              <a href="guessing-game.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 貪食蛇 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-snake fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">貪食蛇</h3>
+              <p class="game-card-description">
+                經典的貪食蛇遊戲！使用方向鍵控制蛇移動吃食物增加長度，遊戲過程中蛇會隨分數逐漸加速，但要小心不能撞牆或自己的身體。
+              </p>
+              <a href="snake.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 瑪利歐 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-running fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">瑪利歐</h3>
+              <p class="game-card-description">
+                簡化版瑪利歐遊戲！使用←→鍵控制角色移動，空格鍵跳躍，跳躍到平台上，避開障礙物並收集金幣。每10秒增加遊戲難度。
+              </p>
+              <a href="mario.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 打磚塊 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-cubes fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">打磚塊</h3>
+              <p class="game-card-description">
+                經典打磚塊遊戲！使用←→鍵控制底部平台反彈小球，擊破上方所有磚塊。反彈角度取決於球擊中平台的位置，邊緣反彈角度更大，關卡難度循序漸進。
+              </p>
+              <a href="breakout.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 打飛機 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-fighter-jet fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">打飛機</h3>
+              <p class="game-card-description">
+                太空射擊遊戲！方向鍵控制飛船移動，空格鍵發射子彈，擊落敵機得分。收集道具獲得護盾、三重射擊或雷射能力，BOSS敵人血量較高但獎勵豐厚。
+              </p>
+              <a href="shooter.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 塔防遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-chess-rook fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">塔防遊戲</h3>
+              <p class="game-card-description">
+                建立防禦塔阻止敵人入侵！有三種防禦塔可選：箭塔(便宜且攻速快)、炮塔(範圍傷害)和魔法塔(高傷害長距離)。波次難度逐漸提升，敵人類型包括普通、快速和頭目。
+              </p>
+              <a href="tower-defense.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 2048 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-th fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">2048</h3>
+              <p class="game-card-description">
+                使用方向鍵滑動合併相同的數字方塊，每次合併會產生更高數值的方塊！嘗試達成2048或更高數字，每次合併都會得分，數字越大得分越多。空間有限，需謹慎規劃。
+              </p>
+              <a href="2048.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 俄羅斯方塊 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-border-all fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">俄羅斯方塊</h3>
+              <p class="game-card-description">
+                經典俄羅斯方塊遊戲！使用←→鍵移動方塊，↑旋轉，↓加速下落。一次消除越多行獲得的分數越多：1行100分，2行300分，3行500分，4行(通關)800分，隨分數提高下落速度增加。
+              </p>
+              <a href="tetris.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 記憶翻牌 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-clone fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">記憶翻牌</h3>
+              <p class="game-card-description">
+                考驗記憶力的翻牌遊戲！點擊卡片將其翻開，嘗試找出成對的動物圖案。有三種難度可選：簡單(8對)，中等(12對)，困難(16對)。計時賽制，時間越多、翻牌次數越少獲得的分數越高。
+              </p>
+              <a href="memory-card.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 踩地雷 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-bomb fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">踩地雷</h3>
+              <p class="game-card-description">
+                經典踩地雷遊戲！左鍵點擊格子揭露內容，右鍵標記地雷。數字表示周圍8格中的地雷數量。有三種難度：簡單(9×9，10顆地雷)，中等(16×16，40顆地雷)和困難(16×30，99顆地雷)。
+              </p>
+              <a href="minesweeper.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 五子棋 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-chess-board fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">五子棋</h3>
+              <p class="game-card-description">
+                經典的五子棋遊戲！在15×15棋盤上，黑白雙方輪流落子，先連成五子一線者獲勝。有雙人對戰和人機對戰兩種模式，AI會根據棋盤形勢智能判斷落子位置，並預判玩家策略。
+              </p>
+              <a href="gomoku.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 彈珠遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-circle fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">彈珠遊戲</h3>
+              <p class="game-card-description">
+                彈珠台遊戲！空格鍵控制發射，長按增加發射力度；左右方向鍵或A、D鍵控制擋板。擊中彈力器、目標和道具可獲得分數，連擊可獲得加成。墜入底部排水孔會失去彈珠。
+              </p>
+              <a href="pinball.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 賽車遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-car fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">賽車遊戲</h3>
+              <p class="game-card-description">
+                刺激的賽車遊戲！使用左右方向鍵在三條車道間切換，避開來往的車輛。隨著距離增加，速度和難度逐漸提高，每提升一個等級賽車速度略增，獲得的分數也更多。
+              </p>
+              <a href="racing.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 飛鳥遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-dove fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">飛鳥遊戲</h3>
+              <p class="game-card-description">
+                經典飛鳥遊戲！點擊螢幕或按空格鍵讓小鳥向上飛，不按則會下落。穿過管道間的空隙得分，撞到管道或地面即遊戲結束。每成功通過一對管道加1分，挑戰自己的最高分！
+              </p>
+              <a href="flappy-bird.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 拼圖遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-puzzle-piece fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">拼圖遊戲</h3>
+              <p class="game-card-description">
+                經典拼圖遊戲！點擊與空格相鄰的拼圖塊移動它，重建完整圖像。有3個難度等級(3×3、4×4、5×5)，用時越短獲得的分數越高。左上角數字表示當前移動步數和時間。
+              </p>
+              <a href="puzzle.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 吃豆人 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-pizza-slice fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">吃豆人</h3>
+              <p class="game-card-description">
+                經典的吃豆人遊戲！方向鍵控制吃豆人在迷宮中移動，吃完所有點點即可過關。小點點得10分，吃到大力丸後可暫時吃掉幽靈得高分，連續吃掉幽靈分數翻倍。每關都會提高難度。
+              </p>
+              <a href="pacman.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="about"
+        style="
+          margin-top: 30px;
+          padding: 20px;
+          background-color: #f0f0f0;
+          border-radius: 8px;
+        "
+      >
+        <h2>關於網頁小遊戲合集</h2>
+        <p style="margin-top: 15px">
+          這個網頁小遊戲合集是為了展示純 JavaScript
+          開發的網頁遊戲。每個遊戲都實現了以下功能：
+        </p>
+        <ul style="margin: 15px 0 15px 20px">
+          <li>說明模態框：幫助玩家了解遊戲規則和操作方式</li>
+          <li>鍵盤操控：多數遊戲支援方向鍵操控</li>
+          <li>分數統計：即時顯示遊戲分數和最高分</li>
+          <li>遊戲重置：隨時重新開始遊戲</li>
+          <li>遊戲暫停：可以暫停遊戲稍作休息</li>
+          <li>返回功能：輕鬆返回遊戲選單</li>
+          <li>開始動畫：每個遊戲都有倒數計時的開始動畫</li>
+          <li>結束動畫：遊戲結束時顯示分數和選項</li>
+        </ul>
+        <p>希望你能享受這些遊戲！如果有任何建議或問題，歡迎提出。</p>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-links">
+            <a href="profile.html#achievements">成就一覽</a>
+            <a href="profile.html#statistics">遊戲統計</a>
+            <a href="profile.html#settings">設定</a>
+          </div>
+          <div class="install-container">
+            <button id="install-button" class="install-button hidden">
+              安裝應用程式
+            </button>
+          </div>
+          <p>&copy; 2025 網頁小遊戲合集 | 使用純 JavaScript 開發</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="gameUtils.js"></script>
+    <script src="themeManager.js"></script>
+    <script src="achievements.js"></script>
+    <script src="gameStats.js"></script>
+    <script src="touchControls.js"></script>
+    <script src="pwa.js"></script>
+    <script src="index.js"></script>
+  </body>
+</html>

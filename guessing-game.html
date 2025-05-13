@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>終極密碼 - 猜數字遊戲</title>
+    <meta name="game-id" content="guessing-game" />
+    <meta name="game-name" content="終極密碼" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html">返回首頁</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container game-container">
+      <h1>終極密碼</h1>
+      <div class="score-display">分數: <span id="scoreValue">0</span></div>
+
+      <div class="guessing-game-container">
+        <div
+          id="gameStatus"
+          style="font-size: 1.5rem; margin: 20px 0; text-align: center"
+        >
+          在 <span id="minValue">1</span> 到
+          <span id="maxValue">100</span> 之間猜一個數字
+        </div>
+
+        <div style="display: flex; gap: 10px">
+          <input
+            type="number"
+            id="guessInput"
+            class="game-input"
+            placeholder="輸入數字"
+            min="1"
+            max="100"
+          />
+          <button id="guessButton" class="primary-button">猜!</button>
+        </div>
+
+        <div class="guess-history" id="guessHistory">
+          <!-- 猜測歷史記錄會在這裡顯示 -->
+        </div>
+
+        <div class="game-controls">
+          <button id="restartButton" class="primary-button">重新開始</button>
+          <button id="helpButton" class="secondary-button">遊戲說明</button>
+          <button id="homeButton" class="secondary-button">返回首頁</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>&copy; 2025 網頁小遊戲合集 | 使用純 JavaScript 開發</p>
+      </div>
+    </footer>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      // 等待DOM載入完成
+      document.addEventListener("DOMContentLoaded", () => {
+        // 初始化遊戲設置
+        const gameSettings = {
+          minValue: 1,
+          maxValue: 100,
+          maxAttempts: 10,
+          currentAttempts: 0,
+          targetNumber: 0,
+          gameOver: false,
+          score: 0,
+        };
+
+        // DOM元素
+        const elements = {
+          minValueEl: document.getElementById("minValue"),
+          maxValueEl: document.getElementById("maxValue"),
+          guessInputEl: document.getElementById("guessInput"),
+          guessButtonEl: document.getElementById("guessButton"),
+          gameStatusEl: document.getElementById("gameStatus"),
+          guessHistoryEl: document.getElementById("guessHistory"),
+          restartButtonEl: document.getElementById("restartButton"),
+          helpButtonEl: document.getElementById("helpButton"),
+          homeButtonEl: document.getElementById("homeButton"),
+        };
+
+        // 創建分數管理器
+        const scoreManager = new GameUtils.ScoreManager("scoreValue");
+
+        // 創建遊戲控制器
+        const gameController = new GameUtils.GameController();
+
+        // 創建說明模態框
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "終極密碼 - 遊戲說明",
+          `
+        <h3>遊戲規則：</h3>
+        <p>系統會生成一個1到100之間的隨機數字作為「終極密碼」。</p>
+        <p>你需要猜這個數字是多少，每次猜測後，系統會告訴你猜的數字太大還是太小。</p>
+        <p>根據這些提示，繼續猜測，直到猜中正確的數字。</p>
+        
+        <h3>計分方式：</h3>
+        <p>- 基本分數：100點</p>
+        <p>- 每多猜一次：-10點</p>
+        <p>- 最低得分：10點</p>
+        
+        <h3>操作方法：</h3>
+        <p>1. 在輸入框中輸入你猜的數字</p>
+        <p>2. 點擊「猜!」按鈕提交你的猜測</p>
+        <p>3. 根據提示縮小範圍，繼續猜測</p>
+        <p>4. 點擊「重新開始」可以開始新遊戲</p>
+      `
+        );
+
+        // 開始新遊戲
+        function startNewGame() {
+          // 隱藏結果
+          gameController.hideMessage();
+
+          // 重設輸入框和狀態
+          elements.guessInputEl.value = "";
+          elements.guessInputEl.disabled = false;
+          elements.guessButtonEl.disabled = false;
+
+          // 重置遊戲設置
+          gameSettings.minValue = 1;
+          gameSettings.maxValue = 100;
+          gameSettings.currentAttempts = 0;
+          gameSettings.gameOver = false;
+
+          // 生成新的目標數字
+          gameSettings.targetNumber = Math.floor(Math.random() * 100) + 1;
+          console.log("目標數字：", gameSettings.targetNumber); // 開發時可查看，發布時刪除
+
+          // 更新顯示
+          elements.minValueEl.textContent = gameSettings.minValue;
+          elements.maxValueEl.textContent = gameSettings.maxValue;
+          elements.gameStatusEl.textContent = `在 ${gameSettings.minValue} 到 ${gameSettings.maxValue} 之間猜一個數字`;
+
+          // 清空歷史記錄
+          elements.guessHistoryEl.innerHTML = "";
+
+          // 重置分數
+          scoreManager.reset();
+          gameSettings.score = 0;
+        }
+
+        // 處理猜測
+        function handleGuess() {
+          // 如果遊戲結束，不處理
+          if (gameSettings.gameOver) return;
+
+          // 獲取猜測的數字
+          const guess = parseInt(elements.guessInputEl.value);
+
+          // 檢查是否有效
+          if (
+            isNaN(guess) ||
+            guess < gameSettings.minValue ||
+            guess > gameSettings.maxValue
+          ) {
+            alert(
+              `請輸入一個在 ${gameSettings.minValue} 到 ${gameSettings.maxValue} 之間的數字`
+            );
+            return;
+          }
+
+          // 增加嘗試次數
+          gameSettings.currentAttempts++;
+
+          // 創建歷史記錄項
+          const historyItem = document.createElement("div");
+          historyItem.className = "history-item";
+
+          // 檢查猜測結果
+          if (guess === gameSettings.targetNumber) {
+            // 猜中了！
+            historyItem.innerHTML = `<span>第 ${gameSettings.currentAttempts} 次:</span> <span>${guess} ✓</span>`;
+            elements.guessHistoryEl.prepend(historyItem);
+
+            // 計算分數 (100分鐘 - 嘗試次數 * 10，最低10分)
+            gameSettings.score = Math.max(
+              100 - (gameSettings.currentAttempts - 1) * 10,
+              10
+            );
+            scoreManager.add(gameSettings.score);
+
+            // 遊戲結束
+            endGame(true);
+          } else if (guess < gameSettings.targetNumber) {
+            // 猜小了
+            historyItem.innerHTML = `<span>第 ${gameSettings.currentAttempts} 次:</span> <span>${guess} ↑</span>`;
+            elements.guessHistoryEl.prepend(historyItem);
+
+            // 更新最小值
+            gameSettings.minValue = Math.max(gameSettings.minValue, guess + 1);
+            elements.minValueEl.textContent = gameSettings.minValue;
+            elements.gameStatusEl.textContent = `在 ${gameSettings.minValue} 到 ${gameSettings.maxValue} 之間猜一個數字`;
+          } else {
+            // 猜大了
+            historyItem.innerHTML = `<span>第 ${gameSettings.currentAttempts} 次:</span> <span>${guess} ↓</span>`;
+            elements.guessHistoryEl.prepend(historyItem);
+
+            // 更新最大值
+            gameSettings.maxValue = Math.min(gameSettings.maxValue, guess - 1);
+            elements.maxValueEl.textContent = gameSettings.maxValue;
+            elements.gameStatusEl.textContent = `在 ${gameSettings.minValue} 到 ${gameSettings.maxValue} 之間猜一個數字`;
+          }
+
+          // 檢查是否還有可能的數字
+          if (gameSettings.minValue > gameSettings.maxValue) {
+            elements.gameStatusEl.textContent = "沒有可能的數字了，遊戲結束！";
+            endGame(false);
+          }
+
+          // 清空輸入框並聚焦
+          elements.guessInputEl.value = "";
+          elements.guessInputEl.focus();
+        }
+
+        // 結束遊戲
+        function endGame(isWin) {
+          gameSettings.gameOver = true;
+          elements.guessInputEl.disabled = true;
+          elements.guessButtonEl.disabled = true;
+
+          if (isWin) {
+            // 使用遊戲控制器顯示遊戲結束訊息
+            gameController.endGame(
+              gameSettings.score,
+              `恭喜你猜中了！終極密碼是 ${gameSettings.targetNumber}`
+            );
+          } else {
+            gameController.endGame(
+              0,
+              `遊戲結束！終極密碼是 ${gameSettings.targetNumber}`
+            );
+          }
+        }
+
+        // 添加事件監聽器
+        elements.guessButtonEl.addEventListener("click", handleGuess);
+
+        // 按回車鍵也可以猜
+        elements.guessInputEl.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") handleGuess();
+        });
+
+        // 重新開始按鈕
+        elements.restartButtonEl.addEventListener("click", startNewGame);
+
+        // 遊戲說明按鈕
+        elements.helpButtonEl.addEventListener("click", () => {
+          helpModal.show();
+        });
+
+        // 返回首頁按鈕
+        elements.homeButtonEl.addEventListener("click", () => {
+          window.location.href = "index.html";
+        });
+
+        // 設置重啟處理程序
+        gameController.setRestartHandler(startNewGame);
+
+        // 顯示開始動畫，然後開始遊戲
+        gameController.showStartAnimation(() => {
+          startNewGame();
+        });
+      });
+    </script>
+  </body>
+</html>

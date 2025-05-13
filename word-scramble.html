@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>單字拼圖 - 網頁小遊戲</title>
+    <meta name="game-id" content="word-scramble" />
+    <meta name="game-name" content="單字拼圖" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .game-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .word-scramble-container {
+        width: 100%;
+        max-width: 700px;
+        margin: 0 auto;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+      }
+
+      .game-header-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .game-stats {
+        display: flex;
+        gap: 15px;
+      }
+
+      .stat-item {
+        padding: 10px 15px;
+        background-color: #f5f5f5;
+        border-radius: 5px;
+        text-align: center;
+        min-width: 80px;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 5px;
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: bold;
+        color: var(--primary-color);
+      }
+
+      .timer {
+        display: flex;
+        align-items: center;
+        padding: 8px 15px;
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 5px;
+        font-weight: 500;
+        gap: 8px;
+      }
+
+      .timer-icon {
+        font-size: 20px;
+      }
+
+      .timer-value {
+        font-size: 20px;
+        font-family: "Courier New", monospace;
+      }
+
+      .word-display {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .scrambled-word {
+        font-size: 2.5rem;
+        font-weight: bold;
+        letter-spacing: 5px;
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      .word-hint {
+        font-size: 1rem;
+        color: #666;
+        margin-top: 10px;
+      }
+
+      .guess-section {
+        margin-bottom: 25px;
+      }
+
+      .guess-input-container {
+        display: flex;
+        margin-bottom: 15px;
+      }
+
+      .guess-input {
+        flex: 1;
+        padding: 12px 15px;
+        font-size: 18px;
+        border: 2px solid #ccc;
+        border-radius: 5px 0 0 5px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      .guess-input:focus {
+        border-color: var(--primary-color);
+      }
+
+      .submit-btn {
+        padding: 12px 25px;
+        font-size: 18px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 0 5px 5px 0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .submit-btn:hover {
+        background-color: var(--primary-hover);
+      }
+
+      .feedback {
+        padding: 12px 15px;
+        border-radius: 5px;
+        font-weight: 500;
+        margin-top: 10px;
+        display: none;
+      }
+
+      .feedback.correct {
+        display: block;
+        background-color: rgba(76, 175, 80, 0.2);
+        color: #2e7d32;
+      }
+
+      .feedback.incorrect {
+        display: block;
+        background-color: rgba(244, 67, 54, 0.2);
+        color: #c62828;
+      }
+
+      .letter-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+        justify-content: center;
+      }
+
+      .letter-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+        font-weight: bold;
+        background-color: #f0f0f0;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .letter-btn:hover {
+        background-color: #e0e0e0;
+        transform: translateY(-2px);
+      }
+
+      .letter-btn.selected {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .hint-btn {
+        background-color: #ff9800;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 15px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .hint-btn:hover {
+        background-color: #f57c00;
+      }
+
+      .hint-icon {
+        font-size: 18px;
+      }
+
+      .skip-btn {
+        background-color: #9e9e9e;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 15px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .skip-btn:hover {
+        background-color: #757575;
+      }
+
+      .skip-icon {
+        font-size: 18px;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+      }
+
+      .progress-bar-container {
+        width: 100%;
+        height: 10px;
+        background-color: #e0e0e0;
+        border-radius: 5px;
+        margin-top: 20px;
+        overflow: hidden;
+      }
+
+      .progress-bar {
+        height: 100%;
+        background-color: var(--primary-color);
+        width: 0%;
+        transition: width 0.3s;
+      }
+
+      .language-selector {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .language-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 10px;
+      }
+
+      .language-btn {
+        background-color: #e0e0e0;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 15px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .language-btn:hover {
+        background-color: #d0d0d0;
+      }
+
+      .language-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .difficulty-selector {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .difficulty-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 10px;
+      }
+
+      .difficulty-btn {
+        background-color: #e0e0e0;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 15px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .difficulty-btn:hover {
+        background-color: #d0d0d0;
+      }
+
+      .difficulty-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .game-controls {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .control-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 10px 20px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .control-btn:hover {
+        background-color: var(--primary-hover);
+      }
+
+      @media (max-width: 600px) {
+        .game-header-info {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .game-stats {
+          justify-content: space-between;
+        }
+
+        .timer {
+          justify-content: center;
+        }
+
+        .scrambled-word {
+          font-size: 2rem;
+          letter-spacing: 3px;
+        }
+
+        .letter-btn {
+          width: 40px;
+          height: 40px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>單字拼圖</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="game-container">
+        <div class="language-selector">
+          <h3>選擇語言</h3>
+          <div class="language-buttons">
+            <button class="language-btn active" data-lang="zh-TW">
+              繁體中文
+            </button>
+            <button class="language-btn" data-lang="en">英文</button>
+          </div>
+        </div>
+
+        <div class="difficulty-selector">
+          <h3>選擇難度</h3>
+          <div class="difficulty-buttons">
+            <button class="difficulty-btn active" data-difficulty="easy">
+              簡單
+            </button>
+            <button class="difficulty-btn" data-difficulty="medium">
+              中等
+            </button>
+            <button class="difficulty-btn" data-difficulty="hard">困難</button>
+          </div>
+        </div>
+
+        <div class="word-scramble-container">
+          <div class="game-header-info">
+            <div class="game-stats">
+              <div class="stat-item">
+                <div class="stat-label">分數</div>
+                <div class="stat-value" id="score">0</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">關卡</div>
+                <div class="stat-value" id="level">1/10</div>
+              </div>
+            </div>
+            <div class="timer">
+              <span class="timer-icon">⏱️</span>
+              <span class="timer-value" id="timer">60</span>
+            </div>
+          </div>
+
+          <div class="word-display">
+            <div class="scrambled-word" id="scrambledWord">單字拼圖</div>
+            <div class="word-hint" id="wordHint"></div>
+          </div>
+
+          <div class="guess-section">
+            <div class="guess-input-container">
+              <input
+                type="text"
+                id="guessInput"
+                class="guess-input"
+                placeholder="輸入你的答案..."
+                autocomplete="off"
+              />
+              <button id="submitBtn" class="submit-btn">確定</button>
+            </div>
+            <div id="feedback" class="feedback"></div>
+          </div>
+
+          <div class="letter-buttons" id="letterButtons"></div>
+
+          <div class="action-buttons">
+            <button id="hintBtn" class="hint-btn">
+              <span class="hint-icon">💡</span>
+              <span>提示</span>
+            </button>
+            <button id="skipBtn" class="skip-btn">
+              <span class="skip-icon">⏭️</span>
+              <span>跳過</span>
+            </button>
+          </div>
+
+          <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+        </div>
+
+        <div class="game-controls">
+          <button id="newGameBtn" class="control-btn">新遊戲</button>
+        </div>
+      </div>
+
+      <div id="gamePaused" class="game-paused">暫停中</div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "遊戲說明",
+          `
+          <h3>單字拼圖遊戲說明</h3>
+          <p>單字拼圖是一款文字解謎遊戲，你需要將打亂的字母重新排列成正確的單字。</p>
+          <h4>遊戲規則：</h4>
+          <ul>
+            <li>每關會給你一個字母順序被打亂的單字</li>
+            <li>你需要在時間內猜出正確的原始單字</li>
+            <li>可以直接輸入答案或點擊下方字母按鈕組合答案</li>
+            <li>每關有60秒的時間限制</li>
+            <li>正確答案可以獲得分數，越難的單字分數越高</li>
+          </ul>
+          <h4>功能說明：</h4>
+          <ul>
+            <li><strong>提示按鈕</strong>：揭示一個未知的字母位置，但會扣除分數</li>
+            <li><strong>跳過按鈕</strong>：跳過當前單字，但不會獲得分數</li>
+            <li><strong>語言選擇</strong>：可選擇繁體中文或英文單字</li>
+            <li><strong>難度選擇</strong>：影響單字的長度和複雜度</li>
+          </ul>
+          <h4>計分方式：</h4>
+          <ul>
+            <li>基礎分數：根據單字長度和難度決定(5-20分)</li>
+            <li>時間獎勵：剩餘時間越多，獎勵分數越高</li>
+            <li>連續答對獎勵：連續答對會有額外加分</li>
+            <li>使用提示扣分：每次提示扣除2分</li>
+          </ul>
+          <p>完成所有關卡後，將獲得額外的完成獎勵！</p>
+        `
+        );
+
+        const gameController = new GameUtils.GameController();
+        const scoreManager = new GameUtils.ScoreManager("wordScrambleScore", 0);
+
+        // DOM 元素
+        const scrambledWordDisplay = document.getElementById("scrambledWord");
+        const wordHintDisplay = document.getElementById("wordHint");
+        const guessInput = document.getElementById("guessInput");
+        const submitBtn = document.getElementById("submitBtn");
+        const feedbackDisplay = document.getElementById("feedback");
+        const scoreDisplay = document.getElementById("score");
+        const levelDisplay = document.getElementById("level");
+        const timerDisplay = document.getElementById("timer");
+        const letterButtons = document.getElementById("letterButtons");
+        const hintBtn = document.getElementById("hintBtn");
+        const skipBtn = document.getElementById("skipBtn");
+        const progressBar = document.getElementById("progressBar");
+        const newGameBtn = document.getElementById("newGameBtn");
+        const languageButtons = document.querySelectorAll(".language-btn");
+        const difficultyButtons = document.querySelectorAll(".difficulty-btn");
+
+        // 遊戲變數
+        let currentWord = "";
+        let scrambledWord = "";
+        let currentHint = "";
+        let revealedLetters = [];
+        let currentLevel = 0;
+        let maxLevels = 10;
+        let language = "zh-TW"; // zh-TW 或 en
+        let difficulty = "easy"; // easy, medium, hard
+        let timer = 60;
+        let timerInterval = null;
+        let gameActive = false;
+        let streak = 0; // 連續答對次數
+        let usedWords = []; // 已使用的單字
+
+        // 單字資料庫
+        const wordDatabase = {
+          "zh-TW": {
+            easy: [
+              { word: "蘋果", hint: "常見的紅色水果" },
+              { word: "香蕉", hint: "黃色彎曲的水果" },
+              { word: "電腦", hint: "用來工作和上網的設備" },
+              { word: "書本", hint: "閱讀的物品" },
+              { word: "時間", hint: "無法倒流的東西" },
+              { word: "朋友", hint: "生活中重要的人" },
+              { word: "學校", hint: "學習的地方" },
+              { word: "天空", hint: "抬頭看見的景象" },
+              { word: "音樂", hint: "聽覺的藝術" },
+              { word: "城市", hint: "人口密集的地區" },
+              { word: "花朵", hint: "美麗的植物" },
+              { word: "月亮", hint: "夜空中的天體" },
+              { word: "風雨", hint: "常見的天氣現象" },
+              { word: "陽光", hint: "太陽發出的光芒" },
+              { word: "海洋", hint: "大片的水域" },
+            ],
+            medium: [
+              { word: "電腦程式", hint: "指示電腦執行任務的指令集" },
+              { word: "人工智能", hint: "模擬人類思考的技術" },
+              { word: "生物科技", hint: "利用生物系統的科學" },
+              { word: "環境保護", hint: "維護自然生態的行動" },
+              { word: "文化傳承", hint: "將傳統價值代代相傳" },
+              { word: "經濟發展", hint: "社會財富增長過程" },
+              { word: "國際關係", hint: "國家之間的互動" },
+              { word: "社會科學", hint: "研究人類社會的學科" },
+              { word: "歷史遺跡", hint: "過去文明的實物遺留" },
+              { word: "藝術創作", hint: "表達情感和思想的作品" },
+              { word: "教育改革", hint: "提升學習效果的變革" },
+              { word: "科學實驗", hint: "驗證假設的過程" },
+              { word: "健康生活", hint: "維持身心平衡的方式" },
+              { word: "創新思維", hint: "突破常規的想法" },
+              { word: "網路安全", hint: "保護數位資料的措施" },
+            ],
+            hard: [
+              { word: "量子力學理論", hint: "描述微觀世界的物理學分支" },
+              { word: "生物多樣性保育", hint: "保護各種生物物種的行動" },
+              { word: "人類基因組計劃", hint: "解碼人類DNA序列的研究" },
+              { word: "全球氣候變遷趨勢", hint: "地球氣候長期改變的方向" },
+              { word: "文藝復興時期藝術", hint: "14-17世紀歐洲的藝術運動" },
+              { word: "經濟全球化影響", hint: "世界經濟整合的結果" },
+              { word: "神經科學研究進展", hint: "了解大腦功能的最新發現" },
+              { word: "太空探索技術發展", hint: "用於探索宇宙的科技進步" },
+              { word: "人工智能倫理問題", hint: "AI發展帶來的道德考量" },
+              { word: "文化遺產數位保存", hint: "用數位方式記錄文化遺產" },
+              { word: "教育體制改革方向", hint: "學校教育系統的變革趨勢" },
+              { word: "環境可持續發展策略", hint: "不損害未來的發展模式" },
+              { word: "網路安全防護措施", hint: "保護數位系統的方法" },
+              { word: "公共衛生危機管理", hint: "應對大規模健康威脅的方法" },
+              { word: "藝術創作心理歷程", hint: "藝術家創作時的心理活動" },
+            ],
+          },
+          en: {
+            easy: [
+              { word: "apple", hint: "A common red fruit" },
+              { word: "water", hint: "Essential liquid for life" },
+              { word: "house", hint: "A place to live" },
+              { word: "music", hint: "Sounds that are pleasant to hear" },
+              { word: "happy", hint: "Feeling joy" },
+              { word: "light", hint: "Makes things visible" },
+              { word: "sleep", hint: "Rest at night" },
+              { word: "plant", hint: "Living organism that grows in soil" },
+              { word: "river", hint: "Flowing body of water" },
+              { word: "cloud", hint: "White mass in the sky" },
+              { word: "table", hint: "Furniture with a flat top" },
+              { word: "bread", hint: "Food made from flour" },
+              { word: "chair", hint: "Furniture for sitting" },
+              { word: "dance", hint: "Moving to music" },
+              { word: "smile", hint: "Expression of happiness" },
+            ],
+            medium: [
+              {
+                word: "computer",
+                hint: "Electronic device for processing data",
+              },
+              { word: "mountain", hint: "Large natural elevation of earth" },
+              { word: "education", hint: "Process of learning" },
+              { word: "adventure", hint: "Exciting or dangerous experience" },
+              { word: "chemistry", hint: "Science of matter and substances" },
+              { word: "language", hint: "System of communication" },
+              {
+                word: "telescope",
+                hint: "Instrument to observe distant objects",
+              },
+              { word: "beautiful", hint: "Pleasing to the senses" },
+              { word: "exercise", hint: "Physical activity for fitness" },
+              {
+                word: "industry",
+                hint: "Economic activity of processing goods",
+              },
+              { word: "challenge", hint: "Task that tests abilities" },
+              { word: "universe", hint: "All of space and time" },
+              { word: "painting", hint: "Art form using colors on surface" },
+              { word: "balanced", hint: "Equal distribution of weight" },
+              { word: "question", hint: "Request for information" },
+            ],
+            hard: [
+              {
+                word: "encyclopaedia",
+                hint: "Reference work with information on all branches of knowledge",
+              },
+              {
+                word: "photosynthesis",
+                hint: "Process by which plants convert light to energy",
+              },
+              {
+                word: "entrepreneurship",
+                hint: "Process of starting and running a business",
+              },
+              {
+                word: "communication",
+                hint: "Exchange of information between individuals",
+              },
+              {
+                word: "biodiversity",
+                hint: "Variety of plant and animal life in a habitat",
+              },
+              {
+                word: "philosophical",
+                hint: "Relating to the study of fundamental nature of knowledge",
+              },
+              {
+                word: "extraterrestrial",
+                hint: "Originating or existing outside earth",
+              },
+              {
+                word: "sustainability",
+                hint: "Ability to maintain at a certain rate or level",
+              },
+              {
+                word: "technological",
+                hint: "Relating to or involving technology",
+              },
+              {
+                word: "responsibility",
+                hint: "State of being accountable for something",
+              },
+              { word: "contemporary", hint: "Belonging to the present time" },
+              { word: "advantageous", hint: "Providing an advantage" },
+              {
+                word: "collaboration",
+                hint: "Working with others to produce something",
+              },
+              {
+                word: "enthusiastic",
+                hint: "Having or showing intense interest",
+              },
+              {
+                word: "constitutional",
+                hint: "Relating to an established set of principles",
+              },
+            ],
+          },
+        };
+
+        // 打亂單字
+        function scrambleWord(word) {
+          const wordArray = Array.from(word);
+          // 確保打亂後的單字與原單字不同
+          let scrambled;
+          do {
+            // Fisher-Yates 洗牌算法
+            for (let i = wordArray.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [wordArray[i], wordArray[j]] = [wordArray[j], wordArray[i]];
+            }
+            scrambled = wordArray.join("");
+          } while (scrambled === word);
+
+          return scrambled;
+        }
+
+        // 選擇單字
+        function selectWord() {
+          const words = wordDatabase[language][difficulty];
+
+          // 過濾出未使用過的單字
+          const availableWords = words.filter(
+            (w) => !usedWords.includes(w.word)
+          );
+
+          // 如果所有單字都用過了，重置已用單字列表
+          if (availableWords.length === 0) {
+            usedWords = [];
+            return words[Math.floor(Math.random() * words.length)];
+          }
+
+          // 隨機選擇一個未使用的單字
+          const selectedWord =
+            availableWords[Math.floor(Math.random() * availableWords.length)];
+          usedWords.push(selectedWord.word);
+
+          return selectedWord;
+        }
+
+        // 創建字母按鈕
+        function createLetterButtons(word) {
+          letterButtons.innerHTML = "";
+
+          const letters = Array.from(word);
+
+          letters.forEach((letter) => {
+            const button = document.createElement("button");
+            button.className = "letter-btn";
+            button.textContent = letter;
+            button.addEventListener("click", () => {
+              if (!gameActive || gameController.paused) return;
+
+              // 添加字母到輸入框
+              guessInput.value += letter;
+
+              // 禁用按鈕
+              button.disabled = true;
+              button.classList.add("selected");
+            });
+
+            letterButtons.appendChild(button);
+          });
+        }
+
+        // 重置字母按鈕
+        function resetLetterButtons() {
+          const buttons = letterButtons.querySelectorAll(".letter-btn");
+          buttons.forEach((button) => {
+            button.disabled = false;
+            button.classList.remove("selected");
+          });
+        }
+
+        // 顯示下一個單字
+        function showNextWord() {
+          if (currentLevel >= maxLevels) {
+            completeGame();
+            return;
+          }
+
+          currentLevel++;
+          levelDisplay.textContent = `${currentLevel}/${maxLevels}`;
+
+          // 選擇單字
+          const wordData = selectWord();
+          currentWord = wordData.word;
+          currentHint = wordData.hint;
+
+          // 打亂單字
+          scrambledWord = scrambleWord(currentWord);
+
+          // 顯示打亂的單字和提示
+          scrambledWordDisplay.textContent = scrambledWord;
+          wordHintDisplay.textContent = "";
+
+          // 重置已揭示的字母
+          revealedLetters = Array(currentWord.length).fill(false);
+
+          // 創建字母按鈕
+          createLetterButtons(scrambledWord);
+
+          // 清空輸入框和反饋
+          guessInput.value = "";
+          feedbackDisplay.className = "feedback";
+          feedbackDisplay.style.display = "none";
+
+          // 更新進度條
+          progressBar.style.width = `${(currentLevel / maxLevels) * 100}%`;
+
+          // 重置計時器
+          resetTimer();
+        }
+
+        // 檢查答案
+        function checkAnswer() {
+          if (!gameActive || gameController.paused) return;
+
+          const guess = guessInput.value.trim();
+
+          if (guess === "") {
+            return;
+          }
+
+          if (guess === currentWord) {
+            // 答對
+            feedbackDisplay.className = "feedback correct";
+            feedbackDisplay.textContent = "答對了！";
+            feedbackDisplay.style.display = "block";
+
+            // 計算得分
+            let baseScore;
+            switch (difficulty) {
+              case "easy":
+                baseScore = 5;
+                break;
+              case "medium":
+                baseScore = 10;
+                break;
+              case "hard":
+                baseScore = 15;
+                break;
+              default:
+                baseScore = 5;
+            }
+
+            // 額外加分 - 單字長度
+            const lengthBonus = Math.floor(currentWord.length / 2);
+
+            // 額外加分 - 剩餘時間
+            const timeBonus = Math.floor(timer / 10);
+
+            // 連續答對獎勵
+            streak++;
+            const streakBonus = Math.floor(streak / 3);
+
+            const totalScore =
+              baseScore + lengthBonus + timeBonus + streakBonus;
+            scoreManager.add(totalScore);
+            scoreDisplay.textContent = scoreManager.getCurrentScore();
+
+            // 延遲顯示下一題
+            setTimeout(() => {
+              showNextWord();
+            }, 1500);
+          } else {
+            // 答錯
+            feedbackDisplay.className = "feedback incorrect";
+            feedbackDisplay.textContent = "不正確，請再試一次！";
+            feedbackDisplay.style.display = "block";
+
+            // 重設連續答對
+            streak = 0;
+          }
+
+          // 清空輸入框並重置字母按鈕
+          guessInput.value = "";
+          resetLetterButtons();
+        }
+
+        // 提供提示
+        function showHint() {
+          if (!gameActive || gameController.paused) return;
+
+          // 設置提示文字
+          if (wordHintDisplay.textContent === "") {
+            wordHintDisplay.textContent = `提示: ${currentHint}`;
+
+            // 扣分
+            const penalty = 2;
+            const newScore = Math.max(
+              0,
+              scoreManager.getCurrentScore() - penalty
+            );
+            scoreManager.set(newScore);
+            scoreDisplay.textContent = newScore;
+
+            // 顯示提示給予的反饋
+            feedbackDisplay.className = "feedback";
+            feedbackDisplay.textContent = `已顯示提示 (-${penalty}分)`;
+            feedbackDisplay.style.display = "block";
+
+            // 自動隱藏反饋
+            setTimeout(() => {
+              feedbackDisplay.style.display = "none";
+            }, 2000);
+          } else {
+            // 揭示一個字母
+            // 找出還未揭示的字母位置
+            const hiddenPositions = revealedLetters
+              .map((revealed, index) => ({ revealed, index }))
+              .filter((item) => !item.revealed)
+              .map((item) => item.index);
+
+            if (hiddenPositions.length > 0) {
+              // 隨機選擇一個未揭示的位置
+              const randomIndex = Math.floor(
+                Math.random() * hiddenPositions.length
+              );
+              const position = hiddenPositions[randomIndex];
+
+              // 更新已揭示的字母陣列
+              revealedLetters[position] = true;
+
+              // 在輸入框中顯示這個字母
+              const letter = currentWord[position];
+
+              // 在輸入框的正確位置填入字母
+              let currentGuess = guessInput.value;
+              while (currentGuess.length < position) {
+                currentGuess += " "; // 用空格填充
+              }
+
+              if (currentGuess.length === position) {
+                currentGuess += letter;
+              } else {
+                // 替換指定位置的字符
+                currentGuess =
+                  currentGuess.substring(0, position) +
+                  letter +
+                  currentGuess.substring(position + 1);
+              }
+
+              guessInput.value = currentGuess;
+
+              // 扣分
+              const penalty = 2;
+              const newScore = Math.max(
+                0,
+                scoreManager.getCurrentScore() - penalty
+              );
+              scoreManager.set(newScore);
+              scoreDisplay.textContent = newScore;
+
+              // 顯示提示給予的反饋
+              feedbackDisplay.className = "feedback";
+              feedbackDisplay.textContent = `已揭示一個字母 (-${penalty}分)`;
+              feedbackDisplay.style.display = "block";
+
+              // 自動隱藏反饋
+              setTimeout(() => {
+                feedbackDisplay.style.display = "none";
+              }, 2000);
+            } else {
+              // 所有字母都已揭示
+              feedbackDisplay.className = "feedback";
+              feedbackDisplay.textContent = `所有字母已經揭示，答案是: ${currentWord}`;
+              feedbackDisplay.style.display = "block";
+            }
+          }
+        }
+
+        // 跳過當前單字
+        function skipWord() {
+          if (!gameActive || gameController.paused) return;
+
+          feedbackDisplay.className = "feedback";
+          feedbackDisplay.textContent = `已跳過，正確答案是: ${currentWord}`;
+          feedbackDisplay.style.display = "block";
+
+          // 重設連續答對
+          streak = 0;
+
+          // 延遲顯示下一題
+          setTimeout(() => {
+            showNextWord();
+          }, 2000);
+        }
+
+        // 更新計時器
+        function updateTimer() {
+          if (timer > 0) {
+            timer--;
+            timerDisplay.textContent = timer;
+
+            // 時間少於10秒時，添加視覺提示
+            if (timer <= 10) {
+              timerDisplay.style.color = "#f44336";
+            } else {
+              timerDisplay.style.color = "white";
+            }
+          } else {
+            // 時間用完
+            clearInterval(timerInterval);
+
+            feedbackDisplay.className = "feedback incorrect";
+            feedbackDisplay.textContent = `時間到！正確答案是: ${currentWord}`;
+            feedbackDisplay.style.display = "block";
+
+            // 重設連續答對
+            streak = 0;
+
+            // 延遲顯示下一題
+            setTimeout(() => {
+              showNextWord();
+            }, 2000);
+          }
+        }
+
+        // 重置計時器
+        function resetTimer() {
+          clearInterval(timerInterval);
+          timer = 60;
+          timerDisplay.textContent = timer;
+          timerDisplay.style.color = "white";
+
+          if (gameActive) {
+            timerInterval = setInterval(updateTimer, 1000);
+          }
+        }
+
+        // 完成遊戲
+        function completeGame() {
+          gameActive = false;
+          clearInterval(timerInterval);
+
+          // 計算完成獎勵
+          const completionBonus =
+            50 * (difficulty === "easy" ? 1 : difficulty === "medium" ? 2 : 3);
+          scoreManager.add(completionBonus);
+          scoreDisplay.textContent = scoreManager.getCurrentScore();
+
+          // 保存最高分
+          const bestScoreKey = `wordScramble_best_score_${language}_${difficulty}`;
+          const currentBestScore = localStorage.getItem(bestScoreKey) || 0;
+
+          if (scoreManager.getCurrentScore() > currentBestScore) {
+            localStorage.setItem(bestScoreKey, scoreManager.getCurrentScore());
+          }
+
+          // 顯示完成訊息
+          scrambledWordDisplay.textContent = "遊戲完成！";
+          wordHintDisplay.textContent = "";
+
+          gameController.endGame(
+            scoreManager.getCurrentScore(),
+            `恭喜！你完成了所有 ${maxLevels} 關！\n` +
+              `最終分數: ${scoreManager.getCurrentScore()}\n` +
+              `完成獎勵: +${completionBonus}`
+          );
+        }
+
+        // 切換語言
+        function switchLanguage(lang) {
+          language = lang;
+
+          // 更新按鈕狀態
+          languageButtons.forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.lang === language);
+          });
+        }
+
+        // 切換難度
+        function switchDifficulty(diff) {
+          difficulty = diff;
+
+          // 更新按鈕狀態
+          difficultyButtons.forEach((btn) => {
+            btn.classList.toggle(
+              "active",
+              btn.dataset.difficulty === difficulty
+            );
+          });
+
+          // 根據難度設置關卡數
+          switch (difficulty) {
+            case "easy":
+              maxLevels = 10;
+              break;
+            case "medium":
+              maxLevels = 15;
+              break;
+            case "hard":
+              maxLevels = 20;
+              break;
+            default:
+              maxLevels = 10;
+          }
+        }
+
+        // 開始新遊戲
+        function startNewGame() {
+          // 重置遊戲變數
+          currentLevel = 0;
+          usedWords = [];
+          streak = 0;
+
+          // 重置分數
+          scoreManager.reset();
+          scoreDisplay.textContent = "0";
+
+          // 啟動遊戲
+          gameActive = true;
+
+          // 顯示第一個單字
+          showNextWord();
+        }
+
+        // 設置事件監聽器
+        submitBtn.addEventListener("click", checkAnswer);
+
+        guessInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            checkAnswer();
+          }
+        });
+
+        hintBtn.addEventListener("click", showHint);
+        skipBtn.addEventListener("click", skipWord);
+        newGameBtn.addEventListener("click", startNewGame);
+
+        languageButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            if (
+              gameActive &&
+              !confirm("切換語言將重新開始遊戲，確定要繼續嗎？")
+            ) {
+              return;
+            }
+
+            switchLanguage(btn.dataset.lang);
+            startNewGame();
+          });
+        });
+
+        difficultyButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            if (
+              gameActive &&
+              !confirm("切換難度將重新開始遊戲，確定要繼續嗎？")
+            ) {
+              return;
+            }
+
+            switchDifficulty(btn.dataset.difficulty);
+            startNewGame();
+          });
+        });
+
+        // 設置遊戲控制器
+        gameController.setPauseHandler(() => {
+          if (gameActive) {
+            clearInterval(timerInterval);
+          }
+        });
+
+        gameController.setResumeHandler(() => {
+          if (gameActive) {
+            timerInterval = setInterval(updateTimer, 1000);
+          }
+        });
+
+        gameController.setRestartHandler(() => {
+          startNewGame();
+        });
+
+        // 開始遊戲動畫
+        gameController.showStartAnimation(() => {
+          startNewGame();
+        });
+      });
+    </script>
+  </body>
+</html>

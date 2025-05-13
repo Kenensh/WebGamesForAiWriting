@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>記憶翻牌 - 網頁小遊戲</title>
+    <meta name="game-id" content="memory-card" />
+    <meta name="game-name" content="記憶翻牌" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .memory-game-container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .memory-stats {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 20px;
+      }
+
+      .stat-box {
+        background-color: #f5f5f5;
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-align: center;
+        width: 150px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 5px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+      }
+
+      .memory-board {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-gap: 15px;
+        margin-bottom: 30px;
+      }
+
+      @media (min-width: 768px) {
+        .memory-board {
+          grid-template-columns: repeat(5, 1fr);
+        }
+      }
+
+      .memory-card {
+        position: relative;
+        height: 0;
+        padding-bottom: 100%;
+        perspective: 1000px;
+        cursor: pointer;
+      }
+
+      .card-inner {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        transition: transform 0.5s;
+      }
+
+      .card-flipped .card-inner {
+        transform: rotateY(180deg);
+      }
+
+      .card-front,
+      .card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .card-front {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        font-size: 24px;
+        font-weight: bold;
+        color: white;
+      }
+
+      .card-back {
+        background-color: white;
+        transform: rotateY(180deg);
+        font-size: 36px;
+      }
+
+      .matched .card-front {
+        background: linear-gradient(135deg, #1cb568 0%, #1bbd9d 100%);
+        opacity: 0.8;
+      }
+
+      .difficulty-selector {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      .difficulty-btn {
+        background-color: #f5f5f5;
+        border: 2px solid transparent;
+        border-radius: 5px;
+        padding: 8px 15px;
+        margin: 0 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .difficulty-btn:hover {
+        background-color: #e0e0e0;
+      }
+
+      .difficulty-btn.active {
+        border-color: #2575fc;
+        background-color: #e6f0ff;
+        font-weight: bold;
+      }
+
+      /* 動畫效果 */
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .pulse {
+        animation: pulse 0.3s;
+      }
+
+      @keyframes shake {
+        0% {
+          transform: translateX(0);
+        }
+        20% {
+          transform: translateX(-10px);
+        }
+        40% {
+          transform: translateX(10px);
+        }
+        60% {
+          transform: translateX(-10px);
+        }
+        80% {
+          transform: translateX(10px);
+        }
+        100% {
+          transform: translateX(0);
+        }
+      }
+
+      .shake {
+        animation: shake 0.5s;
+      }
+
+      .card-emoji {
+        font-size: 40px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html">返回首頁</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container game-container">
+      <h1>記憶翻牌</h1>
+      <div class="score-display">分數: <span id="scoreValue">0</span></div>
+
+      <div class="memory-game-container">
+        <div class="memory-stats">
+          <div class="stat-box">
+            <div class="stat-label">翻牌次數</div>
+            <div id="flipCount" class="stat-value">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">配對數</div>
+            <div id="matchCount" class="stat-value">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">剩餘時間</div>
+            <div id="timeRemaining" class="stat-value">60</div>
+          </div>
+        </div>
+
+        <div class="difficulty-selector">
+          <div id="easyBtn" class="difficulty-btn active">簡單 (8對)</div>
+          <div id="mediumBtn" class="difficulty-btn">中等 (10對)</div>
+          <div id="hardBtn" class="difficulty-btn">困難 (12對)</div>
+        </div>
+
+        <div id="memoryBoard" class="memory-board">
+          <!-- 卡牌將由 JavaScript 動態生成 -->
+        </div>
+
+        <div class="game-controls">
+          <button id="pauseButton" class="primary-button">暫停</button>
+          <button id="restartButton" class="primary-button">重新開始</button>
+          <button id="helpButton" class="secondary-button">遊戲說明</button>
+          <button id="homeButton" class="secondary-button">返回首頁</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>&copy; 2025 網頁小遊戲合集 | 使用純 JavaScript 開發</p>
+      </div>
+    </footer>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // 獲取 DOM 元素
+        const memoryBoard = document.getElementById("memoryBoard");
+        const flipCountElement = document.getElementById("flipCount");
+        const matchCountElement = document.getElementById("matchCount");
+        const timeRemainingElement = document.getElementById("timeRemaining");
+        const easyBtn = document.getElementById("easyBtn");
+        const mediumBtn = document.getElementById("mediumBtn");
+        const hardBtn = document.getElementById("hardBtn");
+
+        // 創建遊戲控制器
+        const gameController = new GameUtils.GameController();
+
+        // 創建分數管理器
+        const scoreManager = new GameUtils.ScoreManager("scoreValue");
+
+        // 創建說明模態框
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "記憶翻牌 - 遊戲說明",
+          `
+            <h3>遊戲規則：</h3>
+            <p>點擊卡片翻開，嘗試配對相同的圖案。每次只能翻開兩張卡片。</p>
+            <p>如果兩張卡片圖案相同，則保持翻開狀態；如果不同，則會翻回。</p>
+            <p>當所有卡片都配對成功時，遊戲結束。</p>
+            <p>遊戲有時間限制，請在時間耗盡前找出所有配對！</p>
+            
+            <h3>難度等級：</h3>
+            <ul>
+              <li>簡單: 8 對卡片 (16 張)</li>
+              <li>中等: 10 對卡片 (20 張)</li>
+              <li>困難: 12 對卡片 (24 張)</li>
+            </ul>
+            
+            <h3>計分方式：</h3>
+            <ul>
+              <li>每成功配對一次: +10 分</li>
+              <li>剩餘時間獎勵: 每秒 +1 分</li>
+              <li>翻牌次數少: 翻牌效率獎勵</li>
+            </ul>
+          `
+        );
+
+        // 表情符號列表 (用於卡片圖案)
+        const emojis = [
+          "🐶",
+          "🐱",
+          "🐭",
+          "🐹",
+          "🐰",
+          "🦊",
+          "🐻",
+          "🐼",
+          "🐨",
+          "🐯",
+          "🦁",
+          "🐮",
+          "🐷",
+          "🐸",
+          "🐵",
+          "🐔",
+          "🦄",
+          "🐙",
+          "🐢",
+          "🦋",
+          "🐠",
+          "🦀",
+          "🐝",
+          "🦖",
+        ];
+
+        // 遊戲變數
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let totalPairs = 8; // 默認簡單模式
+        let flipCount = 0;
+        let timeRemaining = 60;
+        let timerId;
+        let canFlip = true;
+        let difficulty = "easy";
+
+        // 難度設定
+        const difficultySettings = {
+          easy: { pairs: 8, time: 60, columns: 4 },
+          medium: { pairs: 10, time: 90, columns: 5 },
+          hard: { pairs: 12, time: 120, columns: 6 },
+        };
+
+        // 初始化遊戲
+        function initGame() {
+          // 重置遊戲狀態
+          cards = [];
+          flippedCards = [];
+          matchedPairs = 0;
+          flipCount = 0;
+          scoreManager.reset();
+
+          // 應用難度設定
+          const settings = difficultySettings[difficulty];
+          totalPairs = settings.pairs;
+          timeRemaining = settings.time;
+          memoryBoard.style.gridTemplateColumns = `repeat(${settings.columns}, 1fr)`;
+
+          // 更新顯示
+          flipCountElement.textContent = flipCount;
+          matchCountElement.textContent = matchedPairs;
+          timeRemainingElement.textContent = timeRemaining;
+
+          // 清空棋盤
+          memoryBoard.innerHTML = "";
+
+          // 創建卡片
+          createCards();
+
+          // 重置計時器
+          if (timerId) {
+            clearInterval(timerId);
+          }
+
+          // 啟用翻牌
+          canFlip = true;
+
+          // 設置遊戲循環 (主要用於檢查遊戲狀態)
+          gameController.setGameLoop(() => {
+            // 在記憶翻牌遊戲中，主要是基於事件操作，所以循環中不需要做太多
+          });
+
+          // 開始計時器
+          startTimer();
+
+          // 開始遊戲循環
+          gameController.startGameLoop();
+        }
+
+        // 創建卡片
+        function createCards() {
+          // 創建配對數組
+          let cardEmojis = [];
+          for (let i = 0; i < totalPairs; i++) {
+            cardEmojis.push(emojis[i]);
+            cardEmojis.push(emojis[i]);
+          }
+
+          // 洗牌算法
+          for (let i = cardEmojis.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [cardEmojis[i], cardEmojis[j]] = [cardEmojis[j], cardEmojis[i]];
+          }
+
+          // 創建卡片元素
+          cardEmojis.forEach((emoji, index) => {
+            const card = document.createElement("div");
+            card.className = "memory-card";
+            card.dataset.emoji = emoji;
+            card.dataset.index = index;
+
+            const cardInner = document.createElement("div");
+            cardInner.className = "card-inner";
+
+            const cardFront = document.createElement("div");
+            cardFront.className = "card-front";
+            cardFront.textContent = "?";
+
+            const cardBack = document.createElement("div");
+            cardBack.className = "card-back";
+            const emojiSpan = document.createElement("span");
+            emojiSpan.className = "card-emoji";
+            emojiSpan.textContent = emoji;
+            cardBack.appendChild(emojiSpan);
+
+            cardInner.appendChild(cardFront);
+            cardInner.appendChild(cardBack);
+            card.appendChild(cardInner);
+
+            card.addEventListener("click", flipCard);
+            memoryBoard.appendChild(card);
+            cards.push(card);
+          });
+        }
+
+        // 翻牌函數
+        function flipCard() {
+          // 如果已經翻開、已匹配或當前不能翻牌，則返回
+          if (
+            this.classList.contains("card-flipped") ||
+            this.classList.contains("matched") ||
+            flippedCards.length >= 2 ||
+            !canFlip ||
+            gameController.paused
+          ) {
+            return;
+          }
+
+          // 播放翻牌動畫
+          this.classList.add("card-flipped");
+          flippedCards.push(this);
+
+          // 增加翻牌計數
+          flipCount++;
+          flipCountElement.textContent = flipCount;
+
+          // 如果翻開兩張卡片，檢查是否匹配
+          if (flippedCards.length === 2) {
+            checkForMatch();
+          }
+        }
+
+        // 檢查是否配對
+        function checkForMatch() {
+          const card1 = flippedCards[0];
+          const card2 = flippedCards[1];
+
+          // 暫時禁用翻牌
+          canFlip = false;
+
+          if (card1.dataset.emoji === card2.dataset.emoji) {
+            // 配對成功
+            setTimeout(() => {
+              card1.classList.add("matched");
+              card2.classList.add("matched");
+              card1.classList.add("pulse");
+              card2.classList.add("pulse");
+
+              // 增加匹配計數和分數
+              matchedPairs++;
+              matchCountElement.textContent = matchedPairs;
+              scoreManager.add(10);
+
+              // 重置翻牌數組
+              flippedCards = [];
+
+              // 檢查遊戲是否完成
+              checkGameCompletion();
+
+              // 重新啟用翻牌
+              canFlip = true;
+
+              // 移除動畫類
+              setTimeout(() => {
+                card1.classList.remove("pulse");
+                card2.classList.remove("pulse");
+              }, 300);
+            }, 500);
+          } else {
+            // 配對失敗
+            setTimeout(() => {
+              card1.classList.add("shake");
+              card2.classList.add("shake");
+
+              // 翻回卡片
+              setTimeout(() => {
+                card1.classList.remove("card-flipped", "shake");
+                card2.classList.remove("card-flipped", "shake");
+                flippedCards = [];
+
+                // 重新啟用翻牌
+                canFlip = true;
+              }, 500);
+            }, 600);
+          }
+        }
+
+        // 檢查遊戲是否完成
+        function checkGameCompletion() {
+          if (matchedPairs === totalPairs) {
+            // 停止計時器
+            clearInterval(timerId);
+
+            // 計算最終分數
+            calculateFinalScore();
+          }
+        }
+
+        // 計算最終分數
+        function calculateFinalScore() {
+          // 基本分數 = 匹配對數 * 10
+          let finalScore = matchedPairs * 10;
+
+          // 時間獎勵
+          const timeBonus = timeRemaining;
+          finalScore += timeBonus;
+
+          // 翻牌效率獎勵 (最少翻牌次數是 totalPairs * 2)
+          const perfectFlips = totalPairs * 2;
+          const efficiency = Math.max(0, perfectFlips * 3 - flipCount);
+          const efficiencyBonus = Math.floor(efficiency * 0.5);
+          finalScore += efficiencyBonus;
+
+          // 更新分數
+          scoreManager.add(timeBonus + efficiencyBonus);
+
+          // 顯示結果
+          let message = `
+            <p>你成功匹配了所有卡片！</p>
+            <p>翻牌次數: ${flipCount}</p>
+            <p>剩餘時間: ${timeRemaining} 秒</p>
+            <p>基本分數: ${matchedPairs * 10}</p>
+            <p>時間獎勵: +${timeBonus}</p>
+            <p>效率獎勵: +${efficiencyBonus}</p>
+            <p>最終分數: <span style="font-size: 24px; font-weight: bold;">${finalScore}</span></p>
+          `;
+
+          // 顯示遊戲結束訊息
+          gameController.endGame(finalScore, "恭喜完成！");
+        }
+
+        // 開始計時器
+        function startTimer() {
+          if (timerId) {
+            clearInterval(timerId);
+          }
+
+          timerId = setInterval(() => {
+            if (gameController.paused) return;
+
+            timeRemaining--;
+            timeRemainingElement.textContent = timeRemaining;
+
+            if (timeRemaining <= 0) {
+              clearInterval(timerId);
+              canFlip = false;
+              gameController.endGame(
+                scoreManager.getCurrentScore(),
+                "時間到！"
+              );
+            } else if (timeRemaining <= 10) {
+              // 時間快到時的視覺提醒
+              timeRemainingElement.style.color = "red";
+            }
+          }, 1000);
+        }
+
+        // 設置難度按鈕點擊事件
+        easyBtn.addEventListener("click", () => setDifficulty("easy"));
+        mediumBtn.addEventListener("click", () => setDifficulty("medium"));
+        hardBtn.addEventListener("click", () => setDifficulty("hard"));
+
+        // 設置難度
+        function setDifficulty(level) {
+          difficulty = level;
+
+          // 更新按鈕樣式
+          easyBtn.classList.toggle("active", level === "easy");
+          mediumBtn.classList.toggle("active", level === "medium");
+          hardBtn.classList.toggle("active", level === "hard");
+
+          // 重新開始遊戲
+          initGame();
+        }
+
+        // 設置重啟處理器
+        gameController.setRestartHandler(() => {
+          initGame();
+        });
+
+        // 暫停時處理
+        const originalTogglePause = gameController.togglePause;
+        gameController.togglePause = function () {
+          const paused = originalTogglePause.call(gameController);
+          return paused;
+        };
+
+        // 顯示開始動畫然後初始化遊戲
+        gameController.showStartAnimation(() => {
+          initGame();
+        });
+      });
+    </script>
+  </body>
+</html>

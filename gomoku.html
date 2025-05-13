@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>五子棋 - 網頁小遊戲</title>
+    <meta name="game-id" content="gomoku" />
+    <meta name="game-name" content="五子棋" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .gomoku-container {
+        max-width: 700px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 600px;
+        margin-bottom: 20px;
+      }
+
+      .player-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px 20px;
+        border-radius: 8px;
+        background-color: #f5f5f5;
+        width: 45%;
+        transition: all 0.3s;
+      }
+
+      .player-info.active {
+        background-color: #e3f2fd;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+
+      .player-label {
+        font-size: 14px;
+        margin-bottom: 5px;
+      }
+
+      .player-piece {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        margin-bottom: 10px;
+      }
+
+      .black-piece {
+        background: radial-gradient(circle at 30% 30%, #5a5a5a, #000);
+      }
+
+      .white-piece {
+        background: radial-gradient(circle at 30% 30%, #fff, #ddd);
+        border: 1px solid #ccc;
+      }
+
+      .player-score {
+        font-size: 20px;
+        font-weight: bold;
+      }
+
+      .board-container {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        height: 600px;
+        margin-bottom: 20px;
+      }
+
+      #gomokuBoard {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #dcb35c;
+        background-image: linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.1) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+        border: 1px solid #8c6b3b;
+        box-sizing: border-box;
+      }
+
+      .grid-lines {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .piece {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 5;
+        animation: piecePlaced 0.3s ease-out;
+        box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .last-move::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        background-color: red;
+      }
+
+      .winning-piece {
+        animation: winningPulse 1.5s infinite;
+      }
+
+      .star-point {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background-color: #333;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1;
+      }
+
+      .game-options {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        width: 100%;
+      }
+
+      .option-btn {
+        background-color: #f5f5f5;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 15px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .option-btn:hover {
+        background-color: #e0e0e0;
+      }
+
+      .option-btn.active {
+        background-color: #e3f2fd;
+        font-weight: bold;
+      }
+
+      @keyframes piecePlaced {
+        0% {
+          transform: translate(-50%, -50%) scale(1.2);
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+
+      @keyframes winningPulse {
+        0% {
+          transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.1);
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+
+      #resetButton {
+        margin-right: 10px;
+      }
+
+      /* 響應式設計 */
+      @media (max-width: 768px) {
+        .board-container {
+          height: 90vw;
+          max-height: 500px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html">返回首頁</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container game-container">
+      <h1>五子棋</h1>
+      <div class="score-display">分數: <span id="scoreValue">0</span></div>
+
+      <div class="gomoku-container">
+        <div class="game-info">
+          <div id="player1" class="player-info active">
+            <div class="player-label">玩家 1 (黑)</div>
+            <div class="player-piece black-piece"></div>
+            <div class="player-score" id="player1Score">0</div>
+          </div>
+
+          <div id="player2" class="player-info">
+            <div class="player-label">玩家 2 (白)</div>
+            <div class="player-piece white-piece"></div>
+            <div class="player-score" id="player2Score">0</div>
+          </div>
+        </div>
+
+        <div class="game-options">
+          <button id="modeHuman" class="option-btn active">雙人對戰</button>
+          <button id="modeAI" class="option-btn">電腦對戰</button>
+          <button id="undoMove" class="option-btn">悔棋</button>
+          <button id="resetBoard" class="option-btn">清空棋盤</button>
+        </div>
+
+        <div class="board-container">
+          <div id="gomokuBoard"></div>
+        </div>
+
+        <div class="game-controls">
+          <button id="pauseButton" class="primary-button">暫停</button>
+          <button id="restartButton" class="primary-button">重新開始</button>
+          <button id="helpButton" class="secondary-button">遊戲說明</button>
+          <button id="homeButton" class="secondary-button">返回首頁</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>&copy; 2025 網頁小遊戲合集 | 使用純 JavaScript 開發</p>
+      </div>
+    </footer>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // 獲取 DOM 元素
+        const gomokuBoard = document.getElementById("gomokuBoard");
+        const player1Info = document.getElementById("player1");
+        const player2Info = document.getElementById("player2");
+        const player1ScoreElement = document.getElementById("player1Score");
+        const player2ScoreElement = document.getElementById("player2Score");
+        const modeHumanBtn = document.getElementById("modeHuman");
+        const modeAIBtn = document.getElementById("modeAI");
+        const undoMoveBtn = document.getElementById("undoMove");
+        const resetBoardBtn = document.getElementById("resetBoard");
+
+        // 創建遊戲控制器
+        const gameController = new GameUtils.GameController();
+
+        // 創建分數管理器
+        const scoreManager = new GameUtils.ScoreManager("scoreValue");
+
+        // 創建說明模態框
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "五子棋 - 遊戲說明",
+          `
+            <h3>遊戲規則：</h3>
+            <p>五子棋是一種雙人對弈的棋類遊戲，使用15×15的方形棋盤和黑白兩色的棋子。</p>
+            <p>玩家輪流在棋盤上的交叉點放置自己的棋子。</p>
+            <p>黑方先行，之後雙方交替下棋。一旦一方在橫向、縱向或對角線上連成五子，即為獲勝。</p>
+            
+            <h3>遊戲模式：</h3>
+            <ul>
+              <li><strong>雙人對戰</strong>：兩位玩家輪流下棋</li>
+              <li><strong>電腦對戰</strong>：與AI對弈</li>
+            </ul>
+            
+            <h3>操作方法：</h3>
+            <ul>
+              <li>點擊棋盤的交叉點放置棋子</li>
+              <li>點擊「悔棋」可以撤回上一步操作</li>
+              <li>點擊「清空棋盤」重新開始一局</li>
+            </ul>
+            
+            <h3>計分方式：</h3>
+            <p>每贏一局得10分。分數會累計到總分數中。</p>
+          `
+        );
+
+        // 遊戲常量
+        const BOARD_SIZE = 15; // 15x15 的棋盤
+        const CELL_SIZE = 40; // 每個格子 40px
+        const BLACK = 1;
+        const WHITE = 2;
+        const EMPTY = 0;
+
+        // 遊戲變數
+        let board = [];
+        let currentPlayer = BLACK; // 黑方先行
+        let gameActive = true;
+        let gameMode = "human"; // "human" 或 "ai"
+        let moveHistory = [];
+        let lastMove = null;
+        let winningPieces = [];
+        let player1Score = 0;
+        let player2Score = 0;
+
+        // 初始化遊戲
+        function initGame() {
+          // 重置棋盤
+          resetBoard();
+
+          // 重置分數
+          scoreManager.reset();
+
+          // 重置玩家分數
+          player1Score = 0;
+          player2Score = 0;
+          player1ScoreElement.textContent = "0";
+          player2ScoreElement.textContent = "0";
+
+          // 更新玩家顯示
+          updatePlayerInfo();
+
+          // 設置遊戲循環
+          gameController.setGameLoop(() => {
+            // 在五子棋遊戲中，主要是基於事件操作，所以循環中不需要做太多
+          });
+
+          // 開始遊戲循環
+          gameController.startGameLoop();
+        }
+
+        // 初始化棋盤
+        function initBoard() {
+          // 清空棋盤元素
+          gomokuBoard.innerHTML = "";
+
+          // 設置棋盤大小
+          gomokuBoard.style.backgroundSize = `${CELL_SIZE}px ${CELL_SIZE}px`;
+
+          // 創建棋盤網格
+          const gridLines = document.createElement("div");
+          gridLines.className = "grid-lines";
+
+          // 添加網格線
+          for (let i = 0; i < BOARD_SIZE; i++) {
+            // 水平線
+            const horizontalLine = document.createElement("div");
+            horizontalLine.style.position = "absolute";
+            horizontalLine.style.height = "1px";
+            horizontalLine.style.width = "100%";
+            horizontalLine.style.backgroundColor = "#000";
+            horizontalLine.style.top = `${i * CELL_SIZE + CELL_SIZE / 2}px`;
+            horizontalLine.style.left = "0";
+            horizontalLine.style.zIndex = "2";
+            gridLines.appendChild(horizontalLine);
+
+            // 垂直線
+            const verticalLine = document.createElement("div");
+            verticalLine.style.position = "absolute";
+            verticalLine.style.width = "1px";
+            verticalLine.style.height = "100%";
+            verticalLine.style.backgroundColor = "#000";
+            verticalLine.style.left = `${i * CELL_SIZE + CELL_SIZE / 2}px`;
+            verticalLine.style.top = "0";
+            verticalLine.style.zIndex = "2";
+            gridLines.appendChild(verticalLine);
+          }
+
+          gomokuBoard.appendChild(gridLines);
+
+          // 添加星位點
+          const starPoints = [
+            { x: 3, y: 3 },
+            { x: 3, y: 11 },
+            { x: 7, y: 7 },
+            { x: 11, y: 3 },
+            { x: 11, y: 11 },
+          ];
+
+          starPoints.forEach((point) => {
+            const star = document.createElement("div");
+            star.className = "star-point";
+            star.style.left = `${point.x * CELL_SIZE + CELL_SIZE / 2}px`;
+            star.style.top = `${point.y * CELL_SIZE + CELL_SIZE / 2}px`;
+            gomokuBoard.appendChild(star);
+          });
+
+          // 添加點擊事件
+          gomokuBoard.addEventListener("click", handleBoardClick);
+        }
+
+        // 重置棋盤
+        function resetBoard() {
+          // 初始化數組
+          board = Array(BOARD_SIZE)
+            .fill()
+            .map(() => Array(BOARD_SIZE).fill(EMPTY));
+          currentPlayer = BLACK; // 黑方先行
+          gameActive = true;
+          moveHistory = [];
+          lastMove = null;
+          winningPieces = [];
+
+          // 初始化棋盤 UI
+          initBoard();
+
+          // 更新玩家顯示
+          updatePlayerInfo();
+        }
+
+        // 處理棋盤點擊
+        function handleBoardClick(e) {
+          if (!gameActive || gameController.paused) return;
+
+          // 計算點擊位置對應的棋盤座標
+          const rect = gomokuBoard.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          // 轉換為棋盤索引
+          const col = Math.round((x - CELL_SIZE / 2) / CELL_SIZE);
+          const row = Math.round((y - CELL_SIZE / 2) / CELL_SIZE);
+
+          // 檢查有效範圍
+          if (col < 0 || col >= BOARD_SIZE || row < 0 || row >= BOARD_SIZE) {
+            return;
+          }
+
+          // 如果該位置已經有棋子，不做任何操作
+          if (board[row][col] !== EMPTY) {
+            return;
+          }
+
+          // 放置棋子
+          placePiece(row, col);
+
+          // 如果是 AI 模式並且玩家是黑方
+          if (gameMode === "ai" && currentPlayer === WHITE && gameActive) {
+            setTimeout(() => {
+              makeAIMove();
+            }, 500);
+          }
+        }
+
+        // 放置棋子
+        function placePiece(row, col) {
+          // 更新棋盤數組
+          board[row][col] = currentPlayer;
+
+          // 記錄移動歷史
+          moveHistory.push({ row, col, player: currentPlayer });
+
+          // 更新最後一步
+          if (lastMove) {
+            const lastPiece = document.querySelector(".last-move");
+            if (lastPiece) {
+              lastPiece.classList.remove("last-move");
+            }
+          }
+          lastMove = { row, col };
+
+          // 創建棋子元素
+          const piece = document.createElement("div");
+          piece.className = `piece ${
+            currentPlayer === BLACK ? "black-piece" : "white-piece"
+          } last-move`;
+          piece.style.top = `${row * CELL_SIZE + CELL_SIZE / 2}px`;
+          piece.style.left = `${col * CELL_SIZE + CELL_SIZE / 2}px`;
+          piece.dataset.row = row;
+          piece.dataset.col = col;
+
+          gomokuBoard.appendChild(piece);
+
+          // 檢查是否獲勝
+          if (checkWin(row, col)) {
+            handleWin();
+          } else {
+            // 切換玩家
+            currentPlayer = currentPlayer === BLACK ? WHITE : BLACK;
+            updatePlayerInfo();
+          }
+        }
+
+        // 檢查勝利條件
+        function checkWin(row, col) {
+          const directions = [
+            { dr: 0, dc: 1 }, // 水平
+            { dr: 1, dc: 0 }, // 垂直
+            { dr: 1, dc: 1 }, // 對角線 (左上到右下)
+            { dr: 1, dc: -1 }, // 對角線 (右上到左下)
+          ];
+
+          const player = board[row][col];
+
+          for (const dir of directions) {
+            let count = 1; // 包括當前位置
+            const pieces = [{ row, col }];
+
+            // 檢查兩個方向
+            for (let i = 1; i <= 4; i++) {
+              const r1 = row + dir.dr * i;
+              const c1 = col + dir.dc * i;
+              if (
+                r1 >= 0 &&
+                r1 < BOARD_SIZE &&
+                c1 >= 0 &&
+                c1 < BOARD_SIZE &&
+                board[r1][c1] === player
+              ) {
+                count++;
+                pieces.push({ row: r1, col: c1 });
+              } else {
+                break;
+              }
+            }
+
+            for (let i = 1; i <= 4; i++) {
+              const r2 = row - dir.dr * i;
+              const c2 = col - dir.dc * i;
+              if (
+                r2 >= 0 &&
+                r2 < BOARD_SIZE &&
+                c2 >= 0 &&
+                c2 < BOARD_SIZE &&
+                board[r2][c2] === player
+              ) {
+                count++;
+                pieces.push({ row: r2, col: c2 });
+              } else {
+                break;
+              }
+            }
+
+            if (count >= 5) {
+              winningPieces = pieces;
+              return true;
+            }
+          }
+
+          return false;
+        }
+
+        // 處理獲勝
+        function handleWin() {
+          gameActive = false;
+
+          // 高亮顯示獲勝的五子
+          for (const piece of winningPieces) {
+            const pieceElement = getPieceElement(piece.row, piece.col);
+            if (pieceElement) {
+              pieceElement.classList.add("winning-piece");
+            }
+          }
+
+          // 更新分數
+          if (currentPlayer === BLACK) {
+            player1Score += 10;
+            player1ScoreElement.textContent = player1Score;
+            scoreManager.add(10);
+          } else {
+            player2Score += 10;
+            player2ScoreElement.textContent = player2Score;
+            scoreManager.add(10);
+          }
+
+          // 顯示獲勝訊息
+          setTimeout(() => {
+            gameController.showMessage(
+              `${currentPlayer === BLACK ? "黑方" : "白方"}獲勝！`,
+              `
+                <p>${
+                  currentPlayer === BLACK
+                    ? "玩家 1 (黑)"
+                    : currentPlayer === WHITE && gameMode === "human"
+                    ? "玩家 2 (白)"
+                    : "電腦 (白)"
+                }獲勝！</p>
+                <p>獲得 10 分！</p>
+                <button id="newGameBtn" class="primary-button">開始新一局</button>
+              `
+            );
+
+            setTimeout(() => {
+              document
+                .getElementById("newGameBtn")
+                .addEventListener("click", () => {
+                  gameController.hideMessage();
+                  resetBoard();
+                });
+            }, 100);
+          }, 1000);
+        }
+
+        // 更新玩家信息顯示
+        function updatePlayerInfo() {
+          player1Info.classList.toggle("active", currentPlayer === BLACK);
+          player2Info.classList.toggle("active", currentPlayer === WHITE);
+
+          // 更新玩家 2 的標籤
+          const player2Label = player2Info.querySelector(".player-label");
+          player2Label.textContent =
+            gameMode === "human" ? "玩家 2 (白)" : "電腦 (白)";
+        }
+
+        // 獲取指定座標的棋子元素
+        function getPieceElement(row, col) {
+          const pieces = document.querySelectorAll(".piece");
+          for (const piece of pieces) {
+            if (
+              parseInt(piece.dataset.row) === row &&
+              parseInt(piece.dataset.col) === col
+            ) {
+              return piece;
+            }
+          }
+          return null;
+        }
+
+        // 悔棋功能
+        function undoLastMove() {
+          if (!gameActive || moveHistory.length === 0) return;
+
+          // 從歷史記錄中取出最後一步
+          const lastMove = moveHistory.pop();
+          board[lastMove.row][lastMove.col] = EMPTY;
+
+          // 移除對應的棋子元素
+          const pieceElement = getPieceElement(lastMove.row, lastMove.col);
+          if (pieceElement) {
+            pieceElement.remove();
+          }
+
+          // 切換玩家
+          currentPlayer = lastMove.player;
+          updatePlayerInfo();
+
+          // 更新最後一步標記
+          const previousMove = moveHistory[moveHistory.length - 1];
+          if (previousMove) {
+            const previousPiece = getPieceElement(
+              previousMove.row,
+              previousMove.col
+            );
+            if (previousPiece) {
+              previousPiece.classList.add("last-move");
+            }
+          }
+
+          // 如果是 AI 模式，需要再悔一步
+          if (
+            gameMode === "ai" &&
+            moveHistory.length > 0 &&
+            currentPlayer === WHITE
+          ) {
+            undoLastMove();
+          }
+        } // 改進的AI移動策略
+        function makeAIMove() {
+          if (!gameActive) return;
+
+          // 更平衡的AI邏輯：根據棋盤形勢調整策略
+          let bestScore = -Infinity;
+          let move = { row: -1, col: -1 };
+          let goodMoves = []; // 收集所有不錯的移動選擇
+
+          // 計算當前棋盤上的棋子數量，用於調整AI策略
+          let pieceCount = 0;
+          let blackPieces = 0;
+          let whitePieces = 0;
+
+          for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+              if (board[r][c] === BLACK) {
+                pieceCount++;
+                blackPieces++;
+              } else if (board[r][c] === WHITE) {
+                pieceCount++;
+                whitePieces++;
+              }
+            }
+          }
+
+          // 如果是空棋盤，AI首步選擇更加多樣化
+          if (pieceCount === 0) {
+            // 棋盤中央及其周圍星位
+            const starPositions = [
+              { row: 7, col: 7 }, // 中心點
+              { row: 3, col: 3 }, // 左上星位
+              { row: 3, col: 11 }, // 右上星位
+              { row: 11, col: 3 }, // 左下星位
+              { row: 11, col: 11 }, // 右下星位
+            ];
+
+            // 75%機率下在正中央，25%機率選擇星位
+            if (Math.random() < 0.75) {
+              move = starPositions[0]; // 中心位置
+            } else {
+              // 在星位中隨機選擇
+              const starIndex = Math.floor(Math.random() * 4) + 1;
+              move = starPositions[starIndex];
+            }
+
+            placePiece(move.row, move.col);
+            return;
+          }
+
+          // 如果棋盤開局階段 (少於10個棋子)
+          const isOpeningPhase = pieceCount < 10;
+
+          // 設置考慮範圍 - 只考慮已有棋子周圍的位置，提高效率
+          const considerDistanceInOpening = 3; // 開局階段考慮更大範圍
+          const considerDistance = isOpeningPhase
+            ? considerDistanceInOpening
+            : 2;
+
+          // 創建一個遍歷優先級地圖，避免掃描整個棋盤
+          const shouldConsider = Array(BOARD_SIZE)
+            .fill()
+            .map(() => Array(BOARD_SIZE).fill(false));
+
+          // 標記所有已有棋子周圍的位置為"應考慮"
+          for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+              if (board[r][c] !== EMPTY) {
+                // 標記這個棋子周圍的位置
+                for (let dr = -considerDistance; dr <= considerDistance; dr++) {
+                  for (
+                    let dc = -considerDistance;
+                    dc <= considerDistance;
+                    dc++
+                  ) {
+                    const nr = r + dr;
+                    const nc = c + dc;
+                    if (
+                      nr >= 0 &&
+                      nr < BOARD_SIZE &&
+                      nc >= 0 &&
+                      nc < BOARD_SIZE
+                    ) {
+                      shouldConsider[nr][nc] = true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          // 只遍歷標記為"應考慮"的空格
+          for (let row = 0; row < BOARD_SIZE; row++) {
+            for (let col = 0; col < BOARD_SIZE; col++) {
+              if (board[row][col] === EMPTY && shouldConsider[row][col]) {
+                // 臨時放置棋子
+                board[row][col] = WHITE;
+
+                // 評估位置
+                const score = evaluatePosition(row, col);
+
+                // 添加一些基於棋盤位置的啟發式評分調整
+                const positionBonus = getPositionBonus(
+                  row,
+                  col,
+                  isOpeningPhase
+                );
+
+                // 加入隨機因素，使AI變得不太完美
+                const randomFactor = Math.random() * 100;
+                const finalScore = score + positionBonus + randomFactor;
+
+                // 復原
+                board[row][col] = EMPTY;
+
+                // 收集所有不錯的移動，包含較低分數的也保留一些
+                if (score > 200) {
+                  goodMoves.push({ row, col, score: finalScore });
+                }
+
+                // 記錄最佳分數
+                if (finalScore > bestScore) {
+                  bestScore = finalScore;
+                  move = { row, col };
+                }
+              }
+            }
+          }
+
+          // 根據棋局階段調整隨機性
+          // 開局更隨機，中盤更有策略性，殘局更精確
+          let randomChance;
+          if (pieceCount < 10) {
+            randomChance = 0.4; // 開局階段高隨機性
+          } else if (pieceCount < 30) {
+            randomChance = 0.25; // 中局適中隨機性
+          } else {
+            randomChance = 0.15; // 殘局低隨機性，更精確
+          }
+
+          // 從較好的移動中隨機選擇一個
+          if (goodMoves.length > 0 && Math.random() < randomChance) {
+            // 排序好的移動，但加入隨機因子，不總是選最高分的
+            goodMoves.sort((a, b) => {
+              // 比分數越高的移動被選中機會越大，但保留隨機性
+              const aWeight = a.score + Math.random() * 300;
+              const bWeight = b.score + Math.random() * 300;
+              return bWeight - aWeight;
+            });
+
+            // 從前三個(如果有)選擇一個
+            const selectRange = Math.min(3, goodMoves.length);
+            const selectedIndex = Math.floor(Math.random() * selectRange);
+            move = {
+              row: goodMoves[selectedIndex].row,
+              col: goodMoves[selectedIndex].col,
+            };
+          }
+
+          // 執行��佳移動
+          if (move.row !== -1 && move.col !== -1) {
+            placePiece(move.row, move.col);
+          }
+        }
+
+        // 基於棋盤位置提供額外分數
+        function getPositionBonus(row, col, isOpeningPhase) {
+          const center = 7; // 15x15棋盤的中心位置
+          const distFromCenter = Math.sqrt(
+            Math.pow(row - center, 2) + Math.pow(col - center, 2)
+          );
+
+          // 開局階段偏好中央位置
+          if (isOpeningPhase) {
+            // 距離中心越近分數越高，但不要過於集中
+            return Math.max(0, 80 - distFromCenter * 8);
+          } else {
+            // 中盤和殘局階段，對位置的偏好較小
+            return Math.max(0, 40 - distFromCenter * 4);
+          }
+        } // 改進的位置評估算法
+        function evaluatePosition(row, col) {
+          // 如果這一步能贏，給最高分
+          if (checkWin(row, col)) {
+            return 10000;
+          }
+
+          // 恢復原狀以進行進一步檢查
+          board[row][col] = EMPTY;
+
+          // 檢查如果放黑子，是否會贏
+          board[row][col] = BLACK;
+          if (checkWin(row, col)) {
+            board[row][col] = WHITE;
+            return 5000; // 阻止對手獲勝的位置
+          }
+
+          // 恢復原狀
+          board[row][col] = WHITE;
+
+          // 計算方向得分
+          const directions = [
+            { dr: 0, dc: 1 }, // 水平
+            { dr: 1, dc: 0 }, // 垂直
+            { dr: 1, dc: 1 }, // 對角線 (左上到右下)
+            { dr: 1, dc: -1 }, // 對角線 (右上到左下)
+          ];
+
+          let totalScore = 0;
+          let patternScores = []; // 存儲各方向的模式評分
+
+          for (const dir of directions) {
+            // 檢查兩個方向的空間，構建完整的五子棋模式
+            const pattern = getLinePattern(row, col, dir.dr, dir.dc);
+            const patternScore = evaluatePattern(pattern);
+            patternScores.push(patternScore);
+
+            totalScore += patternScore;
+          }
+
+          // 強化模式組合評估 - 如果在多個方向都有威脅
+          // 例如，同時有兩個方向形成活三，或一個活三一個衝四，比單一方向更有價值
+          if (patternScores.filter((score) => score >= 1000).length >= 2) {
+            totalScore += 1500; // 獎勵多方向威脅
+          }
+
+          // 考慮阻止對手的連線
+          board[row][col] = BLACK;
+          let opponentScore = evaluateOpponentThreat(row, col);
+          board[row][col] = WHITE;
+
+          // 加強防守權重，使AI更謹慎
+          totalScore += opponentScore * 1.2;
+
+          // 考慮棋盤中心位置的優勢，但權重較小
+          const centerX = 7;
+          const centerY = 7;
+          const distanceToCenter = Math.sqrt(
+            Math.pow(row - centerX, 2) + Math.pow(col - centerY, 2)
+          );
+          const maxDistance = Math.sqrt(Math.pow(BOARD_SIZE - 1, 2) * 2);
+          const centerBonus = 30 * (1 - distanceToCenter / maxDistance);
+          totalScore += centerBonus;
+
+          return totalScore;
+        }
+
+        // 獲取一條線上的棋型模式
+        function getLinePattern(row, col, dr, dc) {
+          // 創建一個表示當前位置及周圍共9格的棋型字符串
+          // W = 白子(AI), B = 黑子(玩家), E = 空格, O = 邊界外
+          let pattern = "";
+
+          // 檢查白子(負方向4格到正方向4格)
+          for (let i = -4; i <= 4; i++) {
+            const r = row + i * dr;
+            const c = col + i * dc;
+
+            if (r < 0 || r >= BOARD_SIZE || c < 0 || c >= BOARD_SIZE) {
+              pattern += "O"; // 邊界外
+            } else if (i === 0) {
+              pattern += "W"; // 當前位置(假設是白子)
+            } else if (board[r][c] === WHITE) {
+              pattern += "W";
+            } else if (board[r][c] === BLACK) {
+              pattern += "B";
+            } else {
+              pattern += "E";
+            }
+          }
+
+          return pattern;
+        }
+
+        // 評估棋型模式的得分
+        function evaluatePattern(pattern) {
+          // 常見的五子棋棋型及其得分
+          // 五連 - WWWWW
+          if (pattern.includes("WWWWW")) return 10000;
+
+          // 活四 - EWWWWE
+          if (pattern.includes("EWWWWE")) return 2500;
+
+          // 衝四 - 一端被封，如 BWWWWE 或 EWWWWB
+          if (
+            pattern.includes("BWWWWE") ||
+            pattern.includes("EWWWWB") ||
+            pattern.includes("EWWWEW") ||
+            pattern.includes("WEWWWE")
+          )
+            return 2000;
+
+          // 活三 - EWWWE 且周圍至少一格為空
+          if (pattern.includes("EWWWE")) {
+            // 檢查是否能形成活四
+            const idx = pattern.indexOf("EWWWE");
+            if (
+              (idx > 0 && pattern[idx - 1] === "E") ||
+              (idx + 5 < pattern.length && pattern[idx + 5] === "E")
+            ) {
+              return 1000;
+            }
+          }
+
+          // 眠三 - 被封住一端的三連，如 BWWWE
+          if (
+            pattern.includes("BWWWE") ||
+            pattern.includes("EWWWB") ||
+            pattern.includes("EWEWWE") ||
+            pattern.includes("EWWEW")
+          )
+            return 500;
+
+          // 活二 - 兩邊都開的二連，如 EWWE
+          if (
+            pattern.includes("EWWE") &&
+            (pattern.includes("EEWWE") || pattern.includes("EWWEE"))
+          )
+            return 200;
+
+          // 眠二 - 一端被封的二連，如 BWWE
+          if (pattern.includes("BWWE") || pattern.includes("EWWB")) return 50;
+
+          // 單子加小分
+          if (pattern.includes("EWE")) return 10;
+
+          return 1; // 基本分
+        } // 增強型對手威脅評估
+        function evaluateOpponentThreat(row, col) {
+          const directions = [
+            { dr: 0, dc: 1 }, // 水平
+            { dr: 1, dc: 0 }, // 垂直
+            { dr: 1, dc: 1 }, // 對角線 (左上到右下)
+            { dr: 1, dc: -1 }, // 對角線 (右上到左下)
+          ];
+
+          let maxThreat = 0;
+          let threatCount = 0; // 計算威脅的數量
+          let patterns = []; // 記錄所有找到的威脅模式
+
+          for (const dir of directions) {
+            // 檢查這個位置的黑子模式
+            const pattern = getLinePattern(row, col, dir.dr, dir.dc)
+              .replace(/W/g, "B")
+              .replace(/B/g, "W");
+            const threatLevel = evaluateOpponentPattern(pattern);
+
+            patterns.push({ pattern, threatLevel });
+
+            if (threatLevel > 0) {
+              threatCount++;
+            }
+
+            maxThreat = Math.max(maxThreat, threatLevel);
+          }
+
+          // 多重威脅加成 - 如果有多個方向都有威脅，總分提高
+          if (threatCount >= 2) {
+            // 查找所有中高威脅等級
+            const highThreats = patterns.filter(
+              (p) => p.threatLevel >= 1000
+            ).length;
+            const mediumThreats = patterns.filter(
+              (p) => p.threatLevel >= 500 && p.threatLevel < 1000
+            ).length;
+
+            // 如果有多個高級威脅，增加分數
+            if (highThreats >= 2) {
+              maxThreat += 2000; // 雙活三/衝四等強力威脅
+            }
+            // 如果有高+中級威脅
+            else if (highThreats >= 1 && mediumThreats >= 1) {
+              maxThreat += 1000;
+            }
+            // 多個中級威脅
+            else if (mediumThreats >= 2) {
+              maxThreat += 600;
+            }
+          }
+
+          return maxThreat;
+        }
+
+        // 評估對手(黑子)的棋型模式
+        function evaluateOpponentPattern(pattern) {
+          // 五連
+          if (pattern.includes("BBBBB")) return 6000; // 極高優先級
+
+          // 活四 (下一步就贏)
+          if (pattern.includes("EBBBBE")) return 5000;
+
+          // 衝四
+          if (
+            pattern.includes("WBBBBE") ||
+            pattern.includes("EBBBW") ||
+            pattern.includes("EBBEB") ||
+            pattern.includes("BEBBB")
+          )
+            return 3000;
+
+          // 活三
+          if (pattern.includes("EBBBE")) {
+            // 檢查是否能形成活四
+            const idx = pattern.indexOf("EBBBE");
+            if (
+              (idx > 0 && pattern[idx - 1] === "E") ||
+              (idx + 5 < pattern.length && pattern[idx + 5] === "E")
+            ) {
+              return 1500;
+            }
+            return 1000;
+          }
+
+          // 眠三 (被堵住一邊)
+          if (
+            pattern.includes("WBBBE") ||
+            pattern.includes("EBBBW") ||
+            pattern.includes("EBEBBE") ||
+            pattern.includes("EBBEB")
+          )
+            return 500;
+
+          // 活二
+          if (
+            pattern.includes("EBBE") &&
+            (pattern.includes("EEBBE") || pattern.includes("EBBEE"))
+          )
+            return 300;
+
+          // 眠二
+          if (pattern.includes("WBBE") || pattern.includes("EBBW")) return 100;
+
+          // 單子
+          if (pattern.includes("EBE")) return 10;
+
+          return 0; // 無威脅
+        }
+
+        // 設置遊戲模式
+        function setGameMode(mode) {
+          gameMode = mode;
+
+          // 更新按鈕樣式
+          modeHumanBtn.classList.toggle("active", mode === "human");
+          modeAIBtn.classList.toggle("active", mode === "ai");
+
+          // 重置棋盤
+          resetBoard();
+
+          // 如果是 AI 模式且 AI 先行，則 AI 下第一步
+          if (gameMode === "ai" && currentPlayer === WHITE) {
+            setTimeout(() => {
+              makeAIMove();
+            }, 500);
+          }
+        }
+
+        // 註冊按鈕事件
+        modeHumanBtn.addEventListener("click", () => setGameMode("human"));
+        modeAIBtn.addEventListener("click", () => setGameMode("ai"));
+        undoMoveBtn.addEventListener("click", undoLastMove);
+        resetBoardBtn.addEventListener("click", resetBoard);
+
+        // 設置重啟處理器
+        gameController.setRestartHandler(() => {
+          initGame();
+        });
+
+        // 顯示開始動畫然後初始化遊戲
+        gameController.showStartAnimation(() => {
+          initGame();
+        });
+      });
+    </script>
+  </body>
+</html>
