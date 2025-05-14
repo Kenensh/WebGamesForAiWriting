@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>數獨遊戲 - 網頁小遊戲</title>
+    <meta name="game-id" content="sudoku-game" />
+    <meta name="game-name" content="數獨遊戲" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .sudoku-container {
+        max-width: 600px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .game-controls {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .difficulty-control {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .sudoku-board {
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        grid-gap: 1px;
+        padding: 3px;
+        background-color: #888;
+        border: 3px solid #333;
+        max-width: 90vw;
+        max-height: 90vw;
+      }
+
+      .sudoku-cell {
+        width: calc(min(60px, 10vw));
+        height: calc(min(60px, 10vw));
+        background-color: #f9f9f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: calc(min(24px, 5vw));
+        font-weight: 700;
+        cursor: pointer;
+        position: relative;
+        user-select: none;
+      }
+
+      .sudoku-cell:hover {
+        background-color: #f0f0f0;
+      }
+
+      .sudoku-cell.selected {
+        background-color: #d4e8ff;
+        box-shadow: 0 0 8px rgba(0, 100, 255, 0.5) inset;
+      }
+
+      .sudoku-cell.same-value {
+        background-color: #e8f0ff;
+      }
+
+      .sudoku-cell.fixed {
+        color: #333;
+      }
+
+      .sudoku-cell.editable {
+        color: #2970e6;
+      }
+
+      .sudoku-cell.error {
+        color: #e63946;
+      }
+
+      /* 粗邊框分隔3x3區塊 */
+      .sudoku-cell:nth-child(9n + 1),
+      .sudoku-cell:nth-child(9n + 2),
+      .sudoku-cell:nth-child(9n + 3) {
+        border-left: 1px solid #ccc;
+      }
+
+      .sudoku-cell:nth-child(9n + 4),
+      .sudoku-cell:nth-child(9n + 5),
+      .sudoku-cell:nth-child(9n + 6) {
+        border-left: 1px solid #ccc;
+      }
+
+      .sudoku-cell:nth-child(9n + 7),
+      .sudoku-cell:nth-child(9n + 8),
+      .sudoku-cell:nth-child(9n) {
+        border-left: 1px solid #ccc;
+      }
+
+      /* 加粗的垂直分隔線 */
+      .sudoku-cell:nth-child(9n + 1),
+      .sudoku-cell:nth-child(9n + 4),
+      .sudoku-cell:nth-child(9n + 7) {
+        border-left: 2px solid #333;
+      }
+
+      /* 加粗的水平分隔線 */
+      .sudoku-cell:nth-child(-n + 9),
+      .sudoku-cell:nth-child(n + 19):nth-child(-n + 27),
+      .sudoku-cell:nth-child(n + 46):nth-child(-n + 54) {
+        border-top: 2px solid #333;
+      }
+
+      .sudoku-cell:nth-child(n + 73):nth-child(-n + 81) {
+        border-bottom: 2px solid #333;
+      }
+
+      /* 數字鍵盤 */
+      .number-keyboard {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 5px;
+        margin-top: 20px;
+        width: 100%;
+        max-width: 400px;
+      }
+
+      .number-key {
+        padding: 12px 0;
+        font-size: 18px;
+        font-weight: bold;
+        background-color: #f0f0f0;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        cursor: pointer;
+        text-align: center;
+      }
+
+      .number-key:hover {
+        background-color: #e0e0e0;
+      }
+
+      .note-mode {
+        background-color: #fff0d4;
+      }
+
+      .note-mode:hover {
+        background-color: #ffe8b3;
+      }
+
+      .note-mode.active {
+        background-color: #ffd87c;
+      }
+
+      .erase-key {
+        background-color: #ffe0e0;
+      }
+
+      .erase-key:hover {
+        background-color: #ffd0d0;
+      }
+
+      .hint-key {
+        background-color: #e0f0ff;
+      }
+
+      .hint-key:hover {
+        background-color: #d0e5ff;
+      }
+
+      /* 筆記樣式 */
+      .cell-notes {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        padding: 2px;
+      }
+
+      .note-digit {
+        font-size: calc(min(10px, 2vw));
+        color: #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* 遊戲計時和難度 */
+      .game-info {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 500px;
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .timer-display,
+      .difficulty-display,
+      .mistakes-display {
+        flex: 1;
+        padding: 0 10px;
+      }
+
+      .timer-display span,
+      .difficulty-display span,
+      .mistakes-display span {
+        font-weight: bold;
+        color: #333;
+      }
+
+      .difficulty-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        justify-content: center;
+      }
+
+      .difficulty-button {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        background-color: #f0f0f0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .difficulty-button:hover {
+        background-color: #e0e0e0;
+      }
+
+      .difficulty-button.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      @media (max-width: 480px) {
+        .game-info {
+          flex-direction: column;
+          gap: 5px;
+        }
+
+        .number-keyboard {
+          grid-template-columns: repeat(5, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>數獨遊戲</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="score-display">分數: <span id="scoreValue">0</span></div>
+
+      <div class="sudoku-container">
+        <div class="difficulty-selector">
+          <button id="easyBtn" class="difficulty-button">簡單</button>
+          <button id="mediumBtn" class="difficulty-button active">中等</button>
+          <button id="hardBtn" class="difficulty-button">困難</button>
+        </div>
+
+        <div class="sudoku-board" id="sudokuBoard">
+          <!-- 動態生成數獨棋盤 -->
+        </div>
+
+        <div class="number-keyboard" id="numberKeyboard">
+          <!-- 動態生成數字鍵盤 -->
+        </div>
+
+        <div class="game-info">
+          <div class="timer-display">時間: <span id="timer">00:00</span></div>
+          <div class="difficulty-display">
+            難度: <span id="difficultyDisplay">中等</span>
+          </div>
+          <div class="mistakes-display">
+            失誤: <span id="mistakesCount">0/3</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="gamePaused" class="game-paused">暫停中</div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "數獨遊戲 - 遊戲說明",
+          `
+            <h3>遊戲介紹：</h3>
+            <p>數獨是一種邏輯性數字放置遊戲。目標是在9×9的網格中填入數字1到9，使每行、每列和每個3×3子網格中都包含1到9的數字且不重複。</p>
+            
+            <h3>遊戲規則：</h3>
+            <ul>
+              <li>每一行必須包含1-9的數字，不能重複</li>
+              <li>每一列必須包含1-9的數字，不能重複</li>
+              <li>每一個3×3子網格必須包含1-9的數字，不能重複</li>
+              <li>遊戲開始時，部分格子已經填有數字</li>
+              <li>玩家需要根據已填數字的提示，填入剩餘格子的數字</li>
+            </ul>
+            
+            <h3>操作方法：</h3>
+            <ul>
+              <li>點擊一個空白格子選中它</li>
+              <li>使用下方數字鍵盤或鍵盤輸入數字</li>
+              <li>筆記模式下可在格子內標注多個可能的數字</li>
+              <li>每填錯三次就會遊戲結束</li>
+            </ul>
+            
+            <h3>遊戲難度：</h3>
+            <ul>
+              <li><strong>簡單</strong>：提供較多初始數字，適合初學者</li>
+              <li><strong>中等</strong>：提供適中數量的初始數字，需要一定邏輯推理</li>
+              <li><strong>困難</strong>：提供較少初始數字，需要複雜的邏輯推理技巧</li>
+            </ul>
+            
+            <h3>遊戲技巧：</h3>
+            <ul>
+              <li>查看每行、每列和每個3×3區塊中已有的數字，找出唯一可能的數字</li>
+              <li>使用筆記功能記錄每個格子可能的數字</li>
+              <li>關注只有一個或兩個可能位置的數字</li>
+              <li>排除法：如果一個數字在某行、列或區塊中只能放在一個位置，則該位置必須是該數字</li>
+            </ul>
+          `
+        );
+
+        // 初始化遊戲控制器
+        const gameController = new GameUtils.GameController();
+        const scoreManager = new GameUtils.ScoreManager("scoreValue");
+
+        // 遊戲變數
+        let selectedCell = null;
+        let mistakes = 0;
+        let isNoteMode = false;
+        let gameActive = true;
+        let hintsUsed = 0;
+        let timePlayed = 0;
+        let difficulty = "medium"; // 默認難度
+        let puzzleGrid = []; // 當前題目
+        let solutionGrid = []; // 完整解答
+        let userGrid = []; // 玩家輸入
+        let fixedCells = []; // 初始固定的格子
+        let notesGrid = Array(9)
+          .fill()
+          .map(() =>
+            Array(9)
+              .fill()
+              .map(() => Array(9).fill(false))
+          ); // 筆記
+
+        // 獲取DOM元素
+        const sudokuBoard = document.getElementById("sudokuBoard");
+        const numberKeyboard = document.getElementById("numberKeyboard");
+        const timerDisplay = document.getElementById("timer");
+        const mistakesDisplay = document.getElementById("mistakesCount");
+        const difficultyDisplay = document.getElementById("difficultyDisplay");
+        const easyBtn = document.getElementById("easyBtn");
+        const mediumBtn = document.getElementById("mediumBtn");
+        const hardBtn = document.getElementById("hardBtn");
+
+        // 計時器
+        let timerInterval;
+
+        // 初始化遊戲
+        function initGame() {
+          // 創建數獨棋盤
+          createSudokuBoard();
+
+          // 創建數字鍵盤
+          createNumberKeyboard();
+
+          // 生成數獨題目
+          generateSudoku();
+
+          // 開始計時
+          startTimer();
+
+          // 設置難度顯示
+          updateDifficultyDisplay();
+
+          // 重置分數
+          scoreManager.set(0);
+
+          // 重置失誤
+          mistakes = 0;
+          updateMistakesDisplay();
+        }
+
+        // 創建數獨棋盤
+        function createSudokuBoard() {
+          sudokuBoard.innerHTML = "";
+
+          // 創建81個格子 (9x9)
+          for (let i = 0; i < 81; i++) {
+            const cell = document.createElement("div");
+            cell.className = "sudoku-cell";
+            cell.dataset.index = i;
+
+            // 創建筆記容器
+            const notesContainer = document.createElement("div");
+            notesContainer.className = "cell-notes";
+
+            // 創建9個筆記格子 (3x3)
+            for (let j = 0; j < 9; j++) {
+              const noteDigit = document.createElement("div");
+              noteDigit.className = "note-digit";
+              noteDigit.dataset.digit = j + 1;
+              notesContainer.appendChild(noteDigit);
+            }
+
+            cell.appendChild(notesContainer);
+            sudokuBoard.appendChild(cell);
+
+            // 添加點擊事件
+            cell.addEventListener("click", function () {
+              if (!gameActive) return;
+
+              // 獲取格子的行列位置
+              const index = parseInt(this.dataset.index);
+              const row = Math.floor(index / 9);
+              const col = index % 9;
+
+              // 如果是固定格子，不可選中
+              if (fixedCells[row][col]) return;
+
+              // 移除之前選中的格子
+              if (selectedCell) {
+                selectedCell.classList.remove("selected");
+              }
+
+              // 移除所有相同數字的高亮
+              document.querySelectorAll(".same-value").forEach((cell) => {
+                cell.classList.remove("same-value");
+              });
+
+              // 設置新的選中格子
+              selectedCell = this;
+              this.classList.add("selected");
+
+              // 高亮相同數字的格子
+              const cellValue = userGrid[row][col];
+              if (cellValue > 0) {
+                highlightSameValue(cellValue);
+              }
+            });
+          }
+        }
+
+        // 創建數字鍵盤
+        function createNumberKeyboard() {
+          numberKeyboard.innerHTML = "";
+
+          // 添加數字按鈕1-9
+          for (let i = 1; i <= 9; i++) {
+            const key = document.createElement("div");
+            key.className = "number-key";
+            key.textContent = i;
+
+            key.addEventListener("click", function () {
+              if (!gameActive) return;
+
+              // 如果沒有選中格子，返回
+              if (!selectedCell) return;
+
+              const index = parseInt(selectedCell.dataset.index);
+              const row = Math.floor(index / 9);
+              const col = index % 9;
+
+              // 筆記模式
+              if (isNoteMode) {
+                toggleNote(row, col, i);
+              } else {
+                // 普通模式 - 輸入數字
+                inputNumber(row, col, i);
+              }
+            });
+
+            numberKeyboard.appendChild(key);
+          }
+
+          // 添加筆記模式按鈕
+          const noteKey = document.createElement("div");
+          noteKey.className = "number-key note-mode";
+          noteKey.textContent = "筆記";
+          noteKey.addEventListener("click", function () {
+            isNoteMode = !isNoteMode;
+            this.classList.toggle("active", isNoteMode);
+          });
+          numberKeyboard.appendChild(noteKey);
+
+          // 添加擦除按鈕
+          const eraseKey = document.createElement("div");
+          eraseKey.className = "number-key erase-key";
+          eraseKey.textContent = "擦除";
+          eraseKey.addEventListener("click", function () {
+            if (!gameActive) return;
+
+            // 如果沒有選中格子，返回
+            if (!selectedCell) return;
+
+            const index = parseInt(selectedCell.dataset.index);
+            const row = Math.floor(index / 9);
+            const col = index % 9;
+
+            // 清除數字
+            userGrid[row][col] = 0;
+            selectedCell.textContent = "";
+            selectedCell.classList.remove("error");
+            selectedCell.classList.add("editable");
+
+            // 清除筆記
+            clearNotes(row, col);
+
+            // 移除相同數字的高亮
+            document.querySelectorAll(".same-value").forEach((cell) => {
+              cell.classList.remove("same-value");
+            });
+          });
+          numberKeyboard.appendChild(eraseKey);
+
+          // 添加提示按鈕
+          const hintKey = document.createElement("div");
+          hintKey.className = "number-key hint-key";
+          hintKey.textContent = "提示";
+          hintKey.addEventListener("click", function () {
+            if (!gameActive) return;
+
+            // 如果沒有選中格子，返回
+            if (!selectedCell) return;
+
+            const index = parseInt(selectedCell.dataset.index);
+            const row = Math.floor(index / 9);
+            const col = index % 9;
+
+            // 如果是固定格子或已填正確，不給提示
+            if (
+              fixedCells[row][col] ||
+              userGrid[row][col] === solutionGrid[row][col]
+            )
+              return;
+
+            // 給出提示 (填入正確答案)
+            userGrid[row][col] = solutionGrid[row][col];
+            selectedCell.textContent = solutionGrid[row][col];
+            selectedCell.classList.remove("error");
+            selectedCell.classList.add("editable");
+
+            // 清除筆記
+            clearNotes(row, col);
+
+            // 減少分數
+            scoreManager.subtract(5);
+
+            // 記錄使用提示
+            hintsUsed++;
+
+            // 高亮相同數字
+            highlightSameValue(solutionGrid[row][col]);
+
+            // 檢查是否完成
+            if (checkCompletion()) {
+              gameComplete();
+            }
+          });
+          numberKeyboard.appendChild(hintKey);
+        }
+
+        // 輸入數字
+        function inputNumber(row, col, num) {
+          // 檢查數字是否正確
+          if (solutionGrid[row][col] === num) {
+            // 正確答案
+            userGrid[row][col] = num;
+            selectedCell.textContent = num;
+            selectedCell.classList.remove("error");
+            selectedCell.classList.add("editable");
+
+            // 清除筆記
+            clearNotes(row, col);
+
+            // 高亮相同數字
+            highlightSameValue(num);
+
+            // 加分
+            scoreManager.add(10);
+
+            // 檢查是否完成
+            if (checkCompletion()) {
+              gameComplete();
+            }
+          } else {
+            // 錯誤答案
+            selectedCell.classList.add("error");
+            mistakes++;
+            updateMistakesDisplay();
+
+            // 減分
+            scoreManager.subtract(5);
+
+            // 檢查失誤次數
+            if (mistakes >= 3) {
+              gameOver();
+            }
+          }
+        }
+
+        // 切換筆記
+        function toggleNote(row, col, num) {
+          const noteIndex = num - 1;
+
+          // 切換筆記狀態
+          notesGrid[row][col][noteIndex] = !notesGrid[row][col][noteIndex];
+
+          // 更新筆記顯示
+          updateNoteDisplay(row, col);
+        }
+
+        // 清除筆記
+        function clearNotes(row, col) {
+          notesGrid[row][col] = Array(9).fill(false);
+          updateNoteDisplay(row, col);
+        }
+
+        // 更新筆記顯示
+        function updateNoteDisplay(row, col) {
+          const index = row * 9 + col;
+          const cell = document.querySelector(
+            `.sudoku-cell[data-index="${index}"]`
+          );
+          const noteDigits = cell.querySelectorAll(".note-digit");
+
+          for (let i = 0; i < 9; i++) {
+            if (notesGrid[row][col][i]) {
+              noteDigits[i].textContent = i + 1;
+            } else {
+              noteDigits[i].textContent = "";
+            }
+          }
+        }
+
+        // 高亮相同數字的格子
+        function highlightSameValue(value) {
+          if (!value) return;
+
+          for (let i = 0; i < 9; i++) {
+            for (let j = 0; j < 9; j++) {
+              if (userGrid[i][j] === value) {
+                const index = i * 9 + j;
+                const cell = document.querySelector(
+                  `.sudoku-cell[data-index="${index}"]`
+                );
+                cell.classList.add("same-value");
+              }
+            }
+          }
+        }
+
+        // 生成數獨
+        function generateSudoku() {
+          // 清空之前的遊戲數據
+          puzzleGrid = Array(9)
+            .fill()
+            .map(() => Array(9).fill(0));
+          solutionGrid = Array(9)
+            .fill()
+            .map(() => Array(9).fill(0));
+          userGrid = Array(9)
+            .fill()
+            .map(() => Array(9).fill(0));
+          fixedCells = Array(9)
+            .fill()
+            .map(() => Array(9).fill(false));
+          notesGrid = Array(9)
+            .fill()
+            .map(() =>
+              Array(9)
+                .fill()
+                .map(() => Array(9).fill(false))
+            );
+
+          // 生成完整解答
+          generateSolution(solutionGrid);
+
+          // 根據難度創建題目
+          createPuzzle();
+
+          // 更新棋盤顯示
+          updateBoardDisplay();
+        }
+
+        // 生成完整解答
+        function generateSolution(grid) {
+          // 回溯法填充解答
+          solveSudoku(grid);
+        }
+
+        // 回溯法解數獨
+        function solveSudoku(grid) {
+          for (let row = 0; row < 9; row++) {
+            for (let col = 0; col < 9; col++) {
+              if (grid[row][col] === 0) {
+                // 隨機嘗試1-9
+                const nums = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+                for (const num of nums) {
+                  if (isValid(grid, row, col, num)) {
+                    grid[row][col] = num;
+
+                    if (solveSudoku(grid)) {
+                      return true;
+                    }
+
+                    // 回溯
+                    grid[row][col] = 0;
+                  }
+                }
+                return false;
+              }
+            }
+          }
+          return true; // 所有格子都填滿，完成
+        }
+
+        // 檢查數字在指定位置是否有效
+        function isValid(grid, row, col, num) {
+          // 檢查行
+          for (let i = 0; i < 9; i++) {
+            if (grid[row][i] === num) {
+              return false;
+            }
+          }
+
+          // 檢查列
+          for (let i = 0; i < 9; i++) {
+            if (grid[i][col] === num) {
+              return false;
+            }
+          }
+
+          // 檢查3x3區塊
+          const boxRow = Math.floor(row / 3) * 3;
+          const boxCol = Math.floor(col / 3) * 3;
+
+          for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+              if (grid[boxRow + i][boxCol + j] === num) {
+                return false;
+              }
+            }
+          }
+
+          return true;
+        }
+
+        // 創建數獨題目
+        function createPuzzle() {
+          // 複製解答到題目
+          for (let i = 0; i < 9; i++) {
+            for (let j = 0; j < 9; j++) {
+              puzzleGrid[i][j] = solutionGrid[i][j];
+            }
+          }
+
+          // 根據難度決定挖空數量
+          let cellsToRemove;
+          switch (difficulty) {
+            case "easy":
+              cellsToRemove = 35; // 較少挖空
+              break;
+            case "medium":
+              cellsToRemove = 45; // 中等挖空
+              break;
+            case "hard":
+              cellsToRemove = 55; // 較多挖空
+              break;
+            default:
+              cellsToRemove = 45;
+          }
+
+          // 隨機挖空
+          const positions = [];
+          for (let i = 0; i < 81; i++) {
+            positions.push(i);
+          }
+          shuffle(positions);
+
+          for (let i = 0; i < cellsToRemove; i++) {
+            const pos = positions[i];
+            const row = Math.floor(pos / 9);
+            const col = pos % 9;
+            puzzleGrid[row][col] = 0;
+          }
+
+          // 設置固定格子和使用者初始格子
+          for (let i = 0; i < 9; i++) {
+            for (let j = 0; j < 9; j++) {
+              if (puzzleGrid[i][j] !== 0) {
+                fixedCells[i][j] = true;
+                userGrid[i][j] = puzzleGrid[i][j];
+              } else {
+                fixedCells[i][j] = false;
+                userGrid[i][j] = 0;
+              }
+            }
+          }
+        }
+
+        // 更新棋盤顯示
+        function updateBoardDisplay() {
+          for (let i = 0; i < 9; i++) {
+            for (let j = 0; j < 9; j++) {
+              const index = i * 9 + j;
+              const cell = document.querySelector(
+                `.sudoku-cell[data-index="${index}"]`
+              );
+
+              // 清除之前的狀態和內容
+              cell.textContent = "";
+              cell.classList.remove(
+                "fixed",
+                "editable",
+                "error",
+                "selected",
+                "same-value"
+              );
+
+              // 清除筆記
+              clearNotes(i, j);
+
+              // 如果是固定格子，顯示數字
+              if (fixedCells[i][j]) {
+                cell.textContent = puzzleGrid[i][j];
+                cell.classList.add("fixed");
+              }
+            }
+          }
+        }
+
+        // 檢查是否完成數獨
+        function checkCompletion() {
+          for (let i = 0; i < 9; i++) {
+            for (let j = 0; j < 9; j++) {
+              if (userGrid[i][j] !== solutionGrid[i][j]) {
+                return false;
+              }
+            }
+          }
+          return true;
+        }
+
+        // 遊戲完成
+        function gameComplete() {
+          stopTimer();
+          gameActive = false;
+
+          // 計算得分
+          let baseScore = parseInt(scoreManager.get());
+
+          // 根據難度增加基礎分數
+          switch (difficulty) {
+            case "easy":
+              baseScore += 50;
+              break;
+            case "medium":
+              baseScore += 100;
+              break;
+            case "hard":
+              baseScore += 200;
+              break;
+          }
+
+          // 根據用時減少分數
+          const timeBonus = Math.max(0, 300 - Math.floor(timePlayed / 10));
+
+          // 根據提示使用和失誤次數減少分數
+          const hintPenalty = hintsUsed * 10;
+          const mistakesPenalty = mistakes * 5;
+
+          const totalScore =
+            baseScore + timeBonus - hintPenalty - mistakesPenalty;
+
+          // 設置最終分數
+          scoreManager.set(totalScore);
+
+          // 顯示完成訊息
+          gameController.showMessage(
+            "恭喜完成！",
+            `
+            <div style="text-align:center;">
+              <p>你成功解開了數獨題目！</p>
+              <p>用時: ${formatTime(timePlayed)}</p>
+              <p>難度: ${getDifficultyText()}</p>
+              <p>失誤次數: ${mistakes}</p>
+              <p>使用提示次數: ${hintsUsed}</p>
+              <p>最終分數: ${totalScore}</p>
+              <button id="playAgainBtn" class="primary-button">再來一局</button>
+            </div>
+            `
+          );
+
+          setTimeout(() => {
+            document
+              .getElementById("playAgainBtn")
+              .addEventListener("click", () => {
+                gameController.hideMessage();
+                restartGame();
+              });
+          }, 100);
+        }
+
+        // 遊戲結束
+        function gameOver() {
+          stopTimer();
+          gameActive = false;
+
+          gameController.showMessage(
+            "遊戲結束",
+            `
+            <div style="text-align:center;">
+              <p>很遺憾，你已經錯誤3次！</p>
+              <p>用時: ${formatTime(timePlayed)}</p>
+              <p>難度: ${getDifficultyText()}</p>
+              <p>最終分數: ${scoreManager.get()}</p>
+              <button id="tryAgainBtn" class="primary-button">再試一次</button>
+            </div>
+            `
+          );
+
+          setTimeout(() => {
+            document
+              .getElementById("tryAgainBtn")
+              .addEventListener("click", () => {
+                gameController.hideMessage();
+                restartGame();
+              });
+          }, 100);
+        }
+
+        // 開始計時器
+        function startTimer() {
+          stopTimer(); // 先清除之前的計時器
+          timePlayed = 0;
+          updateTimerDisplay();
+
+          timerInterval = setInterval(() => {
+            if (gameActive) {
+              timePlayed++;
+              updateTimerDisplay();
+            }
+          }, 1000);
+        }
+
+        // 停止計時器
+        function stopTimer() {
+          if (timerInterval) {
+            clearInterval(timerInterval);
+          }
+        }
+
+        // 更新計時器顯示
+        function updateTimerDisplay() {
+          timerDisplay.textContent = formatTime(timePlayed);
+        }
+
+        // 格式化時間為 MM:SS
+        function formatTime(seconds) {
+          const mins = Math.floor(seconds / 60)
+            .toString()
+            .padStart(2, "0");
+          const secs = (seconds % 60).toString().padStart(2, "0");
+          return `${mins}:${secs}`;
+        }
+
+        // 重啟遊戲
+        function restartGame() {
+          // 清空選中格子
+          if (selectedCell) {
+            selectedCell.classList.remove("selected");
+            selectedCell = null;
+          }
+
+          // 重置遊戲狀態
+          mistakes = 0;
+          hintsUsed = 0;
+          isNoteMode = false;
+          gameActive = true;
+
+          // 取消筆記模式按鈕的高亮
+          document.querySelector(".note-mode").classList.remove("active");
+
+          // 更新失誤顯示
+          updateMistakesDisplay();
+
+          // 生成新的數獨題目
+          generateSudoku();
+
+          // 重啟計時器
+          startTimer();
+
+          // 重新計分
+          scoreManager.set(0);
+        }
+
+        // 更新失誤顯示
+        function updateMistakesDisplay() {
+          mistakesDisplay.textContent = `${mistakes}/3`;
+        }
+
+        // 更新難度顯示
+        function updateDifficultyDisplay() {
+          difficultyDisplay.textContent = getDifficultyText();
+
+          // 更新按鈕狀態
+          easyBtn.classList.toggle("active", difficulty === "easy");
+          mediumBtn.classList.toggle("active", difficulty === "medium");
+          hardBtn.classList.toggle("active", difficulty === "hard");
+        }
+
+        // 獲取難度文字
+        function getDifficultyText() {
+          switch (difficulty) {
+            case "easy":
+              return "簡單";
+            case "medium":
+              return "中等";
+            case "hard":
+              return "困難";
+            default:
+              return "中等";
+          }
+        }
+
+        // 打亂陣列順序 (Fisher-Yates)
+        function shuffle(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+          }
+          return array;
+        }
+
+        // 難度選擇按鈕事件
+        easyBtn.addEventListener("click", function () {
+          difficulty = "easy";
+          updateDifficultyDisplay();
+          restartGame();
+        });
+
+        mediumBtn.addEventListener("click", function () {
+          difficulty = "medium";
+          updateDifficultyDisplay();
+          restartGame();
+        });
+
+        hardBtn.addEventListener("click", function () {
+          difficulty = "hard";
+          updateDifficultyDisplay();
+          restartGame();
+        });
+
+        // 設置遊戲控制器
+        gameController.setGameLoop(() => {
+          // 這個遊戲不需要遊戲循環
+        });
+
+        // 設置重啟處理器
+        gameController.setRestartHandler(() => {
+          restartGame();
+        });
+
+        // 處理暫停狀態變化
+        gameController.onPauseStateChange = function (isPaused) {
+          const pauseIndicator = document.getElementById("gamePaused");
+          if (pauseIndicator) {
+            pauseIndicator.style.display = isPaused ? "flex" : "none";
+          }
+          gameActive = !isPaused;
+        };
+
+        // 鍵盤輸入支援
+        document.addEventListener("keydown", function (e) {
+          if (!gameActive || !selectedCell) return;
+
+          if (e.key >= "1" && e.key <= "9") {
+            // 數字鍵
+            const num = parseInt(e.key);
+
+            const index = parseInt(selectedCell.dataset.index);
+            const row = Math.floor(index / 9);
+            const col = index % 9;
+
+            if (isNoteMode) {
+              toggleNote(row, col, num);
+            } else {
+              inputNumber(row, col, num);
+            }
+          } else if (e.key === "Backspace" || e.key === "Delete") {
+            // 刪除鍵 - 清除數字
+            const index = parseInt(selectedCell.dataset.index);
+            const row = Math.floor(index / 9);
+            const col = index % 9;
+
+            // 如果是固定格子，不做任何變動
+            if (fixedCells[row][col]) return;
+
+            // 清除數字
+            userGrid[row][col] = 0;
+            selectedCell.textContent = "";
+            selectedCell.classList.remove("error");
+            selectedCell.classList.add("editable");
+
+            // 清除筆記
+            clearNotes(row, col);
+
+            // 移除相同數字的高亮
+            document.querySelectorAll(".same-value").forEach((cell) => {
+              cell.classList.remove("same-value");
+            });
+          } else if (e.key === "n") {
+            // N鍵 - 切換筆記模式
+            isNoteMode = !isNoteMode;
+            document
+              .querySelector(".note-mode")
+              .classList.toggle("active", isNoteMode);
+          }
+        });
+
+        // 初始化遊戲
+        initGame();
+
+        // 顯示遊戲開始動畫
+        gameController.showStartAnimation(() => {
+          gameController.showMessage(
+            "數獨遊戲",
+            `
+            <div style="text-align:center;">
+              <p>歡迎來到數獨遊戲！</p>
+              <p>請在9×9的網格中填入數字1到9，使每行、每列和每個3×3子網格中都包含1到9的數字且不重複。</p>
+              <p>現在就開始挑戰吧！</p>
+              <button id="startGameBtn" class="primary-button">開始遊戲</button>
+            </div>
+            `
+          );
+
+          setTimeout(() => {
+            document
+              .getElementById("startGameBtn")
+              .addEventListener("click", () => {
+                gameController.hideMessage();
+              });
+          }, 100);
+        });
+      });
+    </script>
+  </body>
+</html>

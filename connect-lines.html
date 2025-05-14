@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>連線消除 - 網頁小遊戲</title>
+    <meta name="game-id" content="connect-lines" />
+    <meta name="game-name" content="連線消除" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .connect-container {
+        max-width: 600px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .game-board {
+        display: grid;
+        grid-template-columns: repeat(8, 50px);
+        grid-template-rows: repeat(8, 50px);
+        gap: 2px;
+        background-color: #f0f0f0;
+        border-radius: 8px;
+        padding: 10px;
+        margin-top: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .cell {
+        width: 50px;
+        height: 50px;
+        border-radius: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+      }
+
+      .cell.selected {
+        transform: scale(0.9);
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .cell.hint {
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(0.9);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .cell.connected {
+        animation: fadeOut 0.5s forwards;
+      }
+
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
+          transform: scale(1);
+        }
+        to {
+          opacity: 0;
+          transform: scale(0.5);
+        }
+      }
+
+      .tile {
+        width: 85%;
+        height: 85%;
+        border-radius: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      }
+
+      .path {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.7);
+        z-index: 10;
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        margin-top: 20px;
+      }
+
+      .info-box {
+        background-color: #f5f5f5;
+        padding: 10px 15px;
+        border-radius: 5px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 30%;
+      }
+
+      .info-label {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 5px;
+      }
+
+      .info-value {
+        font-size: 20px;
+        font-weight: bold;
+        color: var(--primary-color);
+      }
+
+      .game-controls {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .control-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        background-color: var(--primary-color);
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .control-btn:hover {
+        background-color: var(--primary-hover);
+        transform: translateY(-2px);
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 15px;
+        background-color: #f0f0f0;
+        border-radius: 10px;
+        margin-top: 15px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background-color: var(--primary-color);
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      .progress-label {
+        font-size: 12px;
+        color: #666;
+        text-align: center;
+        margin-top: 5px;
+      }
+
+      .game-over-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+
+      .game-over-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+
+      .game-over-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        max-width: 400px;
+      }
+
+      .game-over-title {
+        font-size: 24px;
+        color: var(--primary-color);
+        margin-bottom: 15px;
+      }
+
+      .game-over-score {
+        font-size: 36px;
+        font-weight: bold;
+        margin: 15px 0;
+      }
+
+      .game-over-btn {
+        padding: 10px 20px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 15px;
+        transition: all 0.2s;
+      }
+
+      .game-over-btn:hover {
+        background-color: var(--primary-hover);
+      }
+
+      .difficulty-selector {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+      }
+
+      .difficulty-btn {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        background-color: #f0f0f0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .difficulty-btn:hover {
+        background-color: #e0e0e0;
+      }
+
+      .difficulty-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      @media (max-width: 600px) {
+        .game-board {
+          grid-template-columns: repeat(8, 40px);
+          grid-template-rows: repeat(8, 40px);
+        }
+
+        .cell {
+          width: 40px;
+          height: 40px;
+        }
+
+        .tile {
+          font-size: 18px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .game-board {
+          grid-template-columns: repeat(8, 35px);
+          grid-template-rows: repeat(8, 35px);
+        }
+
+        .cell {
+          width: 35px;
+          height: 35px;
+        }
+
+        .tile {
+          font-size: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>連線消除</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="score-display">分數: <span id="scoreValue">0</span></div>
+
+      <div class="connect-container">
+        <div class="difficulty-selector">
+          <button id="easyBtn" class="difficulty-btn active">簡單</button>
+          <button id="normalBtn" class="difficulty-btn">普通</button>
+          <button id="hardBtn" class="difficulty-btn">困難</button>
+        </div>
+
+        <div class="game-info">
+          <div class="info-box">
+            <div class="info-label">關卡</div>
+            <div id="levelDisplay" class="info-value">1</div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">剩餘時間</div>
+            <div id="timeDisplay" class="info-value">60</div>
+          </div>
+          <div class="info-box">
+            <div class="info-label">消除對數</div>
+            <div id="pairsDisplay" class="info-value">0</div>
+          </div>
+        </div>
+
+        <div class="progress-bar">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+        <div id="progressLabel" class="progress-label">關卡進度: 0%</div>
+
+        <div id="gameBoard" class="game-board">
+          <!-- 遊戲格子會由JavaScript動態生成 -->
+        </div>
+
+        <div class="game-controls">
+          <button id="hintButton" class="control-btn">提示</button>
+          <button id="shuffleButton" class="control-btn">重新排列</button>
+        </div>
+      </div>
+
+      <div id="gamePaused" class="game-paused">暫停中</div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "連線消除 - 遊戲說明",
+          `
+            <h3>遊戲規則：</h3>
+            <p>連線消除是一款經典的消除類遊戲，你需要在限定時間內將相同顏色和符號的方塊連線消除。</p>
+            
+            <h3>操作方式：</h3>
+            <ul>
+              <li>點擊一對相同的方塊以嘗試連接它們</li>
+              <li>連線必須是由三條線段或更少的直線組成（最多兩個轉彎）</li>
+              <li>連線路徑不能穿過其他方塊</li>
+              <li>成功連接一對方塊後，它們會消失並獲得分數</li>
+              <li>嘗試在時間結束前消除所有方塊</li>
+            </ul>
+            
+            <h3>遊戲功能：</h3>
+            <ul>
+              <li><strong>提示</strong>：顯示一對可以連線的方塊</li>
+              <li><strong>重新排列</strong>：重新排列所有剩餘的方塊（會消耗一些時間）</li>
+            </ul>
+            
+            <h3>難度設置：</h3>
+            <ul>
+              <li><strong>簡單</strong>：更多時間，更少的方塊種類</li>
+              <li><strong>普通</strong>：標準難度</li>
+              <li><strong>困難</strong>：更少時間，更多的方塊種類</li>
+            </ul>
+            
+            <h3>遊戲目標：</h3>
+            <p>在時間結束前消除所有方塊，進入更高關卡以獲取更高分數！</p>
+          `
+        );
+
+        const gameController = new GameUtils.GameController();
+        const scoreManager = new GameUtils.ScoreManager("scoreValue");
+        const gameBoard = document.getElementById("gameBoard");
+        const levelDisplay = document.getElementById("levelDisplay");
+        const timeDisplay = document.getElementById("timeDisplay");
+        const pairsDisplay = document.getElementById("pairsDisplay");
+        const progressFill = document.getElementById("progressFill");
+        const progressLabel = document.getElementById("progressLabel");
+        const hintButton = document.getElementById("hintButton");
+        const shuffleButton = document.getElementById("shuffleButton");
+        const easyBtn = document.getElementById("easyBtn");
+        const normalBtn = document.getElementById("normalBtn");
+        const hardBtn = document.getElementById("hardBtn");
+
+        // 遊戲變數
+        let grid = [];
+        let selectedCell = null;
+        let level = 1;
+        let time = 60;
+        let score = 0;
+        let pairsRemoved = 0;
+        let totalPairs = 0;
+        let gameActive = false;
+        let timerId = null;
+        let difficulty = "easy"; // "easy", "normal", "hard"
+        let hintTimeout = null;
+        let pathElements = [];
+
+        // 符號和顏色設定
+        const symbols = [
+          "●",
+          "★",
+          "♦",
+          "♠",
+          "♣",
+          "♥",
+          "▲",
+          "■",
+          "◆",
+          "○",
+          "☆",
+          "△",
+        ];
+        const colors = [
+          "#FF5252", // 紅色
+          "#448AFF", // 藍色
+          "#66BB6A", // 綠色
+          "#FFC107", // 黃色
+          "#9C27B0", // 紫色
+          "#FF7043", // 橙色
+          "#26A69A", // 青色
+          "#EC407A", // 粉色
+          "#7E57C2", // 淡紫色
+          "#5C6BC0", // 靛藍色
+          "#009688", // 綠松石色
+          "#FF9800", // 深橙色
+        ];
+
+        // 不同難度的設置
+        const difficultySettings = {
+          easy: {
+            baseTime: 90,
+            symbolsCount: 6,
+            boardSize: { rows: 6, cols: 6 },
+          },
+          normal: {
+            baseTime: 60,
+            symbolsCount: 8,
+            boardSize: { rows: 8, cols: 8 },
+          },
+          hard: {
+            baseTime: 45,
+            symbolsCount: 12,
+            boardSize: { rows: 10, cols: 8 },
+          },
+        };
+
+        // 初始化遊戲
+        function initGame() {
+          // 重置變數
+          grid = [];
+          selectedCell = null;
+          level = 1;
+          score = 0;
+          pairsRemoved = 0;
+          gameActive = false;
+          scoreManager.set(0);
+          clearTimeout(hintTimeout);
+          clearInterval(timerId);
+          removePaths();
+
+          // 設定難度相關參數
+          const settings = difficultySettings[difficulty];
+          time = settings.baseTime;
+
+          // 更新顯示
+          levelDisplay.textContent = level;
+          timeDisplay.textContent = time;
+          pairsDisplay.textContent = "0";
+          updateProgressBar(0);
+
+          // 創建遊戲板
+          createBoard();
+
+          // 確保遊戲板有可消除路徑
+          if (!hasValidMoves()) {
+            shuffleTiles();
+          }
+        }
+
+        // 創建遊戲板
+        function createBoard() {
+          // 清空遊戲板
+          gameBoard.innerHTML = "";
+          grid = [];
+
+          // 取得難度設置
+          const settings = difficultySettings[difficulty];
+          const rows = settings.boardSize.rows;
+          const cols = settings.boardSize.cols;
+
+          // 調整遊戲板 CSS 網格
+          gameBoard.style.gridTemplateColumns = `repeat(${cols}, 50px)`;
+          gameBoard.style.gridTemplateRows = `repeat(${rows}, 50px)`;
+
+          // 為每個格子創建一個物件
+          for (let i = 0; i < rows; i++) {
+            grid[i] = [];
+            for (let j = 0; j < cols; j++) {
+              grid[i][j] = null;
+            }
+          }
+
+          // 符號和顏色組合
+          const symbolCount = settings.symbolsCount;
+          const availableSymbols = symbols.slice(0, symbolCount);
+          const availableColors = colors.slice(0, symbolCount);
+
+          // 計算可填充的格子總數
+          const totalCells = rows * cols;
+
+          // 確保總格子數是偶數，便於創建對應的對子
+          const usableCells =
+            totalCells % 2 === 0 ? totalCells : totalCells - 1;
+
+          // 創建所有可能的配對組合
+          const pairs = [];
+          for (let s = 0; s < availableSymbols.length; s++) {
+            for (let c = 0; c < availableColors.length; c++) {
+              pairs.push({
+                symbol: availableSymbols[s],
+                color: availableColors[c],
+              });
+            }
+          }
+
+          // 隨機選擇配對並將它們放置兩次（形成對子）
+          const totalPairsNeeded = Math.floor(usableCells / 2);
+          totalPairs = totalPairsNeeded;
+
+          // 選擇要使用的對子
+          const selectedPairs = [];
+          for (let i = 0; i < totalPairsNeeded; i++) {
+            if (pairs.length === 0) {
+              // 如果用完了所有配對，重新使用之前的配對
+              const reusedPairIndex = Math.floor(
+                Math.random() * selectedPairs.length
+              );
+              selectedPairs.push(selectedPairs[reusedPairIndex]);
+            } else {
+              // 隨機選擇一個配對
+              const pairIndex = Math.floor(Math.random() * pairs.length);
+              selectedPairs.push(pairs[pairIndex]);
+              pairs.splice(pairIndex, 1);
+            }
+          }
+
+          // 創建所有格子 (包括對子)
+          const cells = [];
+          for (let i = 0; i < totalPairsNeeded; i++) {
+            for (let j = 0; j < 2; j++) {
+              // 每個配對創建兩次
+              const pair = selectedPairs[i];
+              cells.push({
+                symbol: pair.symbol,
+                color: pair.color,
+              });
+            }
+          }
+
+          // 打亂格子順序
+          for (let i = cells.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [cells[i], cells[j]] = [cells[j], cells[i]];
+          }
+
+          // 放置格子到網格
+          let cellIndex = 0;
+          for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+              if (cellIndex < cells.length) {
+                const cell = document.createElement("div");
+                cell.className = "cell";
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+
+                const tile = document.createElement("div");
+                tile.className = "tile";
+                tile.style.backgroundColor = cells[cellIndex].color;
+                tile.textContent = cells[cellIndex].symbol;
+
+                cell.appendChild(tile);
+                gameBoard.appendChild(cell);
+
+                // 存儲格子的數據
+                grid[i][j] = {
+                  element: cell,
+                  symbol: cells[cellIndex].symbol,
+                  color: cells[cellIndex].color,
+                  matched: false,
+                };
+
+                // 添加事件監聽器
+                cell.addEventListener("click", () => selectCell(i, j));
+
+                cellIndex++;
+              } else {
+                // 如果格子總數是奇數，最後一個格子保持為空
+                const cell = document.createElement("div");
+                cell.className = "cell";
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+
+                gameBoard.appendChild(cell);
+                grid[i][j] = null;
+              }
+            }
+          }
+
+          // 更新對數顯示
+          pairsDisplay.textContent = "0";
+
+          // 設置格子的尺寸，根據難度調整
+          const cellSize = difficulty === "hard" ? 40 : 50;
+          const cells2 = document.querySelectorAll(".cell");
+          cells2.forEach((cell) => {
+            cell.style.width = `${cellSize}px`;
+            cell.style.height = `${cellSize}px`;
+          });
+        }
+
+        // 選擇格子
+        function selectCell(row, col) {
+          if (!gameActive || !grid[row][col] || grid[row][col].matched) {
+            return;
+          }
+
+          const cell = grid[row][col].element;
+
+          if (selectedCell === null) {
+            // 第一次選擇
+            selectedCell = { row, col };
+            cell.classList.add("selected");
+          } else if (selectedCell.row === row && selectedCell.col === col) {
+            // 點擊相同格子，取消選擇
+            cell.classList.remove("selected");
+            selectedCell = null;
+          } else {
+            // 第二次選擇
+            const firstCell = grid[selectedCell.row][selectedCell.col];
+            const secondCell = grid[row][col];
+
+            // 檢查是否相同類型
+            if (
+              firstCell.symbol === secondCell.symbol &&
+              firstCell.color === secondCell.color
+            ) {
+              // 嘗試找到路徑
+              const path = findPath(
+                selectedCell.row,
+                selectedCell.col,
+                row,
+                col
+              );
+              if (path) {
+                // 找到有效路徑，顯示並消除方塊
+                drawPath(path);
+
+                setTimeout(() => {
+                  firstCell.matched = true;
+                  secondCell.matched = true;
+                  firstCell.element.classList.add("connected");
+                  secondCell.element.classList.add("connected");
+                  firstCell.element.classList.remove("selected");
+
+                  // 更新分數和對數
+                  const baseScore = 10 * level;
+                  scoreManager.add(baseScore);
+                  score += baseScore;
+                  pairsRemoved++;
+                  pairsDisplay.textContent = pairsRemoved;
+
+                  // 更新進度條
+                  updateProgressBar((pairsRemoved / totalPairs) * 100);
+
+                  // 檢查是否所有配對都被消除
+                  setTimeout(() => {
+                    removePaths();
+                    if (pairsRemoved === totalPairs) {
+                      levelCompleted();
+                    } else if (!hasValidMoves()) {
+                      // 沒有有效移動，自動重新排列
+                      shuffleTiles();
+                    }
+                  }, 500);
+                }, 500);
+              } else {
+                // 無法形成有效路徑
+                shake(firstCell.element);
+                shake(secondCell.element);
+              }
+            } else {
+              // 不相同，顯示搖動動畫
+              shake(firstCell.element);
+              shake(secondCell.element);
+            }
+
+            // 取消選擇
+            grid[selectedCell.row][selectedCell.col].element.classList.remove(
+              "selected"
+            );
+            selectedCell = null;
+          }
+        }
+
+        // 查找兩點間的路徑 (使用修改後的廣度優先搜索)
+        function findPath(startRow, startCol, endRow, endCol) {
+          const settings = difficultySettings[difficulty];
+          const rows = settings.boardSize.rows;
+          const cols = settings.boardSize.cols;
+
+          // 如果兩點是同一位置，不需要路徑
+          if (startRow === endRow && startCol === endCol) {
+            return null;
+          }
+
+          // 創建訪問記錄
+          const visited = Array(rows)
+            .fill()
+            .map(() => Array(cols).fill(false));
+          const parent = {};
+          const queue = [];
+
+          // 將起點加入隊列
+          queue.push({
+            row: startRow,
+            col: startCol,
+            turns: 0,
+            dir: -1, // -1表示沒有方向
+            path: [{ row: startRow, col: startCol }],
+          });
+          visited[startRow][startCol] = true;
+
+          // 方向：上、右、下、左
+          const directions = [
+            { dr: -1, dc: 0, dir: 0 }, // 上
+            { dr: 0, dc: 1, dir: 1 }, // 右
+            { dr: 1, dc: 0, dir: 2 }, // 下
+            { dr: 0, dc: -1, dir: 3 }, // 左
+          ];
+
+          while (queue.length > 0) {
+            const { row, col, turns, dir, path } = queue.shift();
+
+            // 檢查是否到達終點
+            if (row === endRow && col === endCol) {
+              return path;
+            }
+
+            // 嘗試四個方向
+            for (const { dr, dc, dir: newDir } of directions) {
+              let newRow = row + dr;
+              let newCol = col + dc;
+
+              // 檢查是否轉彎
+              const isTurn = dir !== -1 && dir !== newDir;
+              const newTurns = turns + (isTurn ? 1 : 0);
+
+              // 超過兩個轉彎就跳過
+              if (newTurns > 2) continue;
+
+              // 嘗試移動直到遇到障礙物或邊界
+              while (true) {
+                // 檢查邊界
+                if (
+                  newRow < 0 ||
+                  newRow >= rows ||
+                  newCol < 0 ||
+                  newCol >= cols
+                ) {
+                  break;
+                }
+
+                // 檢查是否是終點
+                if (newRow === endRow && newCol === endCol) {
+                  const newPath = [...path, { row: newRow, col: newCol }];
+                  return newPath;
+                }
+
+                // 檢查是否有障礙物 (跳過起點和終點)
+                if (
+                  (newRow !== startRow || newCol !== startCol) &&
+                  (newRow !== endRow || newCol !== endCol) &&
+                  grid[newRow][newCol] !== null &&
+                  !grid[newRow][newCol].matched
+                ) {
+                  break;
+                }
+
+                // 如果沒有訪問過，加入隊列
+                if (!visited[newRow][newCol]) {
+                  visited[newRow][newCol] = true;
+                  const newPath = [...path, { row: newRow, col: newCol }];
+                  queue.push({
+                    row: newRow,
+                    col: newCol,
+                    turns: newTurns,
+                    dir: newDir,
+                    path: newPath,
+                  });
+                }
+
+                // 繼續朝同一方向移動
+                newRow += dr;
+                newCol += dc;
+              }
+            }
+          }
+
+          // 沒找到路徑
+          return null;
+        }
+
+        // 繪製路徑
+        function drawPath(path) {
+          removePaths();
+
+          if (!path || path.length < 2) return;
+
+          for (let i = 0; i < path.length - 1; i++) {
+            const start = path[i];
+            const end = path[i + 1];
+
+            // 計算起點和終點坐標
+            const startCell = grid[start.row][start.col].element;
+            const endCell = grid[end.row][end.col].element;
+
+            const startRect = startCell.getBoundingClientRect();
+            const endRect = endCell.getBoundingClientRect();
+            const boardRect = gameBoard.getBoundingClientRect();
+
+            const startX =
+              startRect.left + startRect.width / 2 - boardRect.left;
+            const startY = startRect.top + startRect.height / 2 - boardRect.top;
+            const endX = endRect.left + endRect.width / 2 - boardRect.left;
+            const endY = endRect.top + endRect.height / 2 - boardRect.top;
+
+            // 創建路徑元素
+            const path = document.createElement("div");
+            path.className = "path";
+
+            // 計算長度和角度
+            const length = Math.sqrt(
+              Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)
+            );
+            const angle =
+              (Math.atan2(endY - startY, endX - startX) * 180) / Math.PI;
+
+            // 設置樣式
+            path.style.width = `${length}px`;
+            path.style.height = "4px";
+            path.style.left = `${startX}px`;
+            path.style.top = `${startY}px`;
+            path.style.transform = `rotate(${angle}deg)`;
+            path.style.transformOrigin = "left center";
+
+            gameBoard.appendChild(path);
+            pathElements.push(path);
+          }
+        }
+
+        // 移除所有路徑元素
+        function removePaths() {
+          for (const path of pathElements) {
+            if (path.parentNode) {
+              path.parentNode.removeChild(path);
+            }
+          }
+          pathElements = [];
+        }
+
+        // 搖動動畫
+        function shake(element) {
+          element.animate(
+            [
+              { transform: "translateX(0)" },
+              { transform: "translateX(-5px)" },
+              { transform: "translateX(5px)" },
+              { transform: "translateX(0)" },
+            ],
+            {
+              duration: 200,
+              iterations: 2,
+            }
+          );
+        }
+
+        // 檢查是否還有有效的移動
+        function hasValidMoves() {
+          const settings = difficultySettings[difficulty];
+          const rows = settings.boardSize.rows;
+          const cols = settings.boardSize.cols;
+
+          // 檢查所有可能的配對
+          for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+              if (!grid[i][j] || grid[i][j].matched) continue;
+
+              for (let m = 0; m < rows; m++) {
+                for (let n = 0; n < cols; n++) {
+                  // 跳過同一位置或已匹配的格子
+                  if ((i === m && j === n) || !grid[m][n] || grid[m][n].matched)
+                    continue;
+
+                  // 檢查是否是相同類型
+                  if (
+                    grid[i][j].symbol === grid[m][n].symbol &&
+                    grid[i][j].color === grid[m][n].color
+                  ) {
+                    // 檢查是否有路徑
+                    const path = findPath(i, j, m, n);
+                    if (path) {
+                      return true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          return false;
+        }
+
+        // 查找一對可以連接的格子（用於提示）
+        function findConnectablePair() {
+          const settings = difficultySettings[difficulty];
+          const rows = settings.boardSize.rows;
+          const cols = settings.boardSize.cols;
+
+          for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+              if (!grid[i][j] || grid[i][j].matched) continue;
+
+              for (let m = 0; m < rows; m++) {
+                for (let n = 0; n < cols; n++) {
+                  // 跳過同一位置或已匹配的格子
+                  if ((i === m && j === n) || !grid[m][n] || grid[m][n].matched)
+                    continue;
+
+                  // 檢查是否是相同類型
+                  if (
+                    grid[i][j].symbol === grid[m][n].symbol &&
+                    grid[i][j].color === grid[m][n].color
+                  ) {
+                    // 檢查是否有路徑
+                    const path = findPath(i, j, m, n);
+                    if (path) {
+                      return {
+                        first: { row: i, col: j },
+                        second: { row: m, col: n },
+                        path,
+                      };
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          return null;
+        }
+
+        // 顯示提示
+        function showHint() {
+          if (!gameActive) return;
+
+          const pair = findConnectablePair();
+          if (pair) {
+            const { first, second, path } = pair;
+
+            // 突顯提示的格子
+            grid[first.row][first.col].element.classList.add("hint");
+            grid[second.row][second.col].element.classList.add("hint");
+
+            // 顯示路徑
+            drawPath(path);
+
+            // 3秒後清除提示
+            clearTimeout(hintTimeout);
+            hintTimeout = setTimeout(() => {
+              grid[first.row][first.col].element.classList.remove("hint");
+              grid[second.row][second.col].element.classList.remove("hint");
+              removePaths();
+            }, 3000);
+
+            // 使用提示扣除時間懲罰
+            time = Math.max(1, time - 5);
+            timeDisplay.textContent = time;
+          } else {
+            // 沒有可能的配對，自動重新排列
+            shuffleTiles();
+          }
+        }
+
+        // 重新排列所有未匹配的格子
+        function shuffleTiles() {
+          if (!gameActive) return;
+
+          // 收集所有未匹配的格子
+          const unmatched = [];
+          const settings = difficultySettings[difficulty];
+          const rows = settings.boardSize.rows;
+          const cols = settings.boardSize.cols;
+
+          for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+              if (grid[i][j] && !grid[i][j].matched) {
+                unmatched.push({
+                  symbol: grid[i][j].symbol,
+                  color: grid[i][j].color,
+                });
+
+                // 清除舊的內容
+                gameBoard.removeChild(grid[i][j].element);
+                grid[i][j] = null;
+              }
+            }
+          }
+
+          // 打亂順序
+          for (let i = unmatched.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [unmatched[i], unmatched[j]] = [unmatched[j], unmatched[i]];
+          }
+
+          // 重新放置格子
+          let index = 0;
+          for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+              if (index < unmatched.length) {
+                const cell = document.createElement("div");
+                cell.className = "cell";
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+
+                const tile = document.createElement("div");
+                tile.className = "tile";
+                tile.style.backgroundColor = unmatched[index].color;
+                tile.textContent = unmatched[index].symbol;
+
+                cell.appendChild(tile);
+                gameBoard.appendChild(cell);
+
+                grid[i][j] = {
+                  element: cell,
+                  symbol: unmatched[index].symbol,
+                  color: unmatched[index].color,
+                  matched: false,
+                };
+
+                cell.addEventListener("click", () => selectCell(i, j));
+                index++;
+              }
+            }
+          }
+
+          // 取消選擇
+          selectedCell = null;
+
+          // 減少時間作為懲罰
+          time = Math.max(1, time - 10);
+          timeDisplay.textContent = time;
+
+          // 確保有有效的移動
+          if (!hasValidMoves()) {
+            shuffleTiles();
+          }
+        }
+
+        // 更新進度條
+        function updateProgressBar(percent) {
+          progressFill.style.width = `${percent}%`;
+          progressLabel.textContent = `關卡進度: ${Math.round(percent)}%`;
+        }
+
+        // 關卡完成
+        function levelCompleted() {
+          gameActive = false;
+          clearInterval(timerId);
+
+          // 獎勵分數
+          const timeBonus = time * 5;
+          const levelBonus = level * 50;
+          const totalBonus = timeBonus + levelBonus;
+
+          scoreManager.add(totalBonus);
+          score += totalBonus;
+
+          gameController.showMessage(
+            "關卡完成",
+            `
+            <div style="text-align:center;">
+              <p>恭喜完成第 ${level} 關!</p>
+              <p>時間獎勵: ${timeBonus} 分</p>
+              <p>關卡獎勵: ${levelBonus} 分</p>
+              <p>總分: ${score} 分</p>
+              <button id="nextLevelBtn" class="primary-button">下一關</button>
+            </div>
+            `
+          );
+
+          setTimeout(() => {
+            document
+              .getElementById("nextLevelBtn")
+              .addEventListener("click", () => {
+                gameController.hideMessage();
+                nextLevel();
+              });
+          }, 100);
+        }
+
+        // 開始下一關
+        function nextLevel() {
+          level++;
+
+          // 更新顯示
+          levelDisplay.textContent = level;
+          pairsRemoved = 0;
+          updateProgressBar(0);
+
+          // 根據難度和關卡調整時間
+          const settings = difficultySettings[difficulty];
+          time = settings.baseTime + Math.min(30, level * 2);
+          timeDisplay.textContent = time;
+
+          // 重設遊戲板
+          createBoard();
+
+          // 重新開始遊戲
+          startGame();
+        }
+
+        // 遊戲結束
+        function gameOver() {
+          gameActive = false;
+          clearInterval(timerId);
+
+          gameController.showMessage(
+            "遊戲結束",
+            `
+            <div style="text-align:center;">
+              <p>時間到!</p>
+              <p>你的最終得分: <strong>${score}</strong></p>
+              <p>關卡達到: ${level}</p>
+              <p>消除對數: ${pairsRemoved}</p>
+              <button id="restartGameBtn" class="primary-button">重新開始</button>
+            </div>
+            `
+          );
+
+          setTimeout(() => {
+            document
+              .getElementById("restartGameBtn")
+              .addEventListener("click", () => {
+                gameController.hideMessage();
+                initGame();
+                startGame();
+              });
+          }, 100);
+        }
+
+        // 開始遊戲
+        function startGame() {
+          gameActive = true;
+
+          // 開始倒數計時
+          timerId = setInterval(() => {
+            time--;
+            timeDisplay.textContent = time;
+
+            if (time <= 10) {
+              timeDisplay.style.color = "red";
+            } else {
+              timeDisplay.style.color = "";
+            }
+
+            if (time <= 0) {
+              gameOver();
+            }
+          }, 1000);
+        }
+
+        // 設置難度
+        function setDifficulty(diff) {
+          difficulty = diff;
+          easyBtn.classList.toggle("active", diff === "easy");
+          normalBtn.classList.toggle("active", diff === "normal");
+          hardBtn.classList.toggle("active", diff === "hard");
+        }
+
+        // 事件監聽器
+        hintButton.addEventListener("click", showHint);
+        shuffleButton.addEventListener("click", shuffleTiles);
+
+        easyBtn.addEventListener("click", () => {
+          if (!gameActive) {
+            setDifficulty("easy");
+            initGame();
+          }
+        });
+
+        normalBtn.addEventListener("click", () => {
+          if (!gameActive) {
+            setDifficulty("normal");
+            initGame();
+          }
+        });
+
+        hardBtn.addEventListener("click", () => {
+          if (!gameActive) {
+            setDifficulty("hard");
+            initGame();
+          }
+        });
+
+        // 設置遊戲控制器
+        gameController.setRestartHandler(() => {
+          initGame();
+        });
+
+        // 處理暫停狀態變化
+        gameController.onPauseStateChange = function (isPaused) {
+          const pauseIndicator = document.getElementById("gamePaused");
+          if (pauseIndicator) {
+            pauseIndicator.style.display = isPaused ? "flex" : "none";
+          }
+
+          if (isPaused) {
+            if (gameActive) {
+              clearInterval(timerId);
+            }
+          } else if (gameActive) {
+            // 恢復計時器
+            timerId = setInterval(() => {
+              time--;
+              timeDisplay.textContent = time;
+
+              if (time <= 10) {
+                timeDisplay.style.color = "red";
+              }
+
+              if (time <= 0) {
+                gameOver();
+              }
+            }, 1000);
+          }
+        };
+
+        // 初始化遊戲
+        initGame();
+
+        // 顯示開始動畫
+        gameController.showStartAnimation(() => {
+          gameController.showMessage(
+            "連線消除",
+            `
+            <div style="text-align:center;">
+              <p>歡迎來到連線消除遊戲！</p>
+              <p>尋找相同顏色和符號的方塊，並嘗試用最多兩個轉彎連接它們。</p>
+              <p>現在已設置為<strong>${
+                difficulty === "easy"
+                  ? "簡單"
+                  : difficulty === "normal"
+                  ? "普通"
+                  : "困難"
+              }</strong>難度。</p>
+              <button id="startGameBtn" class="primary-button">開始遊戲</button>
+            </div>
+            `
+          );
+
+          setTimeout(() => {
+            document
+              .getElementById("startGameBtn")
+              .addEventListener("click", () => {
+                gameController.hideMessage();
+                startGame();
+              });
+          }, 100);
+        });
+      });
+    </script>
+  </body>
+</html>
