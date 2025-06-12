@@ -619,11 +619,14 @@
             e.preventDefault();
           },
           false
-        );
-
-        // 設置重啟處理器
+        ); // 設置重啟處理器
         gameController.setRestartHandler(() => {
           initGame();
+        });
+
+        // 設置幫助按鈕事件監聽器
+        document.getElementById("helpButton").addEventListener("click", () => {
+          helpModal.show();
         });
 
         // 顯示開始動畫然後初始化遊戲

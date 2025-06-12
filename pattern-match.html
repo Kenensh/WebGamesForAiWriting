@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>圖案匹配 - 網頁小遊戲</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        overflow: hidden;
+        user-select: none;
+      }
+
+      .game-container {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 2rem;
+        border-radius: 25px;
+        backdrop-filter: blur(15px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        max-width: 800px;
+        width: 90vw;
+        text-align: center;
+      }
+
+      .game-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 2rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .info-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.8rem;
+        border-radius: 10px;
+        min-width: 100px;
+      }
+
+      .info-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-bottom: 0.3rem;
+      }
+
+      .info-value {
+        font-size: 1.3rem;
+        font-weight: bold;
+      }
+
+      .game-area {
+        margin: 2rem 0;
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+      }
+
+      .status-text {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        min-height: 40px;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #8bc34a);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+        width: 0%;
+      }
+
+      .target-pattern {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 1rem;
+        border-radius: 15px;
+        margin-bottom: 1rem;
+      }
+
+      .pattern-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin: 1rem;
+        justify-content: center;
+      }
+
+      .pattern-cell {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        font-weight: bold;
+      }
+
+      .pattern-cell.filled {
+        background: #2196f3;
+        border-color: #1976d2;
+        box-shadow: 0 0 15px rgba(33, 150, 243, 0.5);
+      }
+
+      .pattern-cell.selected {
+        background: #4caf50;
+        border-color: #388e3c;
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+        transform: scale(1.1);
+      }
+
+      .pattern-cell.wrong {
+        background: #f44336;
+        border-color: #d32f2f;
+        box-shadow: 0 0 15px rgba(244, 67, 54, 0.5);
+        animation: shake 0.5s ease-in-out;
+      }
+
+      .pattern-cell.correct {
+        background: #4caf50;
+        border-color: #388e3c;
+        animation: bounce 0.5s ease-in-out;
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-5px);
+        }
+        75% {
+          transform: translateX(5px);
+        }
+      }
+
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+      }
+
+      .options-area {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      .option-pattern {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+      }
+
+      .option-pattern:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-5px);
+      }
+
+      .option-pattern.selected {
+        border-color: #4caf50;
+        background: rgba(76, 175, 80, 0.2);
+      }
+
+      .option-pattern.wrong {
+        border-color: #f44336;
+        background: rgba(244, 67, 54, 0.2);
+        animation: shake 0.5s ease-in-out;
+      }
+
+      .timer-display {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #ffd700;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-primary {
+        background: linear-gradient(45deg, #4caf50, #8bc34a);
+        color: white;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(45deg, #ff5722, #ff9800);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
+      }
+
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .difficulty-select {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        color: white;
+        padding: 8px 16px;
+        font-size: 1rem;
+      }
+
+      .feedback {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 15px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .feedback.show {
+        opacity: 1;
+      }
+
+      .feedback.correct {
+        background: rgba(76, 175, 80, 0.9);
+      }
+
+      .feedback.wrong {
+        background: rgba(244, 67, 54, 0.9);
+      }
+
+      /* 模態框樣式 */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 5% auto;
+        padding: 2rem;
+        border-radius: 25px;
+        width: 90%;
+        max-width: 600px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        color: white;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .modal h2 {
+        margin-bottom: 1rem;
+        color: #ffd700;
+      }
+
+      .modal p,
+      .modal li {
+        margin-bottom: 0.8rem;
+        line-height: 1.6;
+      }
+
+      .modal ul {
+        margin-left: 1rem;
+      }
+
+      @media (max-width: 768px) {
+        .game-container {
+          padding: 1rem;
+          width: 95vw;
+        }
+
+        .game-title {
+          font-size: 2rem;
+        }
+
+        .pattern-cell {
+          width: 40px;
+          height: 40px;
+          font-size: 1rem;
+        }
+
+        .options-area {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1 class="game-title"><i class="fas fa-shapes"></i> 圖案匹配</h1>
+
+      <div class="game-info">
+        <div class="info-item">
+          <div class="info-label">分數</div>
+          <div class="info-value" id="score">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">關卡</div>
+          <div class="info-value" id="level">1</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">時間</div>
+          <div class="info-value" id="timer">10</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">連擊</div>
+          <div class="info-value" id="combo">0</div>
+        </div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <div class="game-area" id="gameArea">
+        <div class="status-text" id="statusText">按下開始按鈕準備挑戰</div>
+
+        <div class="target-pattern" id="targetPattern" style="display: none">
+          <h3>目標圖案</h3>
+          <div class="pattern-grid" id="targetGrid"></div>
+        </div>
+
+        <div class="options-area" id="optionsArea" style="display: none">
+          <!-- 選項會動態生成 -->
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="startBtn">開始遊戲</button>
+        <button class="btn btn-secondary" id="resetBtn">重置</button>
+        <button class="btn" id="helpBtn">說明</button>
+        <select class="btn difficulty-select" id="difficultySelect">
+          <option value="easy">簡單</option>
+          <option value="medium">普通</option>
+          <option value="hard">困難</option>
+          <option value="expert">專家</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <!-- 說明模態框 -->
+    <div class="modal" id="helpModal">
+      <div class="modal-content">
+        <h2><i class="fas fa-shapes"></i> 圖案匹配說明</h2>
+        <p><strong>遊戲目標：</strong>快速識別並選擇與目標圖案相符的選項</p>
+        <p><strong>操作方式：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li>觀察上方顯示的目標圖案</li>
+          <li>從下方四個選項中選擇相符的圖案</li>
+          <li>在時間限制內做出正確選擇</li>
+          <li>連續正確可獲得連擊獎勵</li>
+        </ul>
+        <p><strong>計分系統：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li>正確匹配：基礎分數 + 時間獎勵</li>
+          <li>連擊獎勵：連擊數 × 5</li>
+          <li>關卡獎勵：關卡數 × 10</li>
+          <li>速度獎勵：剩餘時間 × 2</li>
+        </ul>
+        <p><strong>難度等級：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li><strong>簡單</strong>：15秒時間，3×3圖案</li>
+          <li><strong>普通</strong>：12秒時間，4×4圖案</li>
+          <li><strong>困難</strong>：10秒時間，4×4複雜圖案</li>
+          <li><strong>專家</strong>：8秒時間，5×5圖案</li>
+        </ul>
+        <button class="btn btn-primary" onclick="closeModal('helpModal')">
+          了解了
+        </button>
+      </div>
+    </div>
+
+    <!-- 遊戲結束模態框 -->
+    <div class="modal" id="gameOverModal">
+      <div class="modal-content">
+        <h2><i class="fas fa-trophy"></i> 遊戲結束</h2>
+        <div id="finalStats"></div>
+        <button class="btn btn-primary" onclick="closeModal('gameOverModal')">
+          繼續
+        </button>
+        <button class="btn btn-secondary" onclick="resetGame()">
+          再玩一次
+        </button>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class PatternMatchGame {
+        constructor() {
+          this.score = 0;
+          this.level = 1;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.isPlaying = false;
+          this.currentPattern = [];
+          this.currentOptions = [];
+          this.correctOption = 0;
+          this.timeLeft = 0;
+          this.timer = null;
+          this.currentDifficulty = "easy";
+
+          this.difficultySettings = {
+            easy: {
+              timeLimit: 15,
+              gridSize: 3,
+              complexity: 0.3,
+              name: "簡單",
+            },
+            medium: {
+              timeLimit: 12,
+              gridSize: 4,
+              complexity: 0.4,
+              name: "普通",
+            },
+            hard: {
+              timeLimit: 10,
+              gridSize: 4,
+              complexity: 0.6,
+              name: "困難",
+            },
+            expert: {
+              timeLimit: 8,
+              gridSize: 5,
+              complexity: 0.7,
+              name: "專家",
+            },
+          };
+
+          this.initializeGame();
+        }
+
+        initializeGame() {
+          this.bindEvents();
+          this.loadStats();
+          this.updateDisplay();
+        }
+
+        bindEvents() {
+          document
+            .getElementById("startBtn")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("resetBtn")
+            .addEventListener("click", () => this.resetGame());
+          document
+            .getElementById("helpBtn")
+            .addEventListener("click", () => this.showModal("helpModal"));
+          document
+            .getElementById("difficultySelect")
+            .addEventListener("change", (e) =>
+              this.changeDifficulty(e.target.value)
+            );
+        }
+
+        changeDifficulty(difficulty) {
+          this.currentDifficulty = difficulty;
+        }
+
+        startGame() {
+          this.isPlaying = true;
+          this.score = 0;
+          this.level = 1;
+          this.combo = 0;
+
+          document.getElementById("startBtn").textContent = "遊戲中...";
+          document.getElementById("startBtn").disabled = true;
+
+          this.startLevel();
+        }
+
+        startLevel() {
+          if (!this.isPlaying) return;
+
+          this.generatePattern();
+          this.generateOptions();
+          this.startTimer();
+          this.updateDisplay();
+          this.showGame();
+        }
+
+        generatePattern() {
+          const settings = this.difficultySettings[this.currentDifficulty];
+          const gridSize = settings.gridSize;
+          const complexity = settings.complexity;
+
+          this.currentPattern = [];
+
+          // 生成隨機圖案
+          for (let i = 0; i < gridSize * gridSize; i++) {
+            this.currentPattern.push(Math.random() < complexity);
+          }
+
+          this.displayPattern();
+        }
+
+        displayPattern() {
+          const targetGrid = document.getElementById("targetGrid");
+          const settings = this.difficultySettings[this.currentDifficulty];
+          const gridSize = settings.gridSize;
+
+          targetGrid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+          targetGrid.innerHTML = "";
+
+          this.currentPattern.forEach((filled, index) => {
+            const cell = document.createElement("div");
+            cell.className = `pattern-cell ${filled ? "filled" : ""}`;
+            targetGrid.appendChild(cell);
+          });
+        }
+
+        generateOptions() {
+          const numOptions = 4;
+          this.currentOptions = [];
+          this.correctOption = Math.floor(Math.random() * numOptions);
+
+          for (let i = 0; i < numOptions; i++) {
+            if (i === this.correctOption) {
+              this.currentOptions.push([...this.currentPattern]);
+            } else {
+              this.currentOptions.push(this.generateWrongOption());
+            }
+          }
+
+          this.displayOptions();
+        }
+
+        generateWrongOption() {
+          const wrongPattern = [...this.currentPattern];
+          const settings = this.difficultySettings[this.currentDifficulty];
+          const gridSize = settings.gridSize;
+
+          // 隨機改變1-3個位置
+          const changesToMake = Math.floor(Math.random() * 3) + 1;
+          for (let i = 0; i < changesToMake; i++) {
+            const index = Math.floor(Math.random() * wrongPattern.length);
+            wrongPattern[index] = !wrongPattern[index];
+          }
+
+          return wrongPattern;
+        }
+
+        displayOptions() {
+          const optionsArea = document.getElementById("optionsArea");
+          const settings = this.difficultySettings[this.currentDifficulty];
+          const gridSize = settings.gridSize;
+
+          optionsArea.innerHTML = "";
+
+          this.currentOptions.forEach((option, index) => {
+            const optionDiv = document.createElement("div");
+            optionDiv.className = "option-pattern";
+            optionDiv.onclick = () => this.selectOption(index);
+
+            const grid = document.createElement("div");
+            grid.className = "pattern-grid";
+            grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
+            option.forEach((filled) => {
+              const cell = document.createElement("div");
+              cell.className = `pattern-cell ${filled ? "filled" : ""}`;
+              grid.appendChild(cell);
+            });
+
+            optionDiv.appendChild(grid);
+            optionsArea.appendChild(optionDiv);
+          });
+        }
+
+        selectOption(selectedIndex) {
+          if (!this.isPlaying) return;
+
+          clearInterval(this.timer);
+
+          const options = document.querySelectorAll(".option-pattern");
+
+          if (selectedIndex === this.correctOption) {
+            // 正確答案
+            options[selectedIndex].classList.add("selected");
+            this.combo++;
+            this.maxCombo = Math.max(this.maxCombo, this.combo);
+
+            // 計算分數
+            const settings = this.difficultySettings[this.currentDifficulty];
+            const baseScore = 100;
+            const timeBonus = this.timeLeft * 2;
+            const comboBonus = this.combo * 5;
+            const levelBonus = this.level * 10;
+
+            const totalScore = baseScore + timeBonus + comboBonus + levelBonus;
+            this.score += totalScore;
+
+            this.showFeedback(`正確! +${totalScore}分`, "correct");
+
+            setTimeout(() => {
+              this.level++;
+              this.startLevel();
+            }, 1000);
+          } else {
+            // 錯誤答案
+            options[selectedIndex].classList.add("wrong");
+            options[this.correctOption].classList.add("selected");
+            this.combo = 0;
+
+            this.showFeedback("錯誤!", "wrong");
+
+            setTimeout(() => {
+              this.endGame();
+            }, 1500);
+          }
+        }
+
+        startTimer() {
+          const settings = this.difficultySettings[this.currentDifficulty];
+          this.timeLeft = settings.timeLimit;
+
+          this.timer = setInterval(() => {
+            this.timeLeft--;
+            this.updateDisplay();
+
+            if (this.timeLeft <= 0) {
+              clearInterval(this.timer);
+              this.selectOption(-1); // 時間到了，觸發錯誤
+            }
+          }, 1000);
+        }
+
+        showGame() {
+          document.getElementById("targetPattern").style.display = "block";
+          document.getElementById("optionsArea").style.display = "grid";
+          document.getElementById("statusText").textContent =
+            "選擇與目標圖案相符的選項！";
+        }
+
+        showFeedback(message, type) {
+          const feedback = document.getElementById("feedback");
+          feedback.textContent = message;
+          feedback.className = `feedback show ${type}`;
+
+          setTimeout(() => {
+            feedback.classList.remove("show");
+          }, 1000);
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("level").textContent = this.level;
+          document.getElementById("timer").textContent = this.timeLeft;
+          document.getElementById("combo").textContent = this.combo;
+
+          // 更新進度條
+          const progress = Math.min((this.level - 1) * 5, 100);
+          document.getElementById("progressFill").style.width = progress + "%";
+        }
+
+        endGame() {
+          this.isPlaying = false;
+          clearInterval(this.timer);
+
+          document.getElementById("startBtn").textContent = "開始遊戲";
+          document.getElementById("startBtn").disabled = false;
+          document.getElementById("statusText").textContent = "遊戲結束";
+          document.getElementById("targetPattern").style.display = "none";
+          document.getElementById("optionsArea").style.display = "none";
+
+          this.saveStats();
+          this.showGameOverModal();
+        }
+
+        resetGame() {
+          this.isPlaying = false;
+          clearInterval(this.timer);
+
+          this.score = 0;
+          this.level = 1;
+          this.combo = 0;
+          this.timeLeft = 0;
+
+          document.getElementById("startBtn").textContent = "開始遊戲";
+          document.getElementById("startBtn").disabled = false;
+          document.getElementById("statusText").textContent =
+            "按下開始按鈕準備挑戰";
+          document.getElementById("targetPattern").style.display = "none";
+          document.getElementById("optionsArea").style.display = "none";
+
+          this.updateDisplay();
+          this.closeModal("gameOverModal");
+        }
+
+        showModal(modalId) {
+          document.getElementById(modalId).style.display = "block";
+        }
+
+        closeModal(modalId) {
+          document.getElementById(modalId).style.display = "none";
+        }
+
+        showGameOverModal() {
+          const stats = this.loadStats();
+          const isNewRecord = this.score > stats.bestScore;
+
+          document.getElementById("finalStats").innerHTML = `
+            <p>最終分數: <strong>${this.score.toLocaleString()}</strong></p>
+            <p>達到關卡: <strong>${this.level - 1}</strong></p>
+            <p>最高連擊: <strong>${this.maxCombo}</strong></p>
+            <p>難度: <strong>${
+              this.difficultySettings[this.currentDifficulty].name
+            }</strong></p>
+            ${
+              isNewRecord
+                ? '<p style="color: #FFD700;"><i class="fas fa-crown"></i> 新紀錄！</p>'
+                : ""
+            }
+            <hr style="margin: 1rem 0; border: 1px solid rgba(255,255,255,0.3);">
+            <p>歷史最佳: <strong>${stats.bestScore.toLocaleString()}</strong></p>
+            <p>遊戲次數: <strong>${stats.gamesPlayed}</strong></p>
+            <p>最高關卡: <strong>${stats.bestLevel}</strong></p>
+          `;
+
+          this.showModal("gameOverModal");
+        }
+
+        saveStats() {
+          const stats = this.loadStats();
+
+          stats.gamesPlayed++;
+          stats.totalScore += this.score;
+          stats.bestScore = Math.max(stats.bestScore, this.score);
+          stats.bestLevel = Math.max(stats.bestLevel, this.level - 1);
+          stats.bestCombo = Math.max(stats.bestCombo, this.maxCombo);
+
+          localStorage.setItem("patternMatchStats", JSON.stringify(stats));
+        }
+
+        loadStats() {
+          const defaultStats = {
+            gamesPlayed: 0,
+            totalScore: 0,
+            bestScore: 0,
+            bestLevel: 0,
+            bestCombo: 0,
+          };
+
+          const saved = localStorage.getItem("patternMatchStats");
+          return saved ? JSON.parse(saved) : defaultStats;
+        }
+      }
+
+      // 全域函數
+      function closeModal(modalId) {
+        document.getElementById(modalId).style.display = "none";
+      }
+
+      function resetGame() {
+        if (window.game) {
+          window.game.resetGame();
+        }
+      }
+
+      // 初始化遊戲
+      window.addEventListener("DOMContentLoaded", () => {
+        window.game = new PatternMatchGame();
+      });
+    </script>
+  </body>
+</html>

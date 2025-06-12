@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Precision Draw - Drawing Accuracy Challenge</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .game-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        text-align: center;
+        max-width: 800px;
+        width: 90%;
+      }
+
+      h1 {
+        color: white;
+        margin-bottom: 30px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        color: white;
+        font-weight: bold;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .canvas-container {
+        position: relative;
+        display: inline-block;
+        margin: 20px 0;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      #gameCanvas {
+        background: white;
+        display: block;
+        cursor: crosshair;
+      }
+
+      .target-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        z-index: 10;
+      }
+
+      .game-controls {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        backdrop-filter: blur(5px);
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .btn-primary {
+        background: linear-gradient(45deg, #4caf50, #45a049);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(45deg, #2196f3, #1976d2);
+      }
+
+      .btn-danger {
+        background: linear-gradient(45deg, #f44336, #d32f2f);
+      }
+
+      .difficulty-selector {
+        margin: 20px 0;
+        color: white;
+      }
+
+      .difficulty-btn {
+        margin: 5px;
+        padding: 8px 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .difficulty-btn.active {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: white;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 10px;
+        color: white;
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .challenge-info {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        padding: 15px;
+        margin: 20px 0;
+        color: white;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content {
+        background: rgba(255, 255, 255, 0.95);
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 20px;
+        width: 80%;
+        max-width: 600px;
+        backdrop-filter: blur(10px);
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .close:hover {
+        color: black;
+      }
+
+      .accuracy-meter {
+        width: 100%;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+
+      .accuracy-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #f44336, #ff9800, #4caf50);
+        transition: width 0.3s ease;
+        border-radius: 10px;
+      }
+
+      @media (max-width: 600px) {
+        .game-container {
+          padding: 15px;
+        }
+
+        #gameCanvas {
+          width: 300px;
+          height: 300px;
+        }
+
+        .game-info {
+          font-size: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1>✏️ Precision Draw</h1>
+
+      <div class="game-info">
+        <div>Challenge: <span id="challengeNum">1</span>/5</div>
+        <div>Score: <span id="score">0</span></div>
+        <div>Accuracy: <span id="currentAccuracy">0%</span></div>
+        <div>Best: <span id="bestScore">0</span></div>
+      </div>
+
+      <div class="challenge-info" id="challengeInfo">
+        Select difficulty and click START to begin drawing challenges!
+      </div>
+
+      <div class="difficulty-selector">
+        <div>Select Difficulty:</div>
+        <button class="difficulty-btn active" data-difficulty="easy">
+          Easy
+        </button>
+        <button class="difficulty-btn" data-difficulty="medium">Medium</button>
+        <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+        <button class="difficulty-btn" data-difficulty="expert">Expert</button>
+      </div>
+
+      <div class="canvas-container">
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <canvas
+          id="targetCanvas"
+          class="target-overlay"
+          width="400"
+          height="400"
+        ></canvas>
+      </div>
+
+      <div class="accuracy-meter">
+        <div class="accuracy-fill" id="accuracyFill" style="width: 0%"></div>
+      </div>
+
+      <div class="game-controls">
+        <button class="btn btn-primary" id="startBtn">START</button>
+        <button class="btn btn-secondary" id="clearBtn">CLEAR</button>
+        <button class="btn btn-danger" id="submitBtn" disabled>SUBMIT</button>
+        <button class="btn" id="helpBtn">HELP</button>
+        <button class="btn" onclick="window.location.href='index.html'">
+          BACK
+        </button>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="totalChallenges">0</div>
+          <div class="stat-label">Challenges</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="avgAccuracy">0%</div>
+          <div class="stat-label">Avg Accuracy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="perfectDraws">0</div>
+          <div class="stat-label">Perfect Draws</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="totalTime">0s</div>
+          <div class="stat-label">Total Time</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>✏️ How to Play Precision Draw</h2>
+        <p>
+          <strong>Objective:</strong> Draw accurately along the target paths to
+          test your drawing precision and control.
+        </p>
+
+        <h3>🎮 Controls:</h3>
+        <ul>
+          <li>🖱️ <strong>Mouse:</strong> Click and drag to draw</li>
+          <li>👆 <strong>Touch:</strong> Touch and drag on mobile devices</li>
+          <li>
+            🖊️ <strong>Stylus:</strong> Works with stylus/pen input for better
+            precision
+          </li>
+          <li>✏️ <strong>Clear:</strong> Clear your drawing to start over</li>
+          <li>
+            📤 <strong>Submit:</strong> Submit your drawing for accuracy
+            evaluation
+          </li>
+        </ul>
+
+        <h3>🎯 Challenge Types:</h3>
+        <ul>
+          <li>
+            📏 <strong>Straight Lines:</strong> Draw straight lines between
+            points
+          </li>
+          <li>🌀 <strong>Circles:</strong> Trace perfect circles</li>
+          <li>〰️ <strong>Curves:</strong> Follow smooth curved paths</li>
+          <li>⭐ <strong>Shapes:</strong> Draw geometric shapes accurately</li>
+          <li>
+            📝 <strong>Complex Paths:</strong> Navigate intricate patterns
+          </li>
+        </ul>
+
+        <h3>🏆 Scoring:</h3>
+        <ul>
+          <li>
+            💯 <strong>Accuracy:</strong> How close your drawing matches the
+            target
+          </li>
+          <li>🎯 <strong>Precision:</strong> Consistency of line placement</li>
+          <li>
+            ⏱️ <strong>Time Bonus:</strong> Faster completion = higher score
+          </li>
+          <li>
+            🔥 <strong>Perfection:</strong> 95%+ accuracy earns perfect draw
+            status
+          </li>
+        </ul>
+
+        <h3>🎚️ Difficulty Levels:</h3>
+        <ul>
+          <li>
+            🟢 <strong>Easy:</strong> Simple shapes, large targets, forgiving
+            accuracy
+          </li>
+          <li>
+            🟡 <strong>Medium:</strong> More complex shapes, medium tolerance
+          </li>
+          <li>🟠 <strong>Hard:</strong> Intricate patterns, smaller targets</li>
+          <li>🔴 <strong>Expert:</strong> Pixel-perfect precision required</li>
+        </ul>
+
+        <h3>💡 Tips:</h3>
+        <ul>
+          <li>Use smooth, controlled movements</li>
+          <li>Take your time for better accuracy</li>
+          <li>Hold your device/mouse steady</li>
+          <li>Practice with easier challenges first</li>
+        </ul>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class PrecisionDraw {
+        constructor() {
+          this.canvas = document.getElementById("gameCanvas");
+          this.ctx = this.canvas.getContext("2d");
+          this.targetCanvas = document.getElementById("targetCanvas");
+          this.targetCtx = this.targetCanvas.getContext("2d");
+
+          this.isDrawing = false;
+          this.currentPath = [];
+          this.targetPath = [];
+          this.difficulty = "easy";
+          this.challengeNumber = 1;
+          this.score = 0;
+          this.startTime = 0;
+          this.stats = this.loadStats();
+
+          this.challenges = this.generateChallenges();
+          this.currentChallenge = null;
+
+          this.initializeGame();
+          this.setupEventListeners();
+          this.updateDisplay();
+        }
+
+        initializeGame() {
+          this.startBtn = document.getElementById("startBtn");
+          this.clearBtn = document.getElementById("clearBtn");
+          this.submitBtn = document.getElementById("submitBtn");
+          this.helpBtn = document.getElementById("helpBtn");
+
+          this.setupCanvas();
+        }
+
+        setupCanvas() {
+          // Set up drawing properties
+          this.ctx.lineWidth = 3;
+          this.ctx.lineCap = "round";
+          this.ctx.lineJoin = "round";
+          this.ctx.strokeStyle = "#2196F3";
+
+          this.targetCtx.lineWidth = 2;
+          this.targetCtx.lineCap = "round";
+          this.targetCtx.lineJoin = "round";
+          this.targetCtx.strokeStyle = "rgba(255, 0, 0, 0.7)";
+
+          this.clearCanvas();
+        }
+
+        setupEventListeners() {
+          this.startBtn.addEventListener("click", () => this.startChallenge());
+          this.clearBtn.addEventListener("click", () => this.clearDrawing());
+          this.submitBtn.addEventListener("click", () => this.submitDrawing());
+          this.helpBtn.addEventListener("click", () => this.showHelp());
+
+          // Difficulty selector
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.addEventListener("click", () =>
+              this.setDifficulty(btn.dataset.difficulty)
+            );
+          });
+
+          // Drawing events
+          this.canvas.addEventListener("mousedown", (e) =>
+            this.startDrawing(e)
+          );
+          this.canvas.addEventListener("mousemove", (e) => this.draw(e));
+          this.canvas.addEventListener("mouseup", () => this.stopDrawing());
+          this.canvas.addEventListener("mouseout", () => this.stopDrawing());
+
+          // Touch events
+          this.canvas.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            this.startDrawing(e.touches[0]);
+          });
+          this.canvas.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+            this.draw(e.touches[0]);
+          });
+          this.canvas.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            this.stopDrawing();
+          });
+
+          // Modal events
+          document
+            .querySelector(".close")
+            .addEventListener("click", () => this.hideHelp());
+          document
+            .getElementById("helpModal")
+            .addEventListener("click", (e) => {
+              if (e.target.id === "helpModal") this.hideHelp();
+            });
+        }
+
+        setDifficulty(difficulty) {
+          this.difficulty = difficulty;
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.classList.toggle(
+              "active",
+              btn.dataset.difficulty === difficulty
+            );
+          });
+        }
+
+        startChallenge() {
+          this.challengeNumber = 1;
+          this.score = 0;
+          this.startTime = Date.now();
+          this.nextChallenge();
+        }
+
+        nextChallenge() {
+          if (this.challengeNumber > 5) {
+            this.endGame();
+            return;
+          }
+
+          this.currentChallenge = this.generateChallenge(
+            this.challengeNumber,
+            this.difficulty
+          );
+          this.clearCanvas();
+          this.drawTarget();
+          this.startBtn.disabled = true;
+          this.submitBtn.disabled = false;
+
+          document.getElementById("challengeInfo").textContent =
+            this.currentChallenge.description;
+
+          this.updateDisplay();
+        }
+
+        generateChallenge(challengeNum, difficulty) {
+          const challenges = {
+            1: () => this.generateLineChallenge(),
+            2: () => this.generateCircleChallenge(),
+            3: () => this.generateCurveChallenge(),
+            4: () => this.generateShapeChallenge(),
+            5: () => this.generateComplexChallenge(),
+          };
+
+          return challenges[challengeNum]();
+        }
+
+        generateLineChallenge() {
+          const margin = 50;
+          const points = [
+            {
+              x: margin + Math.random() * (this.canvas.width - 2 * margin),
+              y: margin + Math.random() * (this.canvas.height - 2 * margin),
+            },
+            {
+              x: margin + Math.random() * (this.canvas.width - 2 * margin),
+              y: margin + Math.random() * (this.canvas.height - 2 * margin),
+            },
+          ];
+
+          return {
+            type: "line",
+            description: "📏 Draw a straight line between the two points",
+            path: points,
+            tolerance: this.getDifficultyTolerance(),
+          };
+        }
+
+        generateCircleChallenge() {
+          const centerX = this.canvas.width / 2;
+          const centerY = this.canvas.height / 2;
+          const radius = 80 + Math.random() * 60;
+          const points = [];
+
+          for (let i = 0; i <= 360; i += 5) {
+            const angle = (i * Math.PI) / 180;
+            points.push({
+              x: centerX + Math.cos(angle) * radius,
+              y: centerY + Math.sin(angle) * radius,
+            });
+          }
+
+          return {
+            type: "circle",
+            description: "🌀 Trace the perfect circle",
+            path: points,
+            tolerance: this.getDifficultyTolerance(),
+          };
+        }
+
+        generateCurveChallenge() {
+          const points = [];
+          const amplitude = 50;
+          const frequency = 0.02;
+
+          for (let x = 50; x < this.canvas.width - 50; x += 2) {
+            const y =
+              this.canvas.height / 2 +
+              Math.sin(x * frequency) * amplitude +
+              Math.sin(x * frequency * 3) * (amplitude / 3);
+            points.push({ x, y });
+          }
+
+          return {
+            type: "curve",
+            description: "〰️ Follow the smooth curved path",
+            path: points,
+            tolerance: this.getDifficultyTolerance(),
+          };
+        }
+
+        generateShapeChallenge() {
+          const centerX = this.canvas.width / 2;
+          const centerY = this.canvas.height / 2;
+          const size = 60;
+          const sides = 5 + Math.floor(Math.random() * 3); // 5-7 sides
+          const points = [];
+
+          for (let i = 0; i <= sides; i++) {
+            const angle = (i * 2 * Math.PI) / sides - Math.PI / 2;
+            points.push({
+              x: centerX + Math.cos(angle) * size,
+              y: centerY + Math.sin(angle) * size,
+            });
+          }
+
+          return {
+            type: "shape",
+            description: `⭐ Draw the ${sides}-sided polygon`,
+            path: points,
+            tolerance: this.getDifficultyTolerance(),
+          };
+        }
+
+        generateComplexChallenge() {
+          const points = [];
+          const segments = 4;
+
+          for (let seg = 0; seg < segments; seg++) {
+            const startX = 50 + (seg * (this.canvas.width - 100)) / segments;
+            const endX =
+              50 + ((seg + 1) * (this.canvas.width - 100)) / segments;
+
+            for (let x = startX; x <= endX; x += 2) {
+              const progress = (x - startX) / (endX - startX);
+              const y1 = 100 + Math.sin(progress * Math.PI * 2) * 50;
+              const y2 = 300 + Math.cos(progress * Math.PI * 3) * 30;
+              const y = seg % 2 === 0 ? y1 : y2;
+              points.push({ x, y });
+            }
+          }
+
+          return {
+            type: "complex",
+            description: "🌊 Navigate the complex winding path",
+            path: points,
+            tolerance: this.getDifficultyTolerance(),
+          };
+        }
+
+        getDifficultyTolerance() {
+          const tolerances = {
+            easy: 25,
+            medium: 15,
+            hard: 8,
+            expert: 4,
+          };
+          return tolerances[this.difficulty];
+        }
+
+        drawTarget() {
+          this.targetCtx.clearRect(
+            0,
+            0,
+            this.targetCanvas.width,
+            this.targetCanvas.height
+          );
+
+          if (!this.currentChallenge || !this.currentChallenge.path) return;
+
+          this.targetCtx.beginPath();
+          this.targetCtx.strokeStyle = "rgba(255, 0, 0, 0.7)";
+          this.targetCtx.lineWidth = 3;
+
+          const path = this.currentChallenge.path;
+          this.targetCtx.moveTo(path[0].x, path[0].y);
+
+          for (let i = 1; i < path.length; i++) {
+            this.targetCtx.lineTo(path[i].x, path[i].y);
+          }
+
+          this.targetCtx.stroke();
+
+          // Draw start and end points
+          this.targetCtx.fillStyle = "rgba(0, 255, 0, 0.8)";
+          this.targetCtx.beginPath();
+          this.targetCtx.arc(path[0].x, path[0].y, 8, 0, 2 * Math.PI);
+          this.targetCtx.fill();
+
+          this.targetCtx.fillStyle = "rgba(255, 0, 0, 0.8)";
+          this.targetCtx.beginPath();
+          this.targetCtx.arc(
+            path[path.length - 1].x,
+            path[path.length - 1].y,
+            8,
+            0,
+            2 * Math.PI
+          );
+          this.targetCtx.fill();
+        }
+
+        getMousePos(e) {
+          const rect = this.canvas.getBoundingClientRect();
+          const scaleX = this.canvas.width / rect.width;
+          const scaleY = this.canvas.height / rect.height;
+
+          return {
+            x: (e.clientX - rect.left) * scaleX,
+            y: (e.clientY - rect.top) * scaleY,
+          };
+        }
+
+        startDrawing(e) {
+          this.isDrawing = true;
+          const pos = this.getMousePos(e);
+          this.currentPath = [pos];
+
+          this.ctx.beginPath();
+          this.ctx.moveTo(pos.x, pos.y);
+        }
+
+        draw(e) {
+          if (!this.isDrawing) return;
+
+          const pos = this.getMousePos(e);
+          this.currentPath.push(pos);
+
+          this.ctx.lineTo(pos.x, pos.y);
+          this.ctx.stroke();
+
+          // Real-time accuracy feedback
+          const accuracy = this.calculateAccuracy();
+          this.updateAccuracyMeter(accuracy);
+        }
+
+        stopDrawing() {
+          this.isDrawing = false;
+        }
+
+        clearDrawing() {
+          this.clearCanvas();
+          this.currentPath = [];
+          this.updateAccuracyMeter(0);
+        }
+
+        clearCanvas() {
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+
+        submitDrawing() {
+          if (this.currentPath.length === 0) return;
+
+          const accuracy = this.calculateAccuracy();
+          const timeBonus = Math.max(
+            0,
+            100 - Math.floor((Date.now() - this.startTime) / 1000)
+          );
+          const challengeScore = Math.floor(accuracy * 10 + timeBonus);
+
+          this.score += challengeScore;
+
+          // Update stats
+          this.stats.totalChallenges++;
+          this.stats.totalAccuracy += accuracy;
+          if (accuracy >= 95) this.stats.perfectDraws++;
+
+          document.getElementById(
+            "challengeInfo"
+          ).textContent = `✅ Challenge ${this.challengeNumber} complete! Accuracy: ${accuracy}%, Score: +${challengeScore}`;
+
+          this.challengeNumber++;
+          this.submitBtn.disabled = true;
+
+          setTimeout(() => {
+            this.nextChallenge();
+          }, 2000);
+        }
+
+        calculateAccuracy() {
+          if (!this.currentChallenge || this.currentPath.length === 0) return 0;
+
+          const targetPath = this.currentChallenge.path;
+          const tolerance = this.currentChallenge.tolerance;
+
+          let totalDistance = 0;
+          let withinTolerance = 0;
+
+          for (const point of this.currentPath) {
+            let minDistance = Infinity;
+
+            for (const targetPoint of targetPath) {
+              const distance = Math.sqrt(
+                Math.pow(point.x - targetPoint.x, 2) +
+                  Math.pow(point.y - targetPoint.y, 2)
+              );
+              minDistance = Math.min(minDistance, distance);
+            }
+
+            totalDistance += minDistance;
+            if (minDistance <= tolerance) withinTolerance++;
+          }
+
+          const accuracy = (withinTolerance / this.currentPath.length) * 100;
+          return Math.round(Math.max(0, Math.min(100, accuracy)));
+        }
+
+        updateAccuracyMeter(accuracy) {
+          document.getElementById("accuracyFill").style.width = accuracy + "%";
+          document.getElementById("currentAccuracy").textContent =
+            accuracy + "%";
+        }
+
+        endGame() {
+          const totalTime = Math.floor((Date.now() - this.startTime) / 1000);
+          this.stats.totalTime += totalTime;
+          this.stats.bestScore = Math.max(this.stats.bestScore, this.score);
+
+          document.getElementById(
+            "challengeInfo"
+          ).textContent = `🎉 All challenges complete! Final Score: ${this.score} points in ${totalTime}s`;
+
+          this.startBtn.disabled = false;
+          this.submitBtn.disabled = true;
+
+          this.saveStats();
+          this.updateDisplay();
+        }
+
+        updateDisplay() {
+          document.getElementById("challengeNum").textContent =
+            this.challengeNumber;
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("bestScore").textContent =
+            this.stats.bestScore;
+          document.getElementById("totalChallenges").textContent =
+            this.stats.totalChallenges;
+          document.getElementById("perfectDraws").textContent =
+            this.stats.perfectDraws;
+          document.getElementById("totalTime").textContent =
+            this.stats.totalTime + "s";
+
+          const avgAccuracy =
+            this.stats.totalChallenges > 0
+              ? Math.round(
+                  this.stats.totalAccuracy / this.stats.totalChallenges
+                )
+              : 0;
+          document.getElementById("avgAccuracy").textContent =
+            avgAccuracy + "%";
+        }
+
+        showHelp() {
+          document.getElementById("helpModal").style.display = "block";
+        }
+
+        hideHelp() {
+          document.getElementById("helpModal").style.display = "none";
+        }
+
+        loadStats() {
+          const saved = localStorage.getItem("precisionDrawStats");
+          return saved
+            ? JSON.parse(saved)
+            : {
+                totalChallenges: 0,
+                bestScore: 0,
+                perfectDraws: 0,
+                totalTime: 0,
+                totalAccuracy: 0,
+              };
+        }
+
+        saveStats() {
+          localStorage.setItem(
+            "precisionDrawStats",
+            JSON.stringify(this.stats)
+          );
+        }
+      }
+
+      // Initialize game when page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        new PrecisionDraw();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rapid Fire Quiz - Quick Knowledge Challenge</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .game-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        text-align: center;
+        max-width: 600px;
+        width: 90%;
+      }
+
+      h1 {
+        color: white;
+        margin-bottom: 30px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        color: white;
+        font-weight: bold;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .timer-container {
+        position: relative;
+        margin: 20px 0;
+      }
+
+      .timer-bar {
+        width: 100%;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .timer-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #ffc107, #f44336);
+        transition: width 0.1s linear;
+        border-radius: 10px;
+      }
+
+      .timer-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+      }
+
+      .question-container {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 15px;
+        padding: 30px;
+        margin: 20px 0;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .question-number {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+
+      .question-text {
+        font-size: 20px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 25px;
+        line-height: 1.4;
+      }
+
+      .answers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .answer-btn {
+        padding: 15px 20px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background: linear-gradient(45deg, #2196f3, #1976d2);
+        color: white;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      .answer-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .answer-btn.correct {
+        background: linear-gradient(45deg, #4caf50, #45a049);
+        animation: correct-flash 0.6s ease;
+      }
+
+      .answer-btn.incorrect {
+        background: linear-gradient(45deg, #f44336, #d32f2f);
+        animation: incorrect-shake 0.6s ease;
+      }
+
+      .answer-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+
+      @keyframes correct-flash {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      @keyframes incorrect-shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-5px);
+        }
+        75% {
+          transform: translateX(5px);
+        }
+      }
+
+      .category-selector {
+        margin: 20px 0;
+        color: white;
+      }
+
+      .category-btn {
+        margin: 5px;
+        padding: 8px 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+      }
+
+      .category-btn.active {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: white;
+      }
+
+      .game-controls {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        backdrop-filter: blur(5px);
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .btn-primary {
+        background: linear-gradient(45deg, #4caf50, #45a049);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 10px;
+        color: white;
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .streak-indicator {
+        background: linear-gradient(45deg, #ff6b35, #f7931e);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 25px;
+        margin: 10px 0;
+        font-weight: bold;
+        animation: streak-glow 1s ease-in-out infinite alternate;
+      }
+
+      @keyframes streak-glow {
+        0% {
+          box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
+        }
+        100% {
+          box-shadow: 0 0 20px rgba(255, 107, 53, 0.8);
+        }
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content {
+        background: rgba(255, 255, 255, 0.95);
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 20px;
+        width: 80%;
+        max-width: 600px;
+        backdrop-filter: blur(10px);
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .close:hover {
+        color: black;
+      }
+
+      @media (max-width: 600px) {
+        .game-container {
+          padding: 15px;
+        }
+
+        .question-text {
+          font-size: 18px;
+        }
+
+        .answer-btn {
+          font-size: 14px;
+          padding: 12px 15px;
+        }
+
+        .answers-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1>⚡ Rapid Fire Quiz</h1>
+
+      <div class="game-info">
+        <div>Question: <span id="questionNum">0</span>/20</div>
+        <div>Score: <span id="score">0</span></div>
+        <div>Streak: <span id="streak">0</span></div>
+        <div>Best: <span id="bestScore">0</span></div>
+      </div>
+
+      <div class="timer-container">
+        <div class="timer-bar">
+          <div class="timer-fill" id="timerFill"></div>
+        </div>
+        <div class="timer-text" id="timerText">10s</div>
+      </div>
+
+      <div class="category-selector">
+        <div style="margin-bottom: 10px">Select Category:</div>
+        <button class="category-btn active" data-category="general">
+          🧠 General
+        </button>
+        <button class="category-btn" data-category="science">🔬 Science</button>
+        <button class="category-btn" data-category="history">📚 History</button>
+        <button class="category-btn" data-category="sports">⚽ Sports</button>
+        <button class="category-btn" data-category="movies">🎬 Movies</button>
+        <button class="category-btn" data-category="mixed">🎲 Mixed</button>
+      </div>
+
+      <div class="question-container" id="questionContainer">
+        <div class="question-text">
+          Select a category and click START to begin the rapid fire quiz
+          challenge!
+        </div>
+      </div>
+
+      <div id="streakIndicator" class="streak-indicator" style="display: none">
+        🔥 Hot Streak: <span id="streakCount">0</span> in a row!
+      </div>
+
+      <div class="game-controls">
+        <button class="btn btn-primary" id="startBtn">START</button>
+        <button class="btn" id="helpBtn">HELP</button>
+        <button class="btn" onclick="window.location.href='index.html'">
+          BACK
+        </button>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="totalQuestions">0</div>
+          <div class="stat-label">Questions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="accuracy">0%</div>
+          <div class="stat-label">Accuracy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="avgTime">0s</div>
+          <div class="stat-label">Avg Time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="longestStreak">0</div>
+          <div class="stat-label">Best Streak</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>⚡ How to Play Rapid Fire Quiz</h2>
+        <p>
+          <strong>Objective:</strong> Answer as many questions correctly as
+          possible in this fast-paced knowledge challenge.
+        </p>
+
+        <h3>🎮 How to Play:</h3>
+        <ul>
+          <li>📋 <strong>Questions:</strong> Answer 20 rapid-fire questions</li>
+          <li>⏱️ <strong>Time Limit:</strong> 10 seconds per question</li>
+          <li>🎯 <strong>Click:</strong> Click the correct answer button</li>
+          <li>⚡ <strong>Speed:</strong> Faster answers = higher score</li>
+        </ul>
+
+        <h3>🏆 Scoring System:</h3>
+        <ul>
+          <li>✅ <strong>Correct Answer:</strong> Base points + time bonus</li>
+          <li>
+            🔥 <strong>Streak Bonus:</strong> Extra points for consecutive
+            correct answers
+          </li>
+          <li>
+            ⏰ <strong>Time Bonus:</strong> More points for faster responses
+          </li>
+          <li>❌ <strong>Wrong Answer:</strong> No points, streak resets</li>
+          <li>⏱️ <strong>Timeout:</strong> Counts as wrong answer</li>
+        </ul>
+
+        <h3>📚 Categories:</h3>
+        <ul>
+          <li>🧠 <strong>General:</strong> Mixed knowledge topics</li>
+          <li>🔬 <strong>Science:</strong> Physics, chemistry, biology</li>
+          <li>📚 <strong>History:</strong> World history and events</li>
+          <li>⚽ <strong>Sports:</strong> Sports facts and trivia</li>
+          <li>🎬 <strong>Movies:</strong> Film and entertainment</li>
+          <li>
+            🎲 <strong>Mixed:</strong> Random questions from all categories
+          </li>
+        </ul>
+
+        <h3>🔥 Special Features:</h3>
+        <ul>
+          <li>
+            🎯 <strong>Hot Streaks:</strong> Build momentum with consecutive
+            correct answers
+          </li>
+          <li>
+            📊 <strong>Performance Tracking:</strong> Monitor accuracy and
+            response times
+          </li>
+          <li>
+            🏃 <strong>Speed Recognition:</strong> Visual feedback for quick
+            responses
+          </li>
+          <li>
+            💫 <strong>Streak Indicators:</strong> See your hot streaks in
+            real-time
+          </li>
+        </ul>
+
+        <h3>💡 Tips:</h3>
+        <ul>
+          <li>Read questions quickly but carefully</li>
+          <li>Trust your first instinct</li>
+          <li>Build streaks for maximum points</li>
+          <li>Practice different categories to improve</li>
+        </ul>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class RapidFireQuiz {
+        constructor() {
+          this.questions = this.generateQuestions();
+          this.currentQuestionIndex = 0;
+          this.score = 0;
+          this.streak = 0;
+          this.longestStreak = 0;
+          this.category = "general";
+          this.timeLeft = 10;
+          this.timer = null;
+          this.startTime = 0;
+          this.totalResponseTime = 0;
+          this.correctAnswers = 0;
+          this.stats = this.loadStats();
+
+          this.initializeGame();
+          this.setupEventListeners();
+          this.updateDisplay();
+        }
+
+        initializeGame() {
+          this.startBtn = document.getElementById("startBtn");
+          this.helpBtn = document.getElementById("helpBtn");
+          this.questionContainer = document.getElementById("questionContainer");
+          this.timerFill = document.getElementById("timerFill");
+          this.timerText = document.getElementById("timerText");
+          this.streakIndicator = document.getElementById("streakIndicator");
+        }
+
+        setupEventListeners() {
+          this.startBtn.addEventListener("click", () => this.startGame());
+          this.helpBtn.addEventListener("click", () => this.showHelp());
+
+          // Category selector
+          document.querySelectorAll(".category-btn").forEach((btn) => {
+            btn.addEventListener("click", () =>
+              this.setCategory(btn.dataset.category)
+            );
+          });
+
+          // Modal events
+          document
+            .querySelector(".close")
+            .addEventListener("click", () => this.hideHelp());
+          document
+            .getElementById("helpModal")
+            .addEventListener("click", (e) => {
+              if (e.target.id === "helpModal") this.hideHelp();
+            });
+        }
+
+        setCategory(category) {
+          this.category = category;
+          document.querySelectorAll(".category-btn").forEach((btn) => {
+            btn.classList.toggle("active", btn.dataset.category === category);
+          });
+        }
+
+        startGame() {
+          this.currentQuestionIndex = 0;
+          this.score = 0;
+          this.streak = 0;
+          this.correctAnswers = 0;
+          this.totalResponseTime = 0;
+          this.startBtn.disabled = true;
+
+          this.shuffleQuestions();
+          this.showQuestion();
+        }
+
+        shuffleQuestions() {
+          const categoryQuestions =
+            this.category === "mixed"
+              ? this.questions.flat()
+              : this.questions[this.category] || this.questions.general;
+
+          // Shuffle and select 20 questions
+          this.gameQuestions = [...categoryQuestions]
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 20);
+        }
+
+        showQuestion() {
+          if (this.currentQuestionIndex >= this.gameQuestions.length) {
+            this.endGame();
+            return;
+          }
+
+          const question = this.gameQuestions[this.currentQuestionIndex];
+          this.startTime = Date.now();
+          this.timeLeft = 10;
+
+          this.questionContainer.innerHTML = `
+                    <div class="question-number">Question ${
+                      this.currentQuestionIndex + 1
+                    } of ${this.gameQuestions.length}</div>
+                    <div class="question-text">${question.question}</div>
+                    <div class="answers-grid">
+                        ${question.answers
+                          .map(
+                            (answer, index) =>
+                              `<button class="answer-btn" onclick="rapidFireQuiz.selectAnswer(${index})">${answer}</button>`
+                          )
+                          .join("")}
+                    </div>
+                `;
+
+          this.startTimer();
+          this.updateDisplay();
+        }
+
+        startTimer() {
+          if (this.timer) clearInterval(this.timer);
+
+          this.timer = setInterval(() => {
+            this.timeLeft -= 0.1;
+
+            const percentage = (this.timeLeft / 10) * 100;
+            this.timerFill.style.width = Math.max(0, percentage) + "%";
+            this.timerText.textContent =
+              Math.max(0, this.timeLeft).toFixed(1) + "s";
+
+            if (this.timeLeft <= 0) {
+              this.selectAnswer(-1); // Timeout
+            }
+          }, 100);
+        }
+
+        selectAnswer(selectedIndex) {
+          if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+          }
+
+          const responseTime = (Date.now() - this.startTime) / 1000;
+          this.totalResponseTime += responseTime;
+
+          const question = this.gameQuestions[this.currentQuestionIndex];
+          const buttons = document.querySelectorAll(".answer-btn");
+          const isCorrect = selectedIndex === question.correct;
+          const isTimeout = selectedIndex === -1;
+
+          // Disable all buttons
+          buttons.forEach((btn) => (btn.disabled = true));
+
+          if (isTimeout) {
+            // Highlight correct answer for timeout
+            if (buttons[question.correct]) {
+              buttons[question.correct].classList.add("correct");
+            }
+            this.streak = 0;
+          } else if (isCorrect) {
+            buttons[selectedIndex].classList.add("correct");
+            this.correctAnswers++;
+            this.streak++;
+            this.longestStreak = Math.max(this.longestStreak, this.streak);
+
+            // Calculate score with time bonus and streak multiplier
+            const timeBonus = Math.max(0, Math.floor((10 - responseTime) * 10));
+            const streakMultiplier = Math.min(3, 1 + (this.streak - 1) * 0.1);
+            const points = Math.floor((100 + timeBonus) * streakMultiplier);
+            this.score += points;
+          } else {
+            buttons[selectedIndex].classList.add("incorrect");
+            buttons[question.correct].classList.add("correct");
+            this.streak = 0;
+          }
+
+          // Update streak indicator
+          if (this.streak >= 3) {
+            this.streakIndicator.style.display = "block";
+            document.getElementById("streakCount").textContent = this.streak;
+          } else {
+            this.streakIndicator.style.display = "none";
+          }
+
+          this.updateDisplay();
+
+          // Move to next question after delay
+          setTimeout(() => {
+            this.currentQuestionIndex++;
+            this.showQuestion();
+          }, 1500);
+        }
+
+        endGame() {
+          const avgResponseTime =
+            this.totalResponseTime / this.gameQuestions.length;
+
+          this.questionContainer.innerHTML = `
+                    <div class="question-text">🎉 Quiz Complete!</div>
+                    <div style="margin: 20px 0; font-size: 18px;">
+                        <div>Final Score: <strong>${
+                          this.score
+                        }</strong> points</div>
+                        <div>Correct Answers: <strong>${this.correctAnswers}/${
+            this.gameQuestions.length
+          }</strong></div>
+                        <div>Longest Streak: <strong>${
+                          this.longestStreak
+                        }</strong></div>
+                        <div>Average Response Time: <strong>${avgResponseTime.toFixed(
+                          1
+                        )}s</strong></div>
+                    </div>
+                `;
+
+          this.startBtn.disabled = false;
+          this.streakIndicator.style.display = "none";
+
+          // Update stats
+          this.stats.totalQuestions += this.gameQuestions.length;
+          this.stats.totalCorrect += this.correctAnswers;
+          this.stats.bestScore = Math.max(this.stats.bestScore, this.score);
+          this.stats.longestStreak = Math.max(
+            this.stats.longestStreak,
+            this.longestStreak
+          );
+          this.stats.totalResponseTime += this.totalResponseTime;
+
+          this.saveStats();
+          this.updateDisplay();
+        }
+
+        updateDisplay() {
+          document.getElementById("questionNum").textContent =
+            this.currentQuestionIndex + 1;
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("streak").textContent = this.streak;
+          document.getElementById("bestScore").textContent =
+            this.stats.bestScore;
+          document.getElementById("totalQuestions").textContent =
+            this.stats.totalQuestions;
+          document.getElementById("longestStreak").textContent =
+            this.stats.longestStreak;
+
+          const accuracy =
+            this.stats.totalQuestions > 0
+              ? Math.round(
+                  (this.stats.totalCorrect / this.stats.totalQuestions) * 100
+                )
+              : 0;
+          document.getElementById("accuracy").textContent = accuracy + "%";
+
+          const avgTime =
+            this.stats.totalQuestions > 0
+              ? (
+                  this.stats.totalResponseTime / this.stats.totalQuestions
+                ).toFixed(1)
+              : 0;
+          document.getElementById("avgTime").textContent = avgTime + "s";
+        }
+
+        generateQuestions() {
+          return {
+            general: [
+              {
+                question: "What is the capital of France?",
+                answers: ["London", "Berlin", "Paris", "Madrid"],
+                correct: 2,
+              },
+              {
+                question: "How many continents are there?",
+                answers: ["5", "6", "7", "8"],
+                correct: 2,
+              },
+              {
+                question: "What is the largest planet in our solar system?",
+                answers: ["Saturn", "Jupiter", "Neptune", "Earth"],
+                correct: 1,
+              },
+              {
+                question: "Who painted the Mona Lisa?",
+                answers: ["Van Gogh", "Picasso", "Da Vinci", "Monet"],
+                correct: 2,
+              },
+              {
+                question: "What is the smallest country in the world?",
+                answers: ["Monaco", "Vatican City", "San Marino", "Malta"],
+                correct: 1,
+              },
+              {
+                question: "Which ocean is the largest?",
+                answers: ["Atlantic", "Pacific", "Indian", "Arctic"],
+                correct: 1,
+              },
+              {
+                question: "What is the currency of Japan?",
+                answers: ["Yuan", "Won", "Yen", "Rupee"],
+                correct: 2,
+              },
+              {
+                question: "How many sides does a hexagon have?",
+                answers: ["5", "6", "7", "8"],
+                correct: 1,
+              },
+              {
+                question: "What is the hardest natural substance?",
+                answers: ["Gold", "Iron", "Diamond", "Platinum"],
+                correct: 2,
+              },
+              {
+                question: "Which planet is closest to the Sun?",
+                answers: ["Venus", "Mercury", "Earth", "Mars"],
+                correct: 1,
+              },
+              {
+                question: "What is the largest mammal?",
+                answers: ["Elephant", "Blue Whale", "Giraffe", "Rhino"],
+                correct: 1,
+              },
+              {
+                question: "In which year did WWII end?",
+                answers: ["1944", "1945", "1946", "1947"],
+                correct: 1,
+              },
+              {
+                question: "What is the most spoken language in the world?",
+                answers: ["English", "Spanish", "Mandarin", "Hindi"],
+                correct: 2,
+              },
+              {
+                question: "Which is the longest river in the world?",
+                answers: ["Amazon", "Nile", "Yangtze", "Mississippi"],
+                correct: 1,
+              },
+              {
+                question: "What is the symbol for gold on the periodic table?",
+                answers: ["Go", "Gd", "Au", "Ag"],
+                correct: 2,
+              },
+            ],
+            science: [
+              {
+                question: "What is the chemical symbol for water?",
+                answers: ["H2O", "CO2", "NaCl", "O2"],
+                correct: 0,
+              },
+              {
+                question: "How many bones are in the adult human body?",
+                answers: ["206", "208", "210", "204"],
+                correct: 0,
+              },
+              {
+                question: "What is the speed of light?",
+                answers: [
+                  "300,000 km/s",
+                  "150,000 km/s",
+                  "450,000 km/s",
+                  "200,000 km/s",
+                ],
+                correct: 0,
+              },
+              {
+                question: "Which gas makes up most of Earth's atmosphere?",
+                answers: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"],
+                correct: 2,
+              },
+              {
+                question: "What is the smallest unit of matter?",
+                answers: ["Molecule", "Atom", "Electron", "Proton"],
+                correct: 1,
+              },
+              {
+                question: "How many chambers does a human heart have?",
+                answers: ["2", "3", "4", "5"],
+                correct: 2,
+              },
+              {
+                question: "What is the hardest rock?",
+                answers: ["Granite", "Marble", "Diamond", "Quartz"],
+                correct: 2,
+              },
+              {
+                question: "Which planet has the most moons?",
+                answers: ["Jupiter", "Saturn", "Neptune", "Uranus"],
+                correct: 1,
+              },
+              {
+                question: "What is the most abundant gas in the universe?",
+                answers: ["Oxygen", "Hydrogen", "Helium", "Carbon"],
+                correct: 1,
+              },
+              {
+                question: "At what temperature does water boil?",
+                answers: ["90°C", "95°C", "100°C", "105°C"],
+                correct: 2,
+              },
+              {
+                question: "What is the largest organ in the human body?",
+                answers: ["Brain", "Liver", "Lungs", "Skin"],
+                correct: 3,
+              },
+              {
+                question: "How many teeth does an adult human have?",
+                answers: ["28", "30", "32", "34"],
+                correct: 2,
+              },
+              {
+                question: "What is the chemical symbol for iron?",
+                answers: ["Ir", "Fe", "In", "I"],
+                correct: 1,
+              },
+              {
+                question: "Which blood type is known as the universal donor?",
+                answers: ["A", "B", "AB", "O"],
+                correct: 3,
+              },
+              {
+                question: "What force keeps planets in orbit?",
+                answers: ["Magnetism", "Gravity", "Friction", "Inertia"],
+                correct: 1,
+              },
+            ],
+            history: [
+              {
+                question: "Who was the first person to walk on the moon?",
+                answers: [
+                  "Buzz Aldrin",
+                  "Neil Armstrong",
+                  "John Glenn",
+                  "Alan Shepard",
+                ],
+                correct: 1,
+              },
+              {
+                question: "In which year did the Berlin Wall fall?",
+                answers: ["1987", "1988", "1989", "1990"],
+                correct: 2,
+              },
+              {
+                question: "Who was the first President of the United States?",
+                answers: [
+                  "Thomas Jefferson",
+                  "George Washington",
+                  "John Adams",
+                  "Benjamin Franklin",
+                ],
+                correct: 1,
+              },
+              {
+                question: "Which ancient wonder was located in Alexandria?",
+                answers: [
+                  "Hanging Gardens",
+                  "Lighthouse",
+                  "Colossus",
+                  "Pyramids",
+                ],
+                correct: 1,
+              },
+              {
+                question: "When did World War I begin?",
+                answers: ["1912", "1913", "1914", "1915"],
+                correct: 2,
+              },
+              {
+                question: "Who wrote the Declaration of Independence?",
+                answers: [
+                  "George Washington",
+                  "Benjamin Franklin",
+                  "Thomas Jefferson",
+                  "John Adams",
+                ],
+                correct: 2,
+              },
+              {
+                question: "Which empire was ruled by Julius Caesar?",
+                answers: ["Greek", "Roman", "Egyptian", "Persian"],
+                correct: 1,
+              },
+              {
+                question: "In which year did the Titanic sink?",
+                answers: ["1910", "1911", "1912", "1913"],
+                correct: 2,
+              },
+              {
+                question: "Who was known as the Iron Lady?",
+                answers: [
+                  "Queen Elizabeth",
+                  "Margaret Thatcher",
+                  "Angela Merkel",
+                  "Golda Meir",
+                ],
+                correct: 1,
+              },
+              {
+                question:
+                  "Which war was fought between the North and South in America?",
+                answers: [
+                  "Revolutionary War",
+                  "Civil War",
+                  "War of 1812",
+                  "Spanish-American War",
+                ],
+                correct: 1,
+              },
+              {
+                question: "Who discovered America in 1492?",
+                answers: [
+                  "Vasco da Gama",
+                  "Christopher Columbus",
+                  "Ferdinand Magellan",
+                  "James Cook",
+                ],
+                correct: 1,
+              },
+              {
+                question: "Which dynasty built the Great Wall of China?",
+                answers: ["Ming", "Qing", "Tang", "Han"],
+                correct: 0,
+              },
+              {
+                question: "When did the French Revolution begin?",
+                answers: ["1787", "1788", "1789", "1790"],
+                correct: 2,
+              },
+              {
+                question: "Who was the last Tsar of Russia?",
+                answers: [
+                  "Nicholas I",
+                  "Alexander III",
+                  "Nicholas II",
+                  "Alexander II",
+                ],
+                correct: 2,
+              },
+              {
+                question: "Which city was the capital of the Byzantine Empire?",
+                answers: ["Rome", "Athens", "Constantinople", "Alexandria"],
+                correct: 2,
+              },
+            ],
+            sports: [
+              {
+                question:
+                  "How many players are on a basketball team on the court?",
+                answers: ["4", "5", "6", "7"],
+                correct: 1,
+              },
+              {
+                question: "In which sport would you perform a slam dunk?",
+                answers: ["Volleyball", "Basketball", "Tennis", "Baseball"],
+                correct: 1,
+              },
+              {
+                question: "How often are the Summer Olympics held?",
+                answers: [
+                  "Every 2 years",
+                  "Every 3 years",
+                  "Every 4 years",
+                  "Every 5 years",
+                ],
+                correct: 2,
+              },
+              {
+                question: "What is the maximum score in ten-pin bowling?",
+                answers: ["250", "280", "300", "350"],
+                correct: 2,
+              },
+              {
+                question: "In golf, what is one stroke under par called?",
+                answers: ["Eagle", "Birdie", "Bogey", "Albatross"],
+                correct: 1,
+              },
+              {
+                question: "Which country has won the most FIFA World Cups?",
+                answers: ["Germany", "Argentina", "Brazil", "Italy"],
+                correct: 2,
+              },
+              {
+                question: "How many bases are there on a baseball field?",
+                answers: ["3", "4", "5", "6"],
+                correct: 1,
+              },
+              {
+                question: "In tennis, what score comes after deuce?",
+                answers: ["15", "30", "40", "Advantage"],
+                correct: 3,
+              },
+              {
+                question: "Which sport is known as 'the beautiful game'?",
+                answers: ["Basketball", "Soccer", "Tennis", "Cricket"],
+                correct: 1,
+              },
+              {
+                question:
+                  "How many holes are played in a standard round of golf?",
+                answers: ["16", "18", "20", "22"],
+                correct: 1,
+              },
+              {
+                question: "In which sport would you see a 'slam dunk'?",
+                answers: ["Volleyball", "Basketball", "Tennis", "Badminton"],
+                correct: 1,
+              },
+              {
+                question:
+                  "What is the diameter of a basketball hoop in inches?",
+                answers: ["16", "17", "18", "19"],
+                correct: 2,
+              },
+              {
+                question: "How many periods are in an ice hockey game?",
+                answers: ["2", "3", "4", "5"],
+                correct: 1,
+              },
+              {
+                question:
+                  "In American football, how many points is a touchdown worth?",
+                answers: ["5", "6", "7", "8"],
+                correct: 1,
+              },
+              {
+                question: "Which country invented badminton?",
+                answers: ["China", "England", "India", "Denmark"],
+                correct: 1,
+              },
+            ],
+            movies: [
+              {
+                question: "Who directed the movie 'Jaws'?",
+                answers: [
+                  "George Lucas",
+                  "Steven Spielberg",
+                  "Martin Scorsese",
+                  "Francis Ford Coppola",
+                ],
+                correct: 1,
+              },
+              {
+                question:
+                  "Which movie won the first Academy Award for Best Picture?",
+                answers: ["Wings", "Sunrise", "The Jazz Singer", "7th Heaven"],
+                correct: 0,
+              },
+              {
+                question: "In 'The Matrix', what color pill does Neo take?",
+                answers: ["Blue", "Red", "Green", "Yellow"],
+                correct: 1,
+              },
+              {
+                question: "Who played the Joker in 'The Dark Knight'?",
+                answers: [
+                  "Jack Nicholson",
+                  "Joaquin Phoenix",
+                  "Heath Ledger",
+                  "Jared Leto",
+                ],
+                correct: 2,
+              },
+              {
+                question:
+                  "Which movie features the quote 'May the Force be with you'?",
+                answers: ["Star Trek", "Star Wars", "Blade Runner", "Alien"],
+                correct: 1,
+              },
+              {
+                question: "Who directed 'Pulp Fiction'?",
+                answers: [
+                  "Martin Scorsese",
+                  "Quentin Tarantino",
+                  "David Lynch",
+                  "Joel Coen",
+                ],
+                correct: 1,
+              },
+              {
+                question:
+                  "In which movie does Tom Hanks say 'Life is like a box of chocolates'?",
+                answers: ["Big", "Cast Away", "Forrest Gump", "Philadelphia"],
+                correct: 2,
+              },
+              {
+                question: "Which movie won the Oscar for Best Picture in 1994?",
+                answers: [
+                  "Forrest Gump",
+                  "The Lion King",
+                  "Pulp Fiction",
+                  "The Shawshank Redemption",
+                ],
+                correct: 0,
+              },
+              {
+                question: "Who played Rose in 'Titanic'?",
+                answers: [
+                  "Kate Winslet",
+                  "Nicole Kidman",
+                  "Charlize Theron",
+                  "Sandra Bullock",
+                ],
+                correct: 0,
+              },
+              {
+                question: "Which movie is about a fish looking for his son?",
+                answers: [
+                  "Shark Tale",
+                  "Finding Nemo",
+                  "The Little Mermaid",
+                  "Moana",
+                ],
+                correct: 1,
+              },
+              {
+                question: "Who directed 'E.T. the Extra-Terrestrial'?",
+                answers: [
+                  "George Lucas",
+                  "Steven Spielberg",
+                  "Ridley Scott",
+                  "James Cameron",
+                ],
+                correct: 1,
+              },
+              {
+                question: "In 'The Godfather', who played Vito Corleone?",
+                answers: [
+                  "Al Pacino",
+                  "Robert De Niro",
+                  "Marlon Brando",
+                  "James Caan",
+                ],
+                correct: 2,
+              },
+              {
+                question:
+                  "Which movie features the song 'My Heart Will Go On'?",
+                answers: ["Ghost", "Dirty Dancing", "Titanic", "The Bodyguard"],
+                correct: 2,
+              },
+              {
+                question: "Who played the main character in 'Rocky'?",
+                answers: [
+                  "Robert De Niro",
+                  "Al Pacino",
+                  "Sylvester Stallone",
+                  "Arnold Schwarzenegger",
+                ],
+                correct: 2,
+              },
+              {
+                question:
+                  "Which animated movie was the first to be nominated for Best Picture?",
+                answers: [
+                  "Toy Story",
+                  "Shrek",
+                  "Beauty and the Beast",
+                  "The Lion King",
+                ],
+                correct: 2,
+              },
+            ],
+          };
+        }
+
+        showHelp() {
+          document.getElementById("helpModal").style.display = "block";
+        }
+
+        hideHelp() {
+          document.getElementById("helpModal").style.display = "none";
+        }
+
+        loadStats() {
+          const saved = localStorage.getItem("rapidFireQuizStats");
+          return saved
+            ? JSON.parse(saved)
+            : {
+                totalQuestions: 0,
+                totalCorrect: 0,
+                bestScore: 0,
+                longestStreak: 0,
+                totalResponseTime: 0,
+              };
+        }
+
+        saveStats() {
+          localStorage.setItem(
+            "rapidFireQuizStats",
+            JSON.stringify(this.stats)
+          );
+        }
+      }
+
+      // Initialize game when page loads
+      let rapidFireQuiz;
+      document.addEventListener("DOMContentLoaded", () => {
+        rapidFireQuiz = new RapidFireQuiz();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>音波衝刺 - Sound Wave Rush</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Arial", sans-serif;
+        overflow: hidden;
+      }
+
+      .game-container {
+        width: 90vw;
+        height: 90vh;
+        max-width: 900px;
+        max-height: 700px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 30px;
+        text-align: center;
+        position: relative;
+      }
+
+      h1 {
+        color: white;
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+        color: white;
+        font-size: 1.1em;
+      }
+
+      .stat-box {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .wave-visualizer {
+        width: 100%;
+        height: 80px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        margin: 20px 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .wave-bar {
+        position: absolute;
+        bottom: 0;
+        width: 4px;
+        background: linear-gradient(0deg, #3498db, #2ecc71);
+        transition: height 0.1s ease;
+        border-radius: 2px 2px 0 0;
+      }
+
+      .game-area {
+        width: 100%;
+        height: 350px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 15px;
+        position: relative;
+        margin: 20px 0;
+        overflow: hidden;
+      }
+
+      .rhythm-lane {
+        position: absolute;
+        width: 60px;
+        height: 100%;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .lane1 {
+        left: 10%;
+        background: rgba(231, 76, 60, 0.1);
+      }
+      .lane2 {
+        left: 30%;
+        background: rgba(52, 152, 219, 0.1);
+      }
+      .lane3 {
+        left: 50%;
+        background: rgba(46, 204, 113, 0.1);
+      }
+      .lane4 {
+        left: 70%;
+        background: rgba(241, 196, 15, 0.1);
+      }
+
+      .hit-zone {
+        position: absolute;
+        bottom: 20px;
+        width: 60px;
+        height: 60px;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5em;
+        font-weight: bold;
+        color: white;
+      }
+
+      .hit-zone.lane1 {
+        left: 10%;
+        border-color: #e74c3c;
+      }
+      .hit-zone.lane2 {
+        left: 30%;
+        border-color: #3498db;
+      }
+      .hit-zone.lane3 {
+        left: 50%;
+        border-color: #2ecc71;
+      }
+      .hit-zone.lane4 {
+        left: 70%;
+        border-color: #f1c40f;
+      }
+
+      .note {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        animation: notefall linear forwards;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .note.lane1 {
+        background: linear-gradient(45deg, #e74c3c, #c0392b);
+        left: calc(10% + 5px);
+      }
+
+      .note.lane2 {
+        background: linear-gradient(45deg, #3498db, #2980b9);
+        left: calc(30% + 5px);
+      }
+
+      .note.lane3 {
+        background: linear-gradient(45deg, #2ecc71, #27ae60);
+        left: calc(50% + 5px);
+      }
+
+      .note.lane4 {
+        background: linear-gradient(45deg, #f1c40f, #f39c12);
+        left: calc(70% + 5px);
+      }
+
+      .note.perfect {
+        animation: perfectHit 0.5s ease;
+      }
+
+      .note.good {
+        animation: goodHit 0.5s ease;
+      }
+
+      .note.miss {
+        animation: missHit 0.5s ease;
+      }
+
+      @keyframes notefall {
+        from {
+          top: -60px;
+        }
+        to {
+          top: 100%;
+        }
+      }
+
+      @keyframes perfectHit {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.5);
+          background: radial-gradient(circle, #f39c12, #e67e22);
+        }
+        100% {
+          transform: scale(0);
+          opacity: 0;
+        }
+      }
+
+      @keyframes goodHit {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+          background: radial-gradient(circle, #2ecc71, #27ae60);
+        }
+        100% {
+          transform: scale(0);
+          opacity: 0;
+        }
+      }
+
+      @keyframes missHit {
+        0% {
+          transform: scale(1);
+        }
+        100% {
+          transform: scale(0.5);
+          opacity: 0;
+          background: #e74c3c;
+        }
+      }
+
+      .controls {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      /* 幫助模態框樣式 */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px;
+        border-radius: 20px;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        color: white;
+        position: relative;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+
+      .modal h2 {
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 2em;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .modal h3 {
+        margin: 20px 0 10px 0;
+        color: #fff;
+        font-size: 1.3em;
+      }
+
+      .modal p,
+      .modal li {
+        margin: 10px 0;
+        line-height: 1.6;
+        font-size: 1.1em;
+      }
+
+      .modal ul {
+        margin-left: 20px;
+      }
+
+      .close-help {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 0;
+        line-height: 1;
+      }
+
+      .close-help:hover {
+        color: #ff6b6b;
+        transform: scale(1.1);
+      }
+
+      @media (max-width: 768px) {
+        .game-container {
+          width: 95vw;
+          height: 95vh;
+          padding: 20px;
+        }
+
+        h1 {
+          font-size: 2em;
+        }
+
+        .game-stats {
+          grid-template-columns: repeat(2, 1fr);
+          font-size: 1em;
+        }
+
+        .game-area {
+          height: 300px;
+        }
+
+        .note,
+        .hit-zone {
+          width: 45px;
+          height: 45px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1>🎵 音波衝刺</h1>
+
+      <div class="game-stats">
+        <div class="stat-box">分數: <span id="score">0</span></div>
+        <div class="stat-box">連擊: <span id="combo">0</span></div>
+        <div class="stat-box">準確率: <span id="accuracy">100%</span></div>
+        <div class="stat-box">等級: <span id="level">1</span></div>
+      </div>
+
+      <div class="wave-visualizer" id="waveVisualizer">
+        <!-- 音波可視化條 -->
+      </div>
+
+      <div class="status" id="status">
+        準備音波節奏挑戰！使用鍵盤 A、S、D、F 或點擊按鈕！
+      </div>
+
+      <div class="game-area" id="gameArea">
+        <div class="rhythm-lane lane1"></div>
+        <div class="rhythm-lane lane2"></div>
+        <div class="rhythm-lane lane3"></div>
+        <div class="rhythm-lane lane4"></div>
+
+        <div class="hit-zone lane1" data-lane="1">A</div>
+        <div class="hit-zone lane2" data-lane="2">S</div>
+        <div class="hit-zone lane3" data-lane="3">D</div>
+        <div class="hit-zone lane4" data-lane="4">F</div>
+      </div>
+
+      <div class="key-controls">
+        <button class="btn key-btn lane1" data-lane="1">A</button>
+        <button class="btn key-btn lane2" data-lane="2">S</button>
+        <button class="btn key-btn lane3" data-lane="3">D</button>
+        <button class="btn key-btn lane4" data-lane="4">F</button>
+      </div>
+      <div class="controls">
+        <button class="btn" id="startBtn">開始遊戲</button>
+        <button class="btn" id="pauseBtn" style="display: none">暫停</button>
+        <button class="btn" id="resetBtn">重新開始</button>
+        <button class="btn" id="helpBtn">遊戲說明</button>
+      </div>
+    </div>
+
+    <!-- 幫助模態框 -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <button class="close-help">&times;</button>
+        <h2>🎵 音波衝刺 - 遊戲說明</h2>
+
+        <h3>🎯 遊戲目標</h3>
+        <p>跟隨音樂節拍，在正確的時機按下對應的按鍵，擊中下降的音符！</p>
+
+        <h3>🎮 操作方式</h3>
+        <ul>
+          <li><strong>A 鍵</strong>：控制第1軌道（紅色）</li>
+          <li><strong>S 鍵</strong>：控制第2軌道（綠色）</li>
+          <li><strong>D 鍵</strong>：控制第3軌道（藍色）</li>
+          <li><strong>F 鍵</strong>：控制第4軌道（黃色）</li>
+          <li>也可以點擊螢幕下方的按鈕來操作</li>
+        </ul>
+
+        <h3>📊 計分系統</h3>
+        <ul>
+          <li>
+            <strong>完美擊中</strong>：音符正好到達底部時按鍵，獲得最高分數
+          </li>
+          <li><strong>良好擊中</strong>：稍早或稍晚按鍵，獲得中等分數</li>
+          <li><strong>連擊獎勵</strong>：連續擊中可獲得連擊加分</li>
+          <li><strong>準確度</strong>：影響等級提升和額外獎勵</li>
+        </ul>
+
+        <h3>🎵 音樂節拍</h3>
+        <ul>
+          <li>觀察音波視覺化效果，感受音樂節拍</li>
+          <li>音符會按照音樂節拍從上方降下</li>
+          <li>跟隨節奏，在音符到達判定線時按鍵</li>
+          <li>不同難度的音符速度和密度會增加</li>
+        </ul>
+
+        <h3>💡 遊戲技巧</h3>
+        <ul>
+          <li>專注於音樂節拍，而不只是視覺</li>
+          <li>練習手指的獨立性和協調性</li>
+          <li>保持節奏感，避免急躁</li>
+          <li>觀察音符的下降模式</li>
+          <li>利用音波視覺化幫助判斷節拍</li>
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      class SoundWaveRush {
+        constructor() {
+          this.gameArea = document.getElementById("gameArea");
+          this.startBtn = document.getElementById("startBtn");
+          this.pauseBtn = document.getElementById("pauseBtn");
+          this.resetBtn = document.getElementById("resetBtn");
+          this.status = document.getElementById("status");
+          this.scoreEl = document.getElementById("score");
+          this.comboEl = document.getElementById("combo");
+          this.accuracyEl = document.getElementById("accuracy");
+          this.levelEl = document.getElementById("level");
+          this.waveVisualizer = document.getElementById("waveVisualizer");
+
+          this.score = 0;
+          this.combo = 0;
+          this.level = 1;
+          this.totalNotes = 0;
+          this.hitNotes = 0;
+          this.gameActive = false;
+          this.isPaused = false;
+
+          this.notes = [];
+          this.noteSpeed = 2000; // 音符下降時間(ms)
+          this.spawnRate = 800; // 音符生成間隔(ms)
+          this.gameTime = 0;
+
+          this.keyMapping = {
+            KeyA: 1,
+            KeyS: 2,
+            KeyD: 3,
+            KeyF: 4,
+          };
+
+          this.patterns = [
+            [1, 2, 3, 4],
+            [1, 3, 2, 4],
+            [4, 3, 2, 1],
+            [1, 1, 2, 3],
+            [2, 4, 1, 3],
+            [1, 2, 1, 3, 4],
+            [3, 1, 4, 2, 3],
+          ];
+
+          this.currentPattern = 0;
+          this.patternStep = 0;
+
+          this.spawnInterval = null;
+          this.gameInterval = null;
+
+          this.initializeGame();
+          this.createWaveVisualizer();
+        }
+        initializeGame() {
+          this.startBtn.addEventListener("click", () => this.startGame());
+          this.pauseBtn.addEventListener("click", () => this.pauseGame());
+          this.resetBtn.addEventListener("click", () => this.resetGame());
+
+          // 幫助系統
+          const helpBtn = document.getElementById("helpBtn");
+          if (helpBtn) {
+            helpBtn.addEventListener("click", () => this.showHelp());
+          }
+
+          // 鍵盤事件
+          document.addEventListener("keydown", (e) => this.handleKeyPress(e));
+          document.addEventListener("keyup", (e) => this.handleKeyRelease(e));
+
+          // 按鈕點擊事件
+          document.querySelectorAll(".key-btn").forEach((btn) => {
+            btn.addEventListener("mousedown", (e) =>
+              this.handleButtonPress(e.target.dataset.lane)
+            );
+            btn.addEventListener("mouseup", (e) =>
+              this.handleButtonRelease(e.target.dataset.lane)
+            );
+            btn.addEventListener("mouseleave", (e) =>
+              this.handleButtonRelease(e.target.dataset.lane)
+            );
+          });
+
+          this.updateDisplay();
+        }
+
+        createWaveVisualizer() {
+          for (let i = 0; i < 50; i++) {
+            const bar = document.createElement("div");
+            bar.className = "wave-bar";
+            bar.style.left = i * 4 + "px";
+            this.waveVisualizer.appendChild(bar);
+          }
+        }
+
+        updateWaveVisualizer() {
+          const bars = this.waveVisualizer.querySelectorAll(".wave-bar");
+          bars.forEach((bar, index) => {
+            const height = Math.random() * 60 + 10;
+            bar.style.height = height + "px";
+
+            // 根據遊戲狀態調整顏色
+            if (this.combo > 10) {
+              bar.style.background = "linear-gradient(0deg, #e74c3c, #f39c12)";
+            } else if (this.combo > 5) {
+              bar.style.background = "linear-gradient(0deg, #f39c12, #2ecc71)";
+            } else {
+              bar.style.background = "linear-gradient(0deg, #3498db, #2ecc71)";
+            }
+          });
+        }
+
+        startGame() {
+          this.gameActive = true;
+          this.isPaused = false;
+          this.score = 0;
+          this.combo = 0;
+          this.level = 1;
+          this.totalNotes = 0;
+          this.hitNotes = 0;
+          this.gameTime = 0;
+          this.currentPattern = 0;
+          this.patternStep = 0;
+
+          this.clearNotes();
+          this.updateDisplay();
+          this.startSpawning();
+          this.startGameTimer();
+
+          this.startBtn.style.display = "none";
+          this.pauseBtn.style.display = "inline-block";
+          this.status.textContent = "遊戲開始！跟上節拍！";
+        }
+
+        startSpawning() {
+          this.spawnInterval = setInterval(() => {
+            if (!this.isPaused && this.gameActive) {
+              this.spawnNote();
+            }
+          }, this.spawnRate);
+        }
+
+        startGameTimer() {
+          this.gameInterval = setInterval(() => {
+            if (!this.isPaused && this.gameActive) {
+              this.gameTime++;
+              this.updateWaveVisualizer();
+
+              // 每30秒提升難度
+              if (this.gameTime % 30 === 0) {
+                this.levelUp();
+              }
+            }
+          }, 1000);
+        }
+
+        spawnNote() {
+          const pattern = this.patterns[this.currentPattern];
+          const lane = pattern[this.patternStep];
+
+          const note = {
+            id: Date.now() + Math.random(),
+            lane: lane,
+            y: -60,
+            hit: false,
+            element: null,
+          };
+
+          this.createNoteElement(note);
+          this.notes.push(note);
+          this.totalNotes++;
+
+          // 更新模式進度
+          this.patternStep = (this.patternStep + 1) % pattern.length;
+          if (this.patternStep === 0) {
+            this.currentPattern =
+              (this.currentPattern + 1) % this.patterns.length;
+          }
+        }
+
+        createNoteElement(note) {
+          const element = document.createElement("div");
+          element.className = `note lane${note.lane}`;
+          element.dataset.id = note.id;
+          element.dataset.lane = note.lane;
+          element.textContent = ["", "A", "S", "D", "F"][note.lane];
+
+          element.style.animationDuration = this.noteSpeed + "ms";
+          note.element = element;
+          this.gameArea.appendChild(element);
+
+          // 自動移除超時音符
+          setTimeout(() => {
+            if (!note.hit) {
+              this.missNote(note);
+            }
+          }, this.noteSpeed);
+        }
+
+        handleKeyPress(e) {
+          if (!this.gameActive || this.isPaused) return;
+
+          const lane = this.keyMapping[e.code];
+          if (lane) {
+            this.activateKey(lane);
+            this.hitLane(lane);
+          }
+        }
+
+        handleKeyRelease(e) {
+          const lane = this.keyMapping[e.code];
+          if (lane) {
+            this.deactivateKey(lane);
+          }
+        }
+
+        handleButtonPress(lane) {
+          if (!this.gameActive || this.isPaused) return;
+
+          this.activateKey(parseInt(lane));
+          this.hitLane(parseInt(lane));
+        }
+
+        handleButtonRelease(lane) {
+          this.deactivateKey(parseInt(lane));
+        }
+
+        activateKey(lane) {
+          const keyBtn = document.querySelector(
+            `.key-btn[data-lane="${lane}"]`
+          );
+          const hitZone = document.querySelector(
+            `.hit-zone[data-lane="${lane}"]`
+          );
+
+          if (keyBtn) keyBtn.classList.add("active");
+          if (hitZone) hitZone.style.transform = "scale(1.1)";
+        }
+
+        deactivateKey(lane) {
+          const keyBtn = document.querySelector(
+            `.key-btn[data-lane="${lane}"]`
+          );
+          const hitZone = document.querySelector(
+            `.hit-zone[data-lane="${lane}"]`
+          );
+
+          if (keyBtn) keyBtn.classList.remove("active");
+          if (hitZone) hitZone.style.transform = "scale(1)";
+        }
+
+        hitLane(lane) {
+          const hitZoneRect = document
+            .querySelector(`.hit-zone.lane${lane}`)
+            .getBoundingClientRect();
+          const gameAreaRect = this.gameArea.getBoundingClientRect();
+
+          let closestNote = null;
+          let minDistance = Infinity;
+
+          this.notes.forEach((note) => {
+            if (note.lane === lane && !note.hit) {
+              const noteRect = note.element.getBoundingClientRect();
+              const distance = Math.abs(noteRect.bottom - hitZoneRect.top);
+
+              if (distance < minDistance) {
+                minDistance = distance;
+                closestNote = note;
+              }
+            }
+          });
+
+          if (closestNote) {
+            this.processHit(closestNote, minDistance);
+          }
+        }
+
+        processHit(note, distance) {
+          note.hit = true;
+          let hitType = "miss";
+          let points = 0;
+
+          if (distance < 30) {
+            hitType = "perfect";
+            points = 100;
+            this.combo++;
+            this.hitNotes++;
+          } else if (distance < 60) {
+            hitType = "good";
+            points = 50;
+            this.combo++;
+            this.hitNotes++;
+          } else {
+            hitType = "miss";
+            this.combo = 0;
+          }
+
+          // 連擊加成
+          if (this.combo > 0) {
+            points += Math.floor(this.combo / 5) * 10;
+          }
+
+          this.score += points;
+
+          // 視覺反饋
+          note.element.classList.add(hitType);
+          this.showHitFeedback(hitType, points);
+
+          setTimeout(() => this.removeNote(note), 500);
+          this.updateDisplay();
+        }
+
+        missNote(note) {
+          if (!note.hit) {
+            this.combo = 0;
+            this.showHitFeedback("miss", 0);
+            this.removeNote(note);
+            this.updateDisplay();
+          }
+        }
+
+        showHitFeedback(hitType, points) {
+          const feedback = document.createElement("div");
+          feedback.className = "hit-feedback";
+
+          switch (hitType) {
+            case "perfect":
+              feedback.textContent = "PERFECT!";
+              feedback.style.color = "#f39c12";
+              break;
+            case "good":
+              feedback.textContent = "GOOD!";
+              feedback.style.color = "#2ecc71";
+              break;
+            case "miss":
+              feedback.textContent = "MISS!";
+              feedback.style.color = "#e74c3c";
+              break;
+          }
+
+          if (points > 0) {
+            feedback.textContent += ` +${points}`;
+          }
+
+          this.gameArea.appendChild(feedback);
+          setTimeout(() => {
+            if (feedback.parentNode) {
+              feedback.parentNode.removeChild(feedback);
+            }
+          }, 500);
+        }
+
+        removeNote(note) {
+          const index = this.notes.findIndex((n) => n.id === note.id);
+          if (index !== -1) {
+            if (note.element && note.element.parentNode) {
+              note.element.parentNode.removeChild(note.element);
+            }
+            this.notes.splice(index, 1);
+          }
+        }
+
+        clearNotes() {
+          this.notes.forEach((note) => {
+            if (note.element && note.element.parentNode) {
+              note.element.parentNode.removeChild(note.element);
+            }
+          });
+          this.notes = [];
+        }
+
+        levelUp() {
+          this.level++;
+          this.noteSpeed = Math.max(this.noteSpeed - 100, 1000);
+          this.spawnRate = Math.max(this.spawnRate - 50, 400);
+
+          clearInterval(this.spawnInterval);
+          this.startSpawning();
+
+          this.status.textContent = `等級提升到 ${this.level}！速度增加！`;
+          setTimeout(() => {
+            this.status.textContent = "跟上節拍！";
+          }, 2000);
+        }
+
+        updateDisplay() {
+          this.scoreEl.textContent = this.score;
+          this.comboEl.textContent = this.combo;
+          this.levelEl.textContent = this.level;
+
+          const accuracy =
+            this.totalNotes > 0
+              ? Math.round((this.hitNotes / this.totalNotes) * 100)
+              : 100;
+          this.accuracyEl.textContent = accuracy + "%";
+        }
+
+        pauseGame() {
+          if (this.gameActive) {
+            this.isPaused = !this.isPaused;
+            this.pauseBtn.textContent = this.isPaused ? "繼續" : "暫停";
+            this.status.textContent = this.isPaused ? "遊戲已暫停" : "遊戲繼續";
+          }
+        }
+
+        resetGame() {
+          this.gameActive = false;
+          this.isPaused = false;
+          clearInterval(this.spawnInterval);
+          clearInterval(this.gameInterval);
+
+          this.score = 0;
+          this.combo = 0;
+          this.level = 1;
+          this.totalNotes = 0;
+          this.hitNotes = 0;
+          this.gameTime = 0;
+          this.noteSpeed = 2000;
+          this.spawnRate = 800;
+
+          this.clearNotes();
+          this.updateDisplay();
+          this.status.textContent =
+            "準備音波節奏挑戰！使用鍵盤 A、S、D、F 或點擊按鈕！";
+          this.startBtn.style.display = "inline-block";
+          this.pauseBtn.style.display = "none";
+        }
+
+        showHelp() {
+          const modal = document.getElementById("helpModal");
+          if (modal) {
+            modal.style.display = "flex";
+
+            // 添加關閉按鈕事件監聽器
+            const closeBtn = modal.querySelector(".close-help");
+            if (closeBtn) {
+              closeBtn.onclick = () => this.closeHelp();
+            }
+
+            // 點擊背景關閉
+            modal.onclick = (e) => {
+              if (e.target === modal) {
+                this.closeHelp();
+              }
+            };
+
+            // ESC鍵關閉
+            document.addEventListener("keydown", (e) => {
+              if (e.key === "Escape") {
+                this.closeHelp();
+              }
+            });
+          }
+        }
+
+        closeHelp() {
+          const modal = document.getElementById("helpModal");
+          if (modal) {
+            modal.style.display = "none";
+          }
+        }
+      }
+
+      // 初始化遊戲
+      window.addEventListener("load", () => {
+        new SoundWaveRush();
+      });
+    </script>
+  </body>
+</html>

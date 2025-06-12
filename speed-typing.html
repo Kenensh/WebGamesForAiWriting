@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>極速打字挑戰 - 網頁小遊戲</title>
+    <link rel="stylesheet" href="game-styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      .typing-area {
+        background: #2c3e50;
+        border-radius: 15px;
+        padding: 30px;
+        margin: 20px 0;
+        color: white;
+        font-family: "Courier New", monospace;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .target-text {
+        font-size: 24px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        min-height: 120px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 10px;
+        border: 2px solid #3498db;
+      }
+
+      .char {
+        position: relative;
+      }
+
+      .char.correct {
+        background-color: #27ae60;
+        color: white;
+      }
+
+      .char.incorrect {
+        background-color: #e74c3c;
+        color: white;
+      }
+
+      .char.current {
+        animation: blink 1s infinite;
+        background-color: #f1c40f;
+        color: #2c3e50;
+      }
+
+      @keyframes blink {
+        0%,
+        50% {
+          opacity: 1;
+        }
+        51%,
+        100% {
+          opacity: 0.3;
+        }
+      }
+
+      .typing-input {
+        width: 100%;
+        padding: 15px;
+        font-size: 18px;
+        font-family: "Courier New", monospace;
+        border: 3px solid #3498db;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.9);
+        outline: none;
+      }
+
+      .typing-input:focus {
+        border-color: #2980b9;
+        box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+      }
+
+      .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .stat-box {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .stat-value {
+        font-size: 32px;
+        font-weight: bold;
+        margin: 10px 0;
+      }
+
+      .progress-bar {
+        background: rgba(255, 255, 255, 0.2);
+        height: 10px;
+        border-radius: 5px;
+        margin: 15px 0;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        background: linear-gradient(90deg, #27ae60, #2ecc71);
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s ease;
+        border-radius: 5px;
+      }
+
+      .difficulty-tabs {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+        gap: 10px;
+      }
+
+      .difficulty-tab {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        background: #ecf0f1;
+        color: #2c3e50;
+      }
+
+      .difficulty-tab.active {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+      }
+
+      .time-pressure {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, #e74c3c, #f39c12, #27ae60);
+        transform: scaleX(1);
+        transform-origin: left;
+        transition: transform 0.1s linear;
+      }
+
+      .combo-indicator {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(241, 196, 15, 0.9);
+        color: #2c3e50;
+        padding: 10px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 16px;
+        display: none;
+      }
+
+      .combo-indicator.show {
+        display: block;
+        animation: pulse 0.5s ease-in-out;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <header class="game-header">
+        <div class="header-left">
+          <a href="index.html" class="back-button">
+            <i class="fas fa-arrow-left"></i> 返回
+          </a>
+        </div>
+        <h1 class="game-title"><i class="fas fa-keyboard"></i> 極速打字挑戰</h1>
+        <div class="header-right">
+          <button id="helpButton" class="help-button">
+            <i class="fas fa-question-circle"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="game-content">
+        <div class="stats-row">
+          <div class="stat-box">
+            <i class="fas fa-tachometer-alt"></i>
+            <div>速度 (WPM)</div>
+            <div class="stat-value" id="wpm">0</div>
+          </div>
+          <div class="stat-box">
+            <i class="fas fa-bullseye"></i>
+            <div>準確率</div>
+            <div class="stat-value" id="accuracy">100%</div>
+          </div>
+          <div class="stat-box">
+            <i class="fas fa-clock"></i>
+            <div>剩餘時間</div>
+            <div class="stat-value" id="timeLeft">60</div>
+          </div>
+          <div class="stat-box">
+            <i class="fas fa-star"></i>
+            <div>分數</div>
+            <div class="stat-value" id="score">0</div>
+          </div>
+        </div>
+
+        <div class="difficulty-tabs">
+          <button class="difficulty-tab active" data-difficulty="easy">
+            <i class="fas fa-leaf"></i> 簡單
+          </button>
+          <button class="difficulty-tab" data-difficulty="normal">
+            <i class="fas fa-fire"></i> 普通
+          </button>
+          <button class="difficulty-tab" data-difficulty="hard">
+            <i class="fas fa-bolt"></i> 困難
+          </button>
+          <button class="difficulty-tab" data-difficulty="extreme">
+            <i class="fas fa-skull"></i> 極限
+          </button>
+        </div>
+
+        <div class="typing-area">
+          <div class="time-pressure" id="timePressure"></div>
+          <div class="combo-indicator" id="comboIndicator">
+            <i class="fas fa-fire"></i> 連擊 x<span id="comboCount">0</span>
+          </div>
+
+          <div class="target-text" id="targetText">點擊開始按鈕開始挑戰！</div>
+
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+
+          <input
+            type="text"
+            class="typing-input"
+            id="typingInput"
+            placeholder="在這裡輸入..."
+            disabled
+          />
+        </div>
+
+        <div class="game-controls">
+          <button id="startButton" class="control-button start">
+            <i class="fas fa-play"></i> 開始挑戰
+          </button>
+          <button id="pauseButton" class="control-button pause" disabled>
+            <i class="fas fa-pause"></i> 暫停
+          </button>
+          <button id="resetButton" class="control-button reset">
+            <i class="fas fa-redo"></i> 重新開始
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 說明模態框 -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-keyboard"></i> 極速打字挑戰說明</h2>
+          <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+          <h3>遊戲目標</h3>
+          <p>在限定時間內快速且準確地輸入顯示的文字，挑戰你的打字速度極限！</p>
+
+          <h3>操作方式</h3>
+          <ul>
+            <li>選擇難度等級</li>
+            <li>點擊 <strong>開始挑戰</strong></li>
+            <li>在輸入框中輸入顯示的文字</li>
+            <li>輸入正確會高亮顯示</li>
+            <li>輸入錯誤會紅色標示</li>
+          </ul>
+
+          <h3>難度等級</h3>
+          <ul>
+            <li><strong>簡單</strong> - 基本單字，60秒時限</li>
+            <li><strong>普通</strong> - 常用句子，45秒時限</li>
+            <li><strong>困難</strong> - 複雜文章，30秒時限</li>
+            <li><strong>極限</strong> - 程式碼片段，20秒時限</li>
+          </ul>
+
+          <h3>計分系統</h3>
+          <ul>
+            <li><strong>WPM</strong> - 每分鐘字數 (Words Per Minute)</li>
+            <li><strong>準確率</strong> - 正確字符 / 總字符數</li>
+            <li><strong>連擊</strong> - 連續正確輸入獲得分數加成</li>
+            <li><strong>時間獎勵</strong> - 提前完成獲得額外分數</li>
+          </ul>
+
+          <h3>特殊機制</h3>
+          <ul>
+            <li>連續正確輸入可累積連擊數</li>
+            <li>錯誤輸入會重置連擊</li>
+            <li>高連擊數可獲得分數倍增效果</li>
+            <li>時間壓力條顯示剩餘時間</li>
+          </ul>
+
+          <h3>提升技巧</h3>
+          <ul>
+            <li>保持正確的手指位置</li>
+            <li>專注於準確性，速度會自然提升</li>
+            <li>不要看鍵盤，培養盲打能力</li>
+            <li>定期練習，建立肌肉記憶</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 遊戲結束模態框 -->
+    <div id="gameOverModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-trophy"></i> 挑戰完成</h2>
+        </div>
+        <div class="modal-body">
+          <div class="game-over-stats">
+            <div class="stat-item">
+              <i class="fas fa-tachometer-alt"></i>
+              <span>平均速度</span>
+              <span id="finalWPM">0 WPM</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-bullseye"></i>
+              <span>最終準確率</span>
+              <span id="finalAccuracy">0%</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-star"></i>
+              <span>總分數</span>
+              <span id="finalScore">0</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-fire"></i>
+              <span>最高連擊</span>
+              <span id="maxCombo">0</span>
+            </div>
+          </div>
+          <div class="rating" id="performanceRating">
+            <i class="fas fa-medal"></i>
+            <span>表現評級</span>
+          </div>
+          <div class="modal-actions">
+            <button id="playAgainButton" class="control-button start">
+              <i class="fas fa-play"></i> 再次挑戰
+            </button>
+            <button id="backToMenuButton" class="control-button">
+              <i class="fas fa-home"></i> 回到選單
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class SpeedTypingGame {
+        constructor() {
+          this.gameRunning = false;
+          this.gamePaused = false;
+          this.difficulty = "easy";
+
+          // 遊戲統計
+          this.startTime = 0;
+          this.timeLimit = 60;
+          this.timeLeft = 60;
+          this.currentIndex = 0;
+          this.correctChars = 0;
+          this.totalChars = 0;
+          this.errors = 0;
+          this.wpm = 0;
+          this.accuracy = 100;
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+
+          // 文本內容
+          this.targetText = "";
+          this.textSets = {
+            easy: [
+              "The quick brown fox jumps over the lazy dog.",
+              "Hello world! This is a simple typing test.",
+              "Programming is fun and challenging to learn.",
+              "Practice makes perfect in typing skills.",
+              "Speed and accuracy are both important.",
+            ],
+            normal: [
+              "In the heart of the bustling city, people rush through their daily routines, each with their own dreams and aspirations.",
+              "Technology has revolutionized the way we communicate, work, and live in the modern digital age.",
+              "The art of cooking combines creativity, precision, and passion to create memorable culinary experiences.",
+              "Environmental conservation requires collective effort from individuals, communities, and governments worldwide.",
+            ],
+            hard: [
+              "The implementation of artificial intelligence algorithms requires sophisticated mathematical models and computational frameworks that can process vast amounts of data efficiently.",
+              "Quantum computing represents a paradigm shift in computational capabilities, leveraging principles of quantum mechanics to solve complex problems exponentially faster than classical computers.",
+              "Blockchain technology introduces decentralized consensus mechanisms that eliminate the need for traditional intermediaries in digital transactions and data verification processes.",
+            ],
+            extreme: [
+              "function fibonacci(n) { return n <= 1 ? n : fibonacci(n-1) + fibonacci(n-2); }",
+              "const asyncFunction = async () => { try { const result = await fetch('/api/data'); return result.json(); } catch (error) { console.error(error); } };",
+              "class LinkedList { constructor() { this.head = null; } insert(data) { const newNode = { data, next: this.head }; this.head = newNode; } }",
+            ],
+          };
+
+          this.timeLimits = {
+            easy: 60,
+            normal: 45,
+            hard: 30,
+            extreme: 20,
+          };
+
+          this.init();
+        }
+
+        init() {
+          this.bindEvents();
+          this.updateDisplay();
+        }
+
+        bindEvents() {
+          // 按鈕事件
+          document
+            .getElementById("startButton")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("pauseButton")
+            .addEventListener("click", () => this.togglePause());
+          document
+            .getElementById("resetButton")
+            .addEventListener("click", () => this.resetGame());
+
+          // 難度選擇
+          document.querySelectorAll(".difficulty-tab").forEach((tab) => {
+            tab.addEventListener("click", (e) => {
+              this.setDifficulty(e.target.dataset.difficulty);
+            });
+          });
+
+          // 輸入事件
+          const input = document.getElementById("typingInput");
+          input.addEventListener("input", (e) => this.handleInput(e));
+          input.addEventListener("keydown", (e) => {
+            if (e.key === " " && e.ctrlKey) {
+              e.preventDefault();
+              this.togglePause();
+            }
+          });
+
+          // 模態框事件
+          document
+            .getElementById("playAgainButton")
+            .addEventListener("click", () => {
+              document.getElementById("gameOverModal").style.display = "none";
+              this.resetGame();
+              this.startGame();
+            });
+
+          document
+            .getElementById("backToMenuButton")
+            .addEventListener("click", () => {
+              window.location.href = "index.html";
+            });
+        }
+
+        setDifficulty(difficulty) {
+          if (this.gameRunning) return;
+
+          this.difficulty = difficulty;
+          this.timeLimit = this.timeLimits[difficulty];
+          this.timeLeft = this.timeLimit;
+
+          // 更新難度標籤樣式
+          document.querySelectorAll(".difficulty-tab").forEach((tab) => {
+            tab.classList.remove("active");
+          });
+          document
+            .querySelector(`[data-difficulty="${difficulty}"]`)
+            .classList.add("active");
+
+          this.updateDisplay();
+        }
+
+        startGame() {
+          this.gameRunning = true;
+          this.gamePaused = false;
+          this.startTime = Date.now();
+          this.selectRandomText();
+          this.renderText();
+
+          document.getElementById("startButton").disabled = true;
+          document.getElementById("pauseButton").disabled = false;
+          document.getElementById("typingInput").disabled = false;
+          document.getElementById("typingInput").focus();
+
+          this.startTimer();
+        }
+
+        selectRandomText() {
+          const textSet = this.textSets[this.difficulty];
+          this.targetText = textSet[Math.floor(Math.random() * textSet.length)];
+        }
+
+        renderText() {
+          const container = document.getElementById("targetText");
+          container.innerHTML = "";
+
+          for (let i = 0; i < this.targetText.length; i++) {
+            const span = document.createElement("span");
+            span.className = "char";
+            span.textContent = this.targetText[i];
+            if (i === 0) span.classList.add("current");
+            container.appendChild(span);
+          }
+        }
+
+        handleInput(e) {
+          if (!this.gameRunning || this.gamePaused) return;
+
+          const input = e.target.value;
+          const inputChar = input[input.length - 1];
+          const targetChar = this.targetText[this.currentIndex];
+
+          if (input.length > this.targetText.length) {
+            e.target.value = input.slice(0, this.targetText.length);
+            return;
+          }
+
+          // 更新字符顯示
+          this.updateCharDisplay(input);
+
+          // 檢查完成
+          if (input === this.targetText) {
+            this.completeGame();
+            return;
+          }
+
+          // 計算統計
+          this.calculateStats(input);
+          this.updateDisplay();
+        }
+
+        updateCharDisplay(input) {
+          const chars = document.querySelectorAll(".char");
+
+          chars.forEach((char, index) => {
+            char.classList.remove("correct", "incorrect", "current");
+
+            if (index < input.length) {
+              if (input[index] === this.targetText[index]) {
+                char.classList.add("correct");
+                if (index === input.length - 1) {
+                  this.combo++;
+                  this.maxCombo = Math.max(this.maxCombo, this.combo);
+                  this.showCombo();
+                }
+              } else {
+                char.classList.add("incorrect");
+                this.combo = 0;
+              }
+            } else if (index === input.length) {
+              char.classList.add("current");
+            }
+          });
+
+          // 更新進度條
+          const progress = (input.length / this.targetText.length) * 100;
+          document.getElementById("progressFill").style.width = progress + "%";
+        }
+
+        showCombo() {
+          if (this.combo > 5) {
+            const indicator = document.getElementById("comboIndicator");
+            document.getElementById("comboCount").textContent = this.combo;
+            indicator.classList.add("show");
+
+            setTimeout(() => {
+              indicator.classList.remove("show");
+            }, 1000);
+          }
+        }
+
+        calculateStats(input) {
+          this.totalChars = input.length;
+          this.correctChars = 0;
+          this.errors = 0;
+
+          for (let i = 0; i < input.length; i++) {
+            if (input[i] === this.targetText[i]) {
+              this.correctChars++;
+            } else {
+              this.errors++;
+            }
+          }
+
+          // 計算 WPM (假設平均字長為5)
+          const timeElapsed = (Date.now() - this.startTime) / 1000 / 60;
+          this.wpm = Math.round(
+            this.correctChars / 5 / Math.max(timeElapsed, 0.01)
+          );
+
+          // 計算準確率
+          this.accuracy =
+            this.totalChars > 0
+              ? Math.round((this.correctChars / this.totalChars) * 100)
+              : 100;
+
+          // 計算分數
+          this.score = this.correctChars * 10;
+          if (this.combo > 5) {
+            this.score += this.combo * 5; // 連擊加成
+          }
+          if (this.accuracy > 95) {
+            this.score = Math.round(this.score * 1.2); // 高準確率加成
+          }
+        }
+
+        startTimer() {
+          this.timer = setInterval(() => {
+            if (!this.gameRunning || this.gamePaused) return;
+
+            this.timeLeft--;
+            this.updateTimePressure();
+
+            if (this.timeLeft <= 0) {
+              this.timeUp();
+            }
+          }, 1000);
+        }
+
+        updateTimePressure() {
+          const pressure = document.getElementById("timePressure");
+          const percent = (this.timeLeft / this.timeLimit) * 100;
+          pressure.style.transform = `scaleX(${percent / 100})`;
+
+          // 顏色變化
+          if (percent > 50) {
+            pressure.style.background =
+              "linear-gradient(90deg, #27ae60, #2ecc71)";
+          } else if (percent > 25) {
+            pressure.style.background =
+              "linear-gradient(90deg, #f39c12, #e67e22)";
+          } else {
+            pressure.style.background =
+              "linear-gradient(90deg, #e74c3c, #c0392b)";
+          }
+        }
+
+        togglePause() {
+          this.gamePaused = !this.gamePaused;
+          const pauseButton = document.getElementById("pauseButton");
+          const input = document.getElementById("typingInput");
+
+          if (this.gamePaused) {
+            pauseButton.innerHTML = '<i class="fas fa-play"></i> 繼續';
+            input.disabled = true;
+          } else {
+            pauseButton.innerHTML = '<i class="fas fa-pause"></i> 暫停';
+            input.disabled = false;
+            input.focus();
+          }
+        }
+
+        timeUp() {
+          this.endGame("時間到！");
+        }
+
+        completeGame() {
+          clearInterval(this.timer);
+
+          // 時間獎勵
+          const timeBonus = this.timeLeft * 10;
+          this.score += timeBonus;
+
+          this.endGame("完成挑戰！");
+        }
+
+        endGame(message) {
+          this.gameRunning = false;
+          clearInterval(this.timer);
+
+          document.getElementById("typingInput").disabled = true;
+          this.showGameOverModal(message);
+        }
+
+        showGameOverModal(message) {
+          document.getElementById("finalWPM").textContent = this.wpm + " WPM";
+          document.getElementById("finalAccuracy").textContent =
+            this.accuracy + "%";
+          document.getElementById("finalScore").textContent = this.score;
+          document.getElementById("maxCombo").textContent = this.maxCombo;
+
+          // 表現評級
+          const rating = this.getPerformanceRating();
+          document.getElementById("performanceRating").innerHTML = `
+                    <i class="fas fa-medal"></i> ${rating}
+                `;
+
+          document.getElementById("gameOverModal").style.display = "block";
+        }
+
+        getPerformanceRating() {
+          if (this.wpm >= 80 && this.accuracy >= 98) return "🏆 打字大師";
+          if (this.wpm >= 60 && this.accuracy >= 95) return "🥇 優秀";
+          if (this.wpm >= 40 && this.accuracy >= 90) return "🥈 良好";
+          if (this.wpm >= 25 && this.accuracy >= 85) return "🥉 及格";
+          return "📝 需要練習";
+        }
+
+        resetGame() {
+          this.gameRunning = false;
+          this.gamePaused = false;
+          clearInterval(this.timer);
+
+          this.timeLeft = this.timeLimit;
+          this.currentIndex = 0;
+          this.correctChars = 0;
+          this.totalChars = 0;
+          this.errors = 0;
+          this.wpm = 0;
+          this.accuracy = 100;
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+
+          document.getElementById("startButton").disabled = false;
+          document.getElementById("pauseButton").disabled = true;
+          document.getElementById("pauseButton").innerHTML =
+            '<i class="fas fa-pause"></i> 暫停';
+          document.getElementById("typingInput").disabled = true;
+          document.getElementById("typingInput").value = "";
+          document.getElementById("targetText").textContent =
+            "點擊開始按鈕開始挑戰！";
+          document.getElementById("progressFill").style.width = "0%";
+          document.getElementById("timePressure").style.transform = "scaleX(1)";
+          document.getElementById("timePressure").style.background =
+            "linear-gradient(90deg, #27ae60, #2ecc71)";
+
+          this.updateDisplay();
+        }
+
+        updateDisplay() {
+          document.getElementById("wpm").textContent = this.wpm;
+          document.getElementById("accuracy").textContent = this.accuracy + "%";
+          document.getElementById("timeLeft").textContent = this.timeLeft;
+          document.getElementById("score").textContent = this.score;
+        }
+      }
+
+      // 初始化遊戲
+      let game;
+
+      document.addEventListener("DOMContentLoaded", function () {
+        game = new SpeedTypingGame();
+
+        // 初始化遊戲工具
+        if (typeof GameUtils !== "undefined") {
+          GameUtils.initializeGame("speedTyping");
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>節拍武士 - Beat Samurai</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #2c3e50 0%, #fd79a8 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Arial", sans-serif;
+        overflow: hidden;
+      }
+
+      .game-container {
+        width: 90vw;
+        height: 90vh;
+        max-width: 900px;
+        max-height: 700px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 30px;
+        text-align: center;
+        position: relative;
+      }
+
+      h1 {
+        color: white;
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-stats {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+        color: white;
+        font-size: 1em;
+      }
+
+      .stat-box {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .rhythm-track {
+        width: 100%;
+        height: 80px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        margin: 20px 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .beat-line {
+        position: absolute;
+        width: 3px;
+        height: 100%;
+        background: linear-gradient(0deg, #3498db, #2ecc71);
+        animation: beatMove 2s linear infinite;
+      }
+
+      @keyframes beatMove {
+        from {
+          left: -3px;
+        }
+        to {
+          left: 100%;
+        }
+      }
+
+      .game-area {
+        width: 100%;
+        height: 350px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 15px;
+        position: relative;
+        margin: 20px 0;
+        overflow: hidden;
+      }
+
+      .slash-zone {
+        position: absolute;
+        width: 120px;
+        height: 120px;
+        border: 3px dashed rgba(255, 255, 255, 0.5);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2em;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .slash-zone:hover {
+        border-color: #f39c12;
+        background: rgba(241, 196, 15, 0.2);
+        transform: scale(1.05);
+      }
+
+      .slash-zone.active {
+        border-color: #2ecc71;
+        background: rgba(46, 204, 113, 0.3);
+        animation: zoneActive 0.5s ease;
+      }
+
+      @keyframes zoneActive {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .beat-target {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        animation: targetApproach linear;
+        border: 3px solid white;
+      }
+
+      .beat-target.normal {
+        background: linear-gradient(45deg, #e74c3c, #c0392b);
+      }
+
+      .beat-target.perfect {
+        background: linear-gradient(45deg, #f39c12, #e67e22);
+        border-color: #f39c12;
+        animation: perfectGlow 1s infinite;
+      }
+
+      .beat-target.combo {
+        background: linear-gradient(45deg, #9b59b6, #8e44ad);
+        border-color: #9b59b6;
+      }
+
+      .beat-target.slashed {
+        animation: slashEffect 0.5s ease;
+      }
+
+      .beat-target.missed {
+        animation: missEffect 0.5s ease;
+      }
+
+      @keyframes targetApproach {
+        from {
+          transform: scale(0.3) rotate(0deg);
+          opacity: 0.7;
+        }
+        to {
+          transform: scale(1) rotate(360deg);
+          opacity: 1;
+        }
+      }
+
+      @keyframes perfectGlow {
+        0%,
+        100% {
+          box-shadow: 0 0 10px rgba(241, 196, 15, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 25px rgba(241, 196, 15, 0.8);
+        }
+      }
+
+      @keyframes slashEffect {
+        0% {
+          transform: scale(1) rotate(0deg);
+        }
+        50% {
+          transform: scale(1.5) rotate(180deg);
+          background: radial-gradient(circle, #2ecc71, #27ae60);
+        }
+        100% {
+          transform: scale(0) rotate(360deg);
+          opacity: 0;
+        }
+      }
+
+      @keyframes missEffect {
+        0% {
+          transform: scale(1);
+        }
+        100% {
+          transform: scale(0.5);
+          opacity: 0;
+          background: #e74c3c;
+        }
+      }
+
+      .combo-indicator {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 3em;
+        color: #f39c12;
+        font-weight: bold;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        transform: scale(1);
+        transition: all 0.3s ease;
+      }
+
+      .combo-indicator.highlight {
+        transform: scale(1.3);
+        color: #e74c3c;
+        animation: comboFlash 0.5s ease;
+      }
+
+      @keyframes comboFlash {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+
+      .precision-meter {
+        width: 100%;
+        height: 15px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 7px;
+        margin: 15px 0;
+        overflow: hidden;
+      }
+
+      .precision-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71);
+        border-radius: 7px;
+        transition: width 0.3s ease;
+        width: 50%;
+      }
+
+      .controls {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 12px 25px;
+        background: linear-gradient(45deg, #2c3e50, #fd79a8);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .difficulty-select {
+        margin-bottom: 20px;
+      }
+
+      .difficulty-btn {
+        margin: 0 5px;
+        padding: 8px 16px;
+        font-size: 0.9em;
+      }
+
+      .difficulty-btn.active {
+        background: linear-gradient(45deg, #2ecc71, #27ae60);
+      }
+
+      .status {
+        color: white;
+        font-size: 1.3em;
+        margin: 15px 0;
+        min-height: 30px;
+        font-weight: bold;
+      }
+
+      .slash-trail {
+        position: absolute;
+        pointer-events: none;
+        width: 4px;
+        height: 100px;
+        background: linear-gradient(45deg, #2ecc71, rgba(46, 204, 113, 0));
+        transform-origin: bottom;
+        animation: slashTrail 0.3s ease-out;
+      }
+
+      @keyframes slashTrail {
+        0% {
+          opacity: 1;
+          transform: scaleY(0);
+        }
+        100% {
+          opacity: 0;
+          transform: scaleY(1);
+        }
+      }
+
+      .beat-feedback {
+        position: absolute;
+        font-size: 2em;
+        font-weight: bold;
+        color: #f39c12;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+        animation: feedbackFloat 1s ease-out forwards;
+      }
+
+      @keyframes feedbackFloat {
+        0% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-50px) scale(1.2);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .game-container {
+          width: 95vw;
+          height: 95vh;
+          padding: 20px;
+        }
+
+        h1 {
+          font-size: 2em;
+        }
+
+        .game-stats {
+          grid-template-columns: repeat(3, 1fr);
+          font-size: 0.9em;
+        }
+
+        .beat-target {
+          width: 60px;
+          height: 60px;
+        }
+
+        .slash-zone {
+          width: 100px;
+          height: 100px;
+          font-size: 1.5em;
+        }
+        .game-area {
+          height: 300px;
+        }
+      }
+
+      /* 模態框樣式 */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px);
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #2c3e50 0%, #fd79a8 100%);
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 600px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        color: white;
+        max-height: 80vh;
+        overflow-y: auto;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .modal-header h2 {
+        margin: 0;
+        color: #fd79a8;
+        font-size: 24px;
+      }
+
+      .close-btn {
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: color 0.3s ease;
+      }
+
+      .close-btn:hover {
+        color: #fd79a8;
+      }
+
+      .modal-body {
+        line-height: 1.6;
+      }
+
+      .modal-body h3 {
+        color: #74b9ff;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .modal-body ul {
+        margin: 10px 0;
+        padding-left: 20px;
+      }
+
+      .modal-body li {
+        margin: 5px 0;
+      }
+
+      .modal-footer {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 2px solid rgba(255, 255, 255, 0.2);
+        margin-top: 20px;
+      }
+
+      .modal-btn {
+        background: linear-gradient(45deg, #fd79a8, #fdcb6e);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .modal-btn:hover {
+        background: linear-gradient(45deg, #fdcb6e, #fd79a8);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1>⚔️ 節拍武士</h1>
+
+      <div class="game-stats">
+        <div class="stat-box">分數: <span id="score">0</span></div>
+        <div class="stat-box">連擊: <span id="combo">0</span></div>
+        <div class="stat-box">精準度: <span id="precision">100%</span></div>
+        <div class="stat-box">等級: <span id="level">1</span></div>
+        <div class="stat-box">時間: <span id="timer">90</span></div>
+      </div>
+
+      <div class="rhythm-track" id="rhythmTrack">
+        <!-- 節拍線條將由JS生成 -->
+      </div>
+
+      <div class="precision-meter">
+        <div class="precision-fill" id="precisionFill"></div>
+      </div>
+
+      <div class="difficulty-select">
+        <button class="btn difficulty-btn active" data-difficulty="normal">
+          普通
+        </button>
+        <button class="btn difficulty-btn" data-difficulty="hard">困難</button>
+        <button class="btn difficulty-btn" data-difficulty="master">
+          大師
+        </button>
+      </div>
+
+      <div class="status" id="status">
+        準備成為節拍武士！在正確的時機斬擊目標！
+      </div>
+
+      <div class="game-area" id="gameArea">
+        <div class="combo-indicator" id="comboIndicator">0</div>
+
+        <!-- 斬擊區域 -->
+        <div class="slash-zone" id="slashZone1" style="top: 50px; left: 50px">
+          ⚔️
+        </div>
+        <div class="slash-zone" id="slashZone2" style="top: 50px; right: 50px">
+          ⚔️
+        </div>
+        <div
+          class="slash-zone"
+          id="slashZone3"
+          style="bottom: 50px; left: 50px"
+        >
+          ⚔️
+        </div>
+        <div
+          class="slash-zone"
+          id="slashZone4"
+          style="bottom: 50px; right: 50px"
+        >
+          ⚔️
+        </div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="startBtn">開始遊戲</button>
+        <button class="btn" id="pauseBtn" style="display: none">暫停</button>
+        <button class="btn" id="resetBtn">重新開始</button>
+        <button class="btn" id="helpBtn">遊戲說明</button>
+      </div>
+    </div>
+
+    <!-- 遊戲說明模態框 -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>⚔️ 節拍武士 - 遊戲說明</h2>
+          <span class="close-btn">&times;</span>
+        </div>
+        <div class="modal-body">
+          <h3>🎯 遊戲目標</h3>
+          <p>跟隨音樂節拍，在精確的時機切割飛來的目標，成為最強的節拍武士！</p>
+
+          <h3>🎮 操作方式</h3>
+          <ul>
+            <li>觀察螢幕上方的節拍線，它會指示最佳切割時機</li>
+            <li>當目標物體飛入切割區域時，在節拍上點擊進行切割</li>
+            <li>在完美時機切割可以獲得最高分數</li>
+            <li>錯過時機或切割失敗會中斷連擊</li>
+          </ul>
+
+          <h3>⚡ 切割時機</h3>
+          <ul>
+            <li><strong>完美 (Perfect)：</strong>在節拍線經過時切割 - 200分</li>
+            <li><strong>很好 (Great)：</strong>時機略有偏差 - 150分</li>
+            <li><strong>不錯 (Good)：</strong>時機偏差較大 - 100分</li>
+            <li><strong>錯過 (Miss)：</strong>完全錯過時機 - 0分</li>
+          </ul>
+
+          <h3>🔥 連擊系統</h3>
+          <ul>
+            <li>連續成功切割可以建立連擊</li>
+            <li>更高的連擊會提供分數倍數加成</li>
+            <li>錯過切割會重置連擊數</li>
+            <li>保持連擊是獲得高分的關鍵</li>
+          </ul>
+
+          <h3>📊 難度等級</h3>
+          <ul>
+            <li><strong>普通：</strong>適中的速度和寬鬆的時機判定</li>
+            <li><strong>困難：</strong>更快的速度和嚴格的時機判定</li>
+            <li><strong>大師：</strong>極快速度和極其精確的時機要求</li>
+          </ul>
+
+          <h3>🏆 計分技巧</h3>
+          <ul>
+            <li>專注於節拍線，而不是目標物體</li>
+            <li>練習跟隨音樂節奏，培養節拍感</li>
+            <li>優先保持連擊，而不是追求單次高分</li>
+            <li>觀察精準度條，維持高精準度可獲得額外獎勵</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn" onclick="beatSamurai.closeHelp()">
+            開始挑戰
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      class BeatSamurai {
+        constructor() {
+          this.gameArea = document.getElementById("gameArea");
+          this.rhythmTrack = document.getElementById("rhythmTrack");
+          this.startBtn = document.getElementById("startBtn");
+          this.pauseBtn = document.getElementById("pauseBtn");
+          this.resetBtn = document.getElementById("resetBtn");
+          this.status = document.getElementById("status");
+          this.scoreEl = document.getElementById("score");
+          this.comboEl = document.getElementById("combo");
+          this.precisionEl = document.getElementById("precision");
+          this.levelEl = document.getElementById("level");
+          this.timerEl = document.getElementById("timer");
+          this.comboIndicator = document.getElementById("comboIndicator");
+          this.precisionFill = document.getElementById("precisionFill");
+
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.level = 1;
+          this.timeLeft = 90;
+          this.precision = 100;
+          this.totalTargets = 0;
+          this.hitTargets = 0;
+          this.gameActive = false;
+          this.isPaused = false;
+          this.difficulty = "normal";
+
+          this.targets = [];
+          this.slashZones = [];
+          this.beatInterval = 500; // 節拍間隔
+          this.currentBeat = 0;
+
+          this.difficulties = {
+            normal: { targetSpeed: 3000, spawnRate: 1500, perfectWindow: 200 },
+            hard: { targetSpeed: 2500, spawnRate: 1200, perfectWindow: 150 },
+            master: { targetSpeed: 2000, spawnRate: 1000, perfectWindow: 100 },
+          };
+
+          this.spawnInterval = null;
+          this.timerInterval = null;
+          this.beatInterval = null;
+
+          this.initializeGame();
+        }
+        initializeGame() {
+          this.setupSlashZones();
+          this.createRhythmTrack();
+
+          this.startBtn.addEventListener("click", () => this.startGame());
+          this.pauseBtn.addEventListener("click", () => this.pauseGame());
+          this.resetBtn.addEventListener("click", () => this.resetGame());
+
+          // 添加Help按鈕事件監聽器
+          const helpBtn = document.getElementById("helpBtn");
+          if (helpBtn) {
+            helpBtn.addEventListener("click", () => this.showHelp());
+          }
+
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) =>
+              this.setDifficulty(e.target.dataset.difficulty)
+            );
+          });
+
+          // 鍵盤控制
+          document.addEventListener("keydown", (e) => this.handleKeyPress(e));
+
+          this.updateDisplay();
+        }
+
+        showHelp() {
+          const modal = document.getElementById("helpModal");
+          if (modal) {
+            modal.style.display = "flex";
+
+            // 添加關閉按鈕事件監聽器
+            const closeBtn = modal.querySelector(".close-help");
+            if (closeBtn) {
+              closeBtn.onclick = () => this.closeHelp();
+            }
+
+            // 點擊背景關閉
+            modal.onclick = (e) => {
+              if (e.target === modal) {
+                this.closeHelp();
+              }
+            };
+
+            // ESC鍵關閉
+            document.addEventListener("keydown", (e) => {
+              if (e.key === "Escape") {
+                this.closeHelp();
+              }
+            });
+          }
+        }
+
+        closeHelp() {
+          const modal = document.getElementById("helpModal");
+          if (modal) {
+            modal.style.display = "none";
+          }
+        }
+
+        setupSlashZones() {
+          this.slashZones = [
+            document.getElementById("slashZone1"),
+            document.getElementById("slashZone2"),
+            document.getElementById("slashZone3"),
+            document.getElementById("slashZone4"),
+          ];
+
+          this.slashZones.forEach((zone, index) => {
+            zone.addEventListener("click", () => this.handleSlash(index));
+            zone.dataset.index = index;
+          });
+        }
+
+        createRhythmTrack() {
+          // 創建節拍可視化
+          for (let i = 0; i < 20; i++) {
+            const beatLine = document.createElement("div");
+            beatLine.className = "beat-line";
+            beatLine.style.animationDelay = i * 0.1 + "s";
+            this.rhythmTrack.appendChild(beatLine);
+          }
+        }
+
+        setDifficulty(diff) {
+          if (this.gameActive) return;
+
+          this.difficulty = diff;
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.classList.remove("active");
+          });
+          document
+            .querySelector(`[data-difficulty="${diff}"]`)
+            .classList.add("active");
+        }
+
+        startGame() {
+          this.gameActive = true;
+          this.isPaused = false;
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.level = 1;
+          this.timeLeft = 90;
+          this.precision = 100;
+          this.totalTargets = 0;
+          this.hitTargets = 0;
+
+          this.clearTargets();
+          this.updateDisplay();
+          this.startSpawning();
+          this.startTimer();
+          this.startBeatTracker();
+
+          this.startBtn.style.display = "none";
+          this.pauseBtn.style.display = "inline-block";
+          this.status.textContent = "遊戲開始！跟隨節拍斬擊目標！";
+        }
+
+        startSpawning() {
+          const config = this.difficulties[this.difficulty];
+
+          this.spawnInterval = setInterval(() => {
+            if (!this.isPaused && this.gameActive) {
+              this.spawnTarget();
+            }
+          }, config.spawnRate);
+        }
+
+        startTimer() {
+          this.timerInterval = setInterval(() => {
+            if (!this.isPaused && this.gameActive) {
+              this.timeLeft--;
+              this.updateDisplay();
+
+              if (this.timeLeft <= 0) {
+                this.endGame();
+              }
+
+              // 每20秒提升等級
+              if (this.timeLeft % 20 === 0 && this.timeLeft < 90) {
+                this.levelUp();
+              }
+            }
+          }, 1000);
+        }
+
+        startBeatTracker() {
+          this.beatInterval = setInterval(() => {
+            if (!this.isPaused && this.gameActive) {
+              this.currentBeat++;
+              this.updateBeatVisuals();
+            }
+          }, this.beatInterval);
+        }
+
+        updateBeatVisuals() {
+          // 更新節拍可視化效果
+          this.slashZones.forEach((zone, index) => {
+            if (this.currentBeat % 4 === index) {
+              zone.style.borderColor = "#f39c12";
+              zone.style.background = "rgba(241, 196, 15, 0.3)";
+              setTimeout(() => {
+                zone.style.borderColor = "rgba(255, 255, 255, 0.5)";
+                zone.style.background = "rgba(255, 255, 255, 0.1)";
+              }, this.beatInterval / 2);
+            }
+          });
+        }
+
+        spawnTarget() {
+          const zoneIndex = Math.floor(Math.random() * 4);
+          const zone = this.slashZones[zoneIndex];
+          const zoneRect = zone.getBoundingClientRect();
+          const gameAreaRect = this.gameArea.getBoundingClientRect();
+
+          const target = {
+            id: Date.now() + Math.random(),
+            zoneIndex: zoneIndex,
+            x: zoneRect.left - gameAreaRect.left + 20,
+            y: zoneRect.top - gameAreaRect.top + 20,
+            type: this.getTargetType(),
+            element: null,
+            spawnTime: Date.now(),
+          };
+
+          this.createTargetElement(target);
+          this.targets.push(target);
+          this.totalTargets++;
+
+          const config = this.difficulties[this.difficulty];
+          setTimeout(() => {
+            this.removeTarget(target);
+            if (this.gameActive) {
+              this.missTarget();
+            }
+          }, config.targetSpeed);
+        }
+
+        getTargetType() {
+          const rand = Math.random();
+          if (rand < 0.1) return "perfect";
+          if (rand < 0.2) return "combo";
+          return "normal";
+        }
+
+        createTargetElement(target) {
+          const element = document.createElement("div");
+          element.className = `beat-target ${target.type}`;
+          element.style.left = target.x + "px";
+          element.style.top = target.y + "px";
+          element.dataset.id = target.id;
+          element.dataset.zoneIndex = target.zoneIndex;
+
+          switch (target.type) {
+            case "normal":
+              element.textContent = "●";
+              break;
+            case "perfect":
+              element.textContent = "★";
+              break;
+            case "combo":
+              element.textContent = "⚡";
+              break;
+          }
+
+          const config = this.difficulties[this.difficulty];
+          element.style.animationDuration = config.targetSpeed + "ms";
+
+          element.addEventListener("click", () => this.slashTarget(target));
+          target.element = element;
+          this.gameArea.appendChild(element);
+        }
+
+        handleKeyPress(e) {
+          if (!this.gameActive || this.isPaused) return;
+
+          let zoneIndex = -1;
+          switch (e.code) {
+            case "KeyQ":
+            case "Digit1":
+              zoneIndex = 0;
+              break;
+            case "KeyW":
+            case "Digit2":
+              zoneIndex = 1;
+              break;
+            case "KeyA":
+            case "Digit3":
+              zoneIndex = 2;
+              break;
+            case "KeyS":
+            case "Digit4":
+              zoneIndex = 3;
+              break;
+            case "Space":
+              // 全區域斬擊
+              this.handleSlash(-1);
+              return;
+          }
+
+          if (zoneIndex !== -1) {
+            this.handleSlash(zoneIndex);
+          }
+        }
+
+        handleSlash(zoneIndex) {
+          if (zoneIndex === -1) {
+            // 全區域斬擊
+            this.targets.forEach((target) => {
+              this.slashTarget(target);
+            });
+            return;
+          }
+
+          const zone = this.slashZones[zoneIndex];
+          zone.classList.add("active");
+          setTimeout(() => zone.classList.remove("active"), 500);
+
+          // 創建斬擊軌跡
+          this.createSlashTrail(zone);
+
+          // 尋找該區域的目標
+          const targetsInZone = this.targets.filter(
+            (target) => target.zoneIndex === zoneIndex
+          );
+
+          if (targetsInZone.length > 0) {
+            const closestTarget = this.findClosestTarget(targetsInZone, zone);
+            if (closestTarget) {
+              this.slashTarget(closestTarget);
+            }
+          }
+        }
+
+        findClosestTarget(targets, zone) {
+          const zoneRect = zone.getBoundingClientRect();
+          const zoneCenterX = zoneRect.left + zoneRect.width / 2;
+          const zoneCenterY = zoneRect.top + zoneRect.height / 2;
+
+          let closest = null;
+          let minDistance = Infinity;
+
+          targets.forEach((target) => {
+            const targetRect = target.element.getBoundingClientRect();
+            const targetCenterX = targetRect.left + targetRect.width / 2;
+            const targetCenterY = targetRect.top + targetRect.height / 2;
+
+            const distance = Math.sqrt(
+              Math.pow(targetCenterX - zoneCenterX, 2) +
+                Math.pow(targetCenterY - zoneCenterY, 2)
+            );
+
+            if (distance < minDistance) {
+              minDistance = distance;
+              closest = target;
+            }
+          });
+
+          return closest;
+        }
+
+        createSlashTrail(zone) {
+          const trail = document.createElement("div");
+          trail.className = "slash-trail";
+
+          const zoneRect = zone.getBoundingClientRect();
+          const gameAreaRect = this.gameArea.getBoundingClientRect();
+
+          trail.style.left = zoneRect.left - gameAreaRect.left + 60 + "px";
+          trail.style.top = zoneRect.top - gameAreaRect.top + "px";
+          trail.style.transform =
+            "rotate(" + (Math.random() * 90 - 45) + "deg)";
+
+          this.gameArea.appendChild(trail);
+          setTimeout(() => {
+            if (trail.parentNode) {
+              trail.parentNode.removeChild(trail);
+            }
+          }, 300);
+        }
+
+        slashTarget(target) {
+          const now = Date.now();
+          const timingAccuracy = this.calculateTimingAccuracy(target, now);
+
+          let baseScore = 50;
+          let feedback = "HIT!";
+
+          // 根據目標類型調整分數
+          switch (target.type) {
+            case "perfect":
+              baseScore = 150;
+              feedback = "PERFECT!";
+              break;
+            case "combo":
+              baseScore = 100;
+              feedback = "COMBO!";
+              break;
+          }
+
+          // 時機準確度加成
+          if (timingAccuracy > 0.8) {
+            baseScore *= 2;
+            feedback = "PERFECT TIMING!";
+          } else if (timingAccuracy > 0.6) {
+            baseScore *= 1.5;
+            feedback = "GREAT!";
+          }
+
+          // 連擊加成
+          this.combo++;
+          this.maxCombo = Math.max(this.maxCombo, this.combo);
+          const comboBonus = Math.floor(this.combo / 5) * 25;
+          const totalScore = baseScore + comboBonus;
+
+          this.score += totalScore;
+          this.hitTargets++;
+
+          // 視覺反饋
+          target.element.classList.add("slashed");
+          this.showBeatFeedback(target.x, target.y, feedback, totalScore);
+          this.updateComboIndicator();
+
+          setTimeout(() => this.removeTarget(target), 500);
+          this.updateDisplay();
+        }
+
+        calculateTimingAccuracy(target, hitTime) {
+          const targetLifeTime = hitTime - target.spawnTime;
+          const config = this.difficulties[this.difficulty];
+          const perfectTiming = config.targetSpeed * 0.8; // 80%的時間點為完美時機
+
+          const timingDiff = Math.abs(targetLifeTime - perfectTiming);
+          const accuracy = Math.max(0, 1 - timingDiff / config.perfectWindow);
+
+          return accuracy;
+        }
+
+        missTarget() {
+          this.combo = 0;
+          this.updateComboIndicator();
+          this.updateDisplay();
+        }
+
+        showBeatFeedback(x, y, text, score) {
+          const feedback = document.createElement("div");
+          feedback.className = "beat-feedback";
+          feedback.textContent = text;
+          feedback.style.left = x + "px";
+          feedback.style.top = y + "px";
+
+          if (score > 100) {
+            feedback.style.color = "#2ecc71";
+          } else if (score > 50) {
+            feedback.style.color = "#f39c12";
+          } else {
+            feedback.style.color = "#e74c3c";
+          }
+
+          this.gameArea.appendChild(feedback);
+          setTimeout(() => {
+            if (feedback.parentNode) {
+              feedback.parentNode.removeChild(feedback);
+            }
+          }, 1000);
+        }
+
+        updateComboIndicator() {
+          this.comboIndicator.textContent = this.combo;
+
+          if (this.combo > 0 && this.combo % 10 === 0) {
+            this.comboIndicator.classList.add("highlight");
+            setTimeout(() => {
+              this.comboIndicator.classList.remove("highlight");
+            }, 500);
+          }
+        }
+
+        removeTarget(target) {
+          const index = this.targets.findIndex((t) => t.id === target.id);
+          if (index !== -1) {
+            if (target.element && target.element.parentNode) {
+              target.element.parentNode.removeChild(target.element);
+            }
+            this.targets.splice(index, 1);
+          }
+        }
+
+        clearTargets() {
+          this.targets.forEach((target) => {
+            if (target.element && target.element.parentNode) {
+              target.element.parentNode.removeChild(target.element);
+            }
+          });
+          this.targets = [];
+        }
+
+        levelUp() {
+          this.level++;
+          const config = this.difficulties[this.difficulty];
+
+          // 提升難度
+          clearInterval(this.spawnInterval);
+          this.spawnInterval = setInterval(() => {
+            if (!this.isPaused && this.gameActive) {
+              this.spawnTarget();
+            }
+          }, Math.max(config.spawnRate - this.level * 50, 600));
+
+          this.status.textContent = `等級提升到 ${this.level}！節拍加快！`;
+          setTimeout(() => {
+            this.status.textContent = "跟隨節拍斬擊目標！";
+          }, 2000);
+        }
+
+        updateDisplay() {
+          this.scoreEl.textContent = this.score;
+          this.comboEl.textContent = this.combo;
+          this.levelEl.textContent = this.level;
+          this.timerEl.textContent = this.timeLeft;
+
+          // 計算精準度
+          this.precision =
+            this.totalTargets > 0
+              ? Math.round((this.hitTargets / this.totalTargets) * 100)
+              : 100;
+          this.precisionEl.textContent = this.precision + "%";
+          this.precisionFill.style.width = this.precision + "%";
+
+          // 根據精準度調整顏色
+          if (this.precision > 80) {
+            this.precisionFill.style.background =
+              "linear-gradient(90deg, #2ecc71, #27ae60)";
+          } else if (this.precision > 60) {
+            this.precisionFill.style.background =
+              "linear-gradient(90deg, #f39c12, #e67e22)";
+          } else {
+            this.precisionFill.style.background =
+              "linear-gradient(90deg, #e74c3c, #c0392b)";
+          }
+        }
+
+        pauseGame() {
+          if (this.gameActive) {
+            this.isPaused = !this.isPaused;
+            this.pauseBtn.textContent = this.isPaused ? "繼續" : "暫停";
+            this.status.textContent = this.isPaused ? "遊戲已暫停" : "遊戲繼續";
+          }
+        }
+
+        endGame() {
+          this.gameActive = false;
+          clearInterval(this.spawnInterval);
+          clearInterval(this.timerInterval);
+          clearInterval(this.beatInterval);
+
+          this.clearTargets();
+          this.status.textContent = `🎉 遊戲結束！最終分數: ${this.score} | 最高連擊: ${this.maxCombo}`;
+          this.startBtn.style.display = "inline-block";
+          this.pauseBtn.style.display = "none";
+        }
+
+        resetGame() {
+          this.gameActive = false;
+          this.isPaused = false;
+          clearInterval(this.spawnInterval);
+          clearInterval(this.timerInterval);
+          clearInterval(this.beatInterval);
+
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.level = 1;
+          this.timeLeft = 90;
+          this.precision = 100;
+          this.totalTargets = 0;
+          this.hitTargets = 0;
+          this.currentBeat = 0;
+
+          this.clearTargets();
+          this.updateDisplay();
+          this.comboIndicator.textContent = "0";
+
+          this.status.textContent = "準備成為節拍武士！在正確的時機斬擊目標！";
+          this.startBtn.style.display = "inline-block";
+          this.pauseBtn.style.display = "none";
+        }
+      }
+
+      // 初始化遊戲
+      window.addEventListener("load", () => {
+        new BeatSamurai();
+      });
+    </script>
+  </body>
+</html>

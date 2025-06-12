@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>反應時間測試</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: "Arial", sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        color: white;
+      }
+
+      .game-container {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        min-width: 400px;
+        min-height: 500px;
+        position: relative;
+      }
+
+      h1 {
+        margin: 0 0 30px 0;
+        font-size: 2.5em;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        background: linear-gradient(45deg, #ffd700, #ffed4e);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .game-area {
+        width: 100%;
+        height: 400px;
+        border-radius: 15px;
+        margin: 20px 0;
+        position: relative;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.5em;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s ease;
+      }
+
+      .waiting {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+        box-shadow: 0 0 30px rgba(255, 107, 107, 0.5);
+      }
+
+      .ready {
+        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        box-shadow: 0 0 30px rgba(78, 205, 196, 0.5);
+      }
+
+      .too-early {
+        background: linear-gradient(45deg, #9b59b6, #8e44ad);
+        box-shadow: 0 0 30px rgba(155, 89, 182, 0.5);
+      }
+
+      .controls {
+        margin: 20px 0;
+      }
+
+      .control-button {
+        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        margin: 0 10px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .control-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .control-button:active {
+        transform: translateY(0);
+      }
+
+      .info {
+        margin: 20px 0;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        font-size: 1.1em;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin: 20px 0;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 1em;
+      }
+
+      .result {
+        font-size: 2em;
+        margin: 20px 0;
+        padding: 20px;
+        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.2);
+        animation: pulse 0.5s ease;
+      }
+
+      .excellent {
+        color: #2ecc71;
+      }
+      .good {
+        color: #f39c12;
+      }
+      .average {
+        color: #e74c3c;
+      }
+      .poor {
+        color: #9b59b6;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(0.95);
+          opacity: 0.8;
+        }
+        50% {
+          transform: scale(1.05);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      .help-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px;
+        border-radius: 15px;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+        position: relative;
+        color: white;
+      }
+
+      .close-modal {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        background: none;
+        border: none;
+        font-size: 1.5em;
+        color: white;
+        cursor: pointer;
+      }
+
+      .back-button {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: all 0.3s ease;
+      }
+
+      .back-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .flash {
+        animation: flash 0.2s ease;
+      }
+
+      @keyframes flash {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .game-container {
+          min-width: 300px;
+          padding: 20px;
+          margin: 10px;
+        }
+
+        h1 {
+          font-size: 2em;
+        }
+
+        .game-area {
+          height: 300px;
+          font-size: 1.2em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <button class="back-button" onclick="window.location.href='index.html'">
+      ← 返回
+    </button>
+
+    <div class="game-container">
+      <h1>⚡ 反應時間測試</h1>
+
+      <div class="game-area waiting" id="gameArea">點擊開始測試</div>
+
+      <div class="controls">
+        <button class="control-button" onclick="startTest()">開始測試</button>
+        <button class="control-button" onclick="resetStats()">重置統計</button>
+        <button class="control-button" onclick="showHelp()">說明</button>
+      </div>
+
+      <div class="info" id="info">等待紅色變綠色後立即點擊！</div>
+
+      <div class="stats">
+        <div class="stat-item">
+          <div>當前: <span id="currentTime">--</span>ms</div>
+        </div>
+        <div class="stat-item">
+          <div>最佳: <span id="bestTime">--</span>ms</div>
+        </div>
+        <div class="stat-item">
+          <div>平均: <span id="averageTime">--</span>ms</div>
+        </div>
+        <div class="stat-item">
+          <div>測試次數: <span id="testCount">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 說明模態框 -->
+    <div class="help-modal" id="helpModal">
+      <div class="modal-content">
+        <button class="close-modal" onclick="closeHelp()">&times;</button>
+        <h2>🎯 遊戲說明</h2>
+        <h3>📋 遊戲目標</h3>
+        <p>測試你的視覺反應速度，在紅色變綠色後儘快點擊！</p>
+
+        <h3>🎮 操作方式</h3>
+        <ul>
+          <li>點擊「開始測試」按鈕</li>
+          <li>等待區域從紅色變為綠色</li>
+          <li>綠色出現後立即點擊</li>
+          <li>系統會測量你的反應時間</li>
+        </ul>
+
+        <h3>📊 評分標準</h3>
+        <ul>
+          <li>🟢 優秀: 小於 200ms</li>
+          <li>🟡 良好: 200-300ms</li>
+          <li>🟠 一般: 300-400ms</li>
+          <li>🔴 需要練習: 大於 400ms</li>
+        </ul>
+
+        <h3>⚠️ 注意事項</h3>
+        <ul>
+          <li>如果太早點擊會被判定為搶跑</li>
+          <li>等待時間是隨機的(2-6秒)</li>
+          <li>專注於螢幕變化</li>
+          <li>多次測試可提高準確性</li>
+        </ul>
+
+        <h3>🎯 小技巧</h3>
+        <ul>
+          <li>保持手指懸在螢幕上方</li>
+          <li>專注注視測試區域</li>
+          <li>放鬆心情避免緊張</li>
+          <li>連續測試獲得平均值</li>
+        </ul>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      let gameState = "waiting"; // waiting, testing, ready, finished
+      let startTime = null;
+      let timeoutId = null;
+      let stats = {
+        tests: [],
+        bestTime: null,
+        count: 0,
+      };
+
+      // 載入統計數據
+      function loadStats() {
+        const saved = localStorage.getItem("reactionTimeStats");
+        if (saved) {
+          stats = JSON.parse(saved);
+          updateStatsDisplay();
+        }
+      }
+
+      // 保存統計數據
+      function saveStats() {
+        localStorage.setItem("reactionTimeStats", JSON.stringify(stats));
+      }
+
+      // 更新統計顯示
+      function updateStatsDisplay() {
+        document.getElementById("testCount").textContent = stats.count;
+        document.getElementById("bestTime").textContent = stats.bestTime
+          ? stats.bestTime
+          : "--";
+
+        if (stats.tests.length > 0) {
+          const average = Math.round(
+            stats.tests.reduce((a, b) => a + b, 0) / stats.tests.length
+          );
+          document.getElementById("averageTime").textContent = average;
+        } else {
+          document.getElementById("averageTime").textContent = "--";
+        }
+      }
+
+      // 開始測試
+      function startTest() {
+        if (gameState !== "waiting") return;
+
+        gameState = "testing";
+        const gameArea = document.getElementById("gameArea");
+        const info = document.getElementById("info");
+
+        gameArea.className = "game-area waiting";
+        gameArea.textContent = "準備...";
+        info.textContent = "等待綠色出現...";
+
+        // 隨機等待時間 (2-6秒)
+        const waitTime = 2000 + Math.random() * 4000;
+
+        timeoutId = setTimeout(() => {
+          if (gameState === "testing") {
+            gameState = "ready";
+            gameArea.className = "game-area ready";
+            gameArea.textContent = "點擊！";
+            info.textContent = "現在點擊！";
+            startTime = performance.now();
+          }
+        }, waitTime);
+      }
+
+      // 處理點擊
+      function handleClick() {
+        const gameArea = document.getElementById("gameArea");
+        const info = document.getElementById("info");
+
+        if (gameState === "testing") {
+          // 太早點擊
+          clearTimeout(timeoutId);
+          gameState = "waiting";
+          gameArea.className = "game-area too-early flash";
+          gameArea.textContent = "太早了！";
+          info.textContent = "等待綠色再點擊！";
+
+          setTimeout(() => {
+            gameArea.className = "game-area waiting";
+            gameArea.textContent = "點擊開始測試";
+            info.textContent = "等待紅色變綠色後立即點擊！";
+          }, 2000);
+        } else if (gameState === "ready") {
+          // 正確點擊
+          const reactionTime = Math.round(performance.now() - startTime);
+          recordResult(reactionTime);
+
+          gameState = "waiting";
+          gameArea.className = "game-area waiting";
+
+          // 顯示結果
+          showResult(reactionTime);
+
+          setTimeout(() => {
+            gameArea.textContent = "點擊開始測試";
+            info.textContent = "等待紅色變綠色後立即點擊！";
+          }, 3000);
+        }
+      }
+
+      // 記錄結果
+      function recordResult(time) {
+        stats.tests.push(time);
+        stats.count++;
+
+        // 只保留最近50次測試
+        if (stats.tests.length > 50) {
+          stats.tests.shift();
+        }
+
+        // 更新最佳時間
+        if (!stats.bestTime || time < stats.bestTime) {
+          stats.bestTime = time;
+        }
+
+        document.getElementById("currentTime").textContent = time;
+        updateStatsDisplay();
+        saveStats();
+      }
+
+      // 顯示結果
+      function showResult(time) {
+        const gameArea = document.getElementById("gameArea");
+        const info = document.getElementById("info");
+
+        let rating, className, message;
+
+        if (time < 200) {
+          rating = "優秀！";
+          className = "excellent";
+          message = "反應神速！";
+        } else if (time < 300) {
+          rating = "良好！";
+          className = "good";
+          message = "反應很快！";
+        } else if (time < 400) {
+          rating = "一般";
+          className = "average";
+          message = "還有進步空間";
+        } else {
+          rating = "需要練習";
+          className = "poor";
+          message = "多練習會更好！";
+        }
+
+        gameArea.innerHTML = `
+                <div class="result ${className}">
+                    ${time}ms<br>
+                    <div style="font-size: 0.6em; margin-top: 10px;">${rating}</div>
+                </div>
+            `;
+        info.textContent = message;
+      }
+
+      // 重置統計
+      function resetStats() {
+        stats = {
+          tests: [],
+          bestTime: null,
+          count: 0,
+        };
+        document.getElementById("currentTime").textContent = "--";
+        updateStatsDisplay();
+        saveStats();
+
+        // 顯示重置提示
+        const info = document.getElementById("info");
+        const originalText = info.textContent;
+        info.textContent = "統計已重置！";
+        setTimeout(() => {
+          info.textContent = originalText;
+        }, 2000);
+      }
+
+      // 說明功能
+      function showHelp() {
+        document.getElementById("helpModal").style.display = "flex";
+      }
+
+      function closeHelp() {
+        document.getElementById("helpModal").style.display = "none";
+      }
+
+      // 事件監聽
+      document
+        .getElementById("gameArea")
+        .addEventListener("click", handleClick);
+
+      // 鍵盤支持
+      document.addEventListener("keydown", (event) => {
+        if (event.code === "Space") {
+          event.preventDefault();
+          if (gameState === "waiting") {
+            startTest();
+          } else {
+            handleClick();
+          }
+        } else if (event.key === "Escape") {
+          closeHelp();
+        }
+      });
+
+      // 點擊模態框外部關閉
+      document
+        .getElementById("helpModal")
+        .addEventListener("click", (event) => {
+          if (event.target === event.currentTarget) {
+            closeHelp();
+          }
+        });
+
+      // 初始化
+      loadStats();
+
+      // 遊戲統計整合
+      window.addEventListener("beforeunload", () => {
+        if (stats.count > 0) {
+          GameUtils.updateGameStats("reaction-time", {
+            gamesPlayed: 1,
+            totalScore: stats.bestTime ? 1000 - stats.bestTime : 0,
+            bestScore: stats.bestTime ? 1000 - stats.bestTime : 0,
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

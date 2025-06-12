@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>記憶競速 - 網頁小遊戲</title>
+    <meta name="game-id" content="memory-pattern-race" />
+    <meta name="game-name" content="記憶競速" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .race-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: "Noto Sans TC", sans-serif;
+      }
+
+      .game-board {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(15px);
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        max-width: 800px;
+        width: 100%;
+      }
+
+      .race-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px 15px;
+        border-radius: 8px;
+        text-align: center;
+        min-width: 80px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 2px;
+      }
+
+      .stat-value {
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+      }
+
+      .level-indicator {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: bold;
+        margin: 20px 0;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .pattern-display {
+        width: 100%;
+        max-width: 500px;
+        height: 300px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        margin: 20px auto;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .pattern-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 2px;
+        width: 100%;
+        height: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+
+      .pattern-cell {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+      }
+
+      .pattern-cell:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.05);
+      }
+
+      .pattern-cell.active {
+        background: linear-gradient(135deg, #4ecdc4, #44a08d);
+        color: white;
+        animation: cell-pulse 0.5s ease;
+      }
+
+      .pattern-cell.correct {
+        background: linear-gradient(135deg, #2ecc71, #27ae60);
+        border-color: #27ae60;
+        animation: correct-flash 0.5s ease;
+      }
+
+      .pattern-cell.wrong {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        border-color: #c0392b;
+        animation: wrong-shake 0.5s ease;
+      }
+
+      .pattern-cell.sequence {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+        animation: sequence-glow 0.8s ease;
+      }
+
+      @keyframes cell-pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes correct-flash {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+          box-shadow: 0 0 20px #2ecc71;
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes wrong-shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-10px);
+        }
+        75% {
+          transform: translateX(10px);
+        }
+      }
+
+      @keyframes sequence-glow {
+        0% {
+          box-shadow: 0 0 5px #f39c12;
+        }
+        50% {
+          box-shadow: 0 0 25px #f39c12, 0 0 35px #e67e22;
+        }
+        100% {
+          box-shadow: 0 0 5px #f39c12;
+        }
+      }
+
+      .instruction-panel {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        font-size: 16px;
+        color: white;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 15px 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c);
+        transition: width 0.3s ease;
+      }
+
+      .speed-meter {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin: 15px 0;
+      }
+
+      .speed-indicator {
+        width: 30px;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        transition: background 0.3s ease;
+      }
+
+      .speed-indicator.active {
+        background: linear-gradient(90deg, #2ecc71, #f1c40f);
+      }
+
+      .difficulty-controls {
+        display: flex;
+        gap: 10px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .difficulty-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 2px solid transparent;
+        padding: 10px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+      }
+
+      .difficulty-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .difficulty-btn.active {
+        background: rgba(52, 152, 219, 0.8);
+        border-color: #3498db;
+        box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
+      }
+
+      .game-controls {
+        display: flex;
+        gap: 15px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .control-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .control-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      }
+
+      .control-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .race-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .combo-display {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 10px;
+        font-weight: bold;
+        transform: scale(0);
+        animation: combo-popup 0.5s ease-out;
+      }
+
+      @keyframes combo-popup {
+        0% {
+          transform: scale(0) rotate(-10deg);
+        }
+        50% {
+          transform: scale(1.2) rotate(5deg);
+        }
+        100% {
+          transform: scale(1) rotate(0deg);
+        }
+      }
+
+      .achievement-banner {
+        background: linear-gradient(135deg, #ffd700, #ff8c00);
+        color: #333;
+        padding: 10px 20px;
+        border-radius: 10px;
+        margin: 10px 0;
+        font-weight: bold;
+        animation: achievement-slide 0.5s ease-out;
+      }
+
+      @keyframes achievement-slide {
+        0% {
+          transform: translateY(-50px);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .timer-warning {
+        animation: timer-pulse 1s infinite;
+      }
+
+      @keyframes timer-pulse {
+        0%,
+        100% {
+          background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+        50% {
+          background: linear-gradient(90deg, #ff5733, #e74c3c);
+        }
+      }
+
+      .perfect-round {
+        background: linear-gradient(135deg, #2ecc71, #27ae60);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 10px 0;
+        font-weight: bold;
+        text-align: center;
+        animation: perfect-celebration 1s ease-out;
+      }
+
+      @keyframes perfect-celebration {
+        0% {
+          transform: scale(0.8) rotate(-5deg);
+        }
+        50% {
+          transform: scale(1.1) rotate(2deg);
+        }
+        100% {
+          transform: scale(1) rotate(0deg);
+        }
+      } /* 模態框樣式 */
+      .game-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px);
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: auto;
+        padding: 30px;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        color: white;
+        position: relative;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .modal-header h2 {
+        margin: 0;
+        color: white;
+        font-size: 24px;
+      }
+
+      .close-button {
+        color: white;
+        font-size: 35px;
+        font-weight: bold;
+        cursor: pointer;
+        line-height: 1;
+        transition: color 0.3s ease;
+      }
+
+      .close-button:hover {
+        color: #ff6b6b;
+      }
+
+      .modal-body {
+        margin-bottom: 20px;
+        line-height: 1.6;
+      }
+
+      .modal-body h3 {
+        color: #4ecdc4;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .modal-body ul {
+        margin: 10px 0;
+        padding-left: 20px;
+      }
+
+      .modal-body li {
+        margin: 5px 0;
+      }
+
+      .modal-footer {
+        text-align: center;
+        padding-top: 15px;
+        border-top: 2px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .modal-button {
+        background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .modal-button:hover {
+        background: linear-gradient(45deg, #45b7d1, #4ecdc4);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      /* 響應式設計 */
+      @media (max-width: 768px) {
+        .pattern-display {
+          height: 250px;
+        }
+
+        .pattern-cell {
+          font-size: 18px;
+        }
+
+        .race-header {
+          justify-content: center;
+        }
+
+        .race-stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .modal-content {
+          padding: 20px;
+          margin: 20px;
+        }
+
+        .modal-header h2 {
+          font-size: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="race-container">
+      <div class="game-board">
+        <h1 style="color: white; margin-bottom: 20px">🧠 記憶競速</h1>
+
+        <div class="race-header">
+          <div class="stat-item">
+            <div class="stat-label">分數</div>
+            <div class="stat-value" id="score">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">關卡</div>
+            <div class="stat-value" id="level">1</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">序列長度</div>
+            <div class="stat-value" id="sequenceLength">3</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">連勝</div>
+            <div class="stat-value" id="streak">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">時間</div>
+            <div class="stat-value" id="timeLeft">30</div>
+          </div>
+        </div>
+
+        <div class="level-indicator" id="levelIndicator">關卡 1 - 準備開始</div>
+
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="speed-meter" id="speedMeter">
+          <span style="color: white; font-size: 14px">速度:</span>
+          <div class="speed-indicator"></div>
+          <div class="speed-indicator"></div>
+          <div class="speed-indicator"></div>
+          <div class="speed-indicator"></div>
+          <div class="speed-indicator"></div>
+        </div>
+
+        <div class="difficulty-controls">
+          <button class="difficulty-btn active" data-difficulty="easy">
+            簡單
+          </button>
+          <button class="difficulty-btn" data-difficulty="medium">中等</button>
+          <button class="difficulty-btn" data-difficulty="hard">困難</button>
+          <button class="difficulty-btn" data-difficulty="expert">專家</button>
+        </div>
+
+        <div class="instruction-panel" id="instructionPanel">
+          點擊開始遊戲按鈕開始記憶競速挑戰！
+        </div>
+
+        <div class="pattern-display" id="patternDisplay">
+          <div class="pattern-grid" id="patternGrid">
+            <!-- 16 cells will be generated by JavaScript -->
+          </div>
+        </div>
+
+        <div class="race-stats">
+          <div class="stat-item">
+            <div class="stat-label">準確率</div>
+            <div class="stat-value" id="accuracy">100%</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">平均時間</div>
+            <div class="stat-value" id="avgTime">0.0s</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">最高關卡</div>
+            <div class="stat-value" id="maxLevel">1</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">完美回合</div>
+            <div class="stat-value" id="perfectRounds">0</div>
+          </div>
+        </div>
+
+        <div class="game-controls">
+          <button class="control-btn" id="startBtn">開始遊戲</button>
+          <button class="control-btn" id="pauseBtn" disabled>暫停</button>
+          <button class="control-btn" id="restartBtn" disabled>重新開始</button>
+          <button class="control-btn" id="helpBtn">遊戲說明</button>
+          <button class="control-btn" id="homeBtn">返回首頁</button>
+        </div>
+
+        <div id="achievementContainer"></div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class MemoryPatternRace {
+        constructor() {
+          this.gameActive = false;
+          this.showingSequence = false;
+          this.score = 0;
+          this.level = 1;
+          this.maxLevel = 1;
+          this.streak = 0;
+          this.difficulty = "easy";
+          this.sequence = [];
+          this.playerSequence = [];
+          this.timeLeft = 30;
+          this.totalAttempts = 0;
+          this.correctAttempts = 0;
+          this.responseTimes = [];
+          this.perfectRounds = 0;
+          this.roundStartTime = 0;
+
+          this.difficultySettings = {
+            easy: {
+              initialLength: 3,
+              maxLength: 8,
+              displaySpeed: 800,
+              pauseBetween: 200,
+              timeLimit: 45,
+            },
+            medium: {
+              initialLength: 4,
+              maxLength: 10,
+              displaySpeed: 600,
+              pauseBetween: 150,
+              timeLimit: 35,
+            },
+            hard: {
+              initialLength: 5,
+              maxLength: 12,
+              displaySpeed: 400,
+              pauseBetween: 100,
+              timeLimit: 25,
+            },
+            expert: {
+              initialLength: 6,
+              maxLength: 15,
+              displaySpeed: 300,
+              pauseBetween: 50,
+              timeLimit: 20,
+            },
+          };
+
+          this.symbols = [
+            "🔴",
+            "🔵",
+            "🟢",
+            "🟡",
+            "🟣",
+            "🟠",
+            "⚫",
+            "⚪",
+            "🔺",
+            "🔻",
+            "◆",
+            "◇",
+            "★",
+            "☆",
+            "♠",
+            "♥",
+          ];
+
+          this.initializeGame();
+        }
+
+        initializeGame() {
+          this.createGrid();
+          this.bindEvents();
+          this.setupHelpModal();
+          this.loadStats();
+          this.showHelp();
+        }
+
+        createGrid() {
+          const grid = document.getElementById("patternGrid");
+          grid.innerHTML = "";
+
+          for (let i = 0; i < 16; i++) {
+            const cell = document.createElement("div");
+            cell.className = "pattern-cell";
+            cell.dataset.index = i;
+            cell.addEventListener("click", () => this.handleCellClick(i));
+            grid.appendChild(cell);
+          }
+        }
+
+        bindEvents() {
+          // 難度選擇
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.addEventListener("click", () =>
+              this.setDifficulty(btn.dataset.difficulty)
+            );
+          });
+
+          // 控制按鈕
+          document
+            .getElementById("startBtn")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("pauseBtn")
+            .addEventListener("click", () => this.togglePause());
+          document
+            .getElementById("restartBtn")
+            .addEventListener("click", () => this.restartGame());
+          document
+            .getElementById("helpBtn")
+            .addEventListener("click", () => this.showHelp());
+          document
+            .getElementById("homeBtn")
+            .addEventListener(
+              "click",
+              () => (window.location.href = "index.html")
+            );
+        }
+
+        setDifficulty(newDifficulty) {
+          this.difficulty = newDifficulty;
+
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.classList.remove("active");
+          });
+          document
+            .querySelector(`[data-difficulty="${newDifficulty}"]`)
+            .classList.add("active");
+        }
+
+        startGame() {
+          this.gameActive = true;
+          this.score = 0;
+          this.level = 1;
+          this.streak = 0;
+          this.totalAttempts = 0;
+          this.correctAttempts = 0;
+          this.responseTimes = [];
+          this.perfectRounds = 0;
+
+          const settings = this.difficultySettings[this.difficulty];
+          this.timeLeft = settings.timeLimit;
+
+          this.updateDisplay();
+          this.startTimer();
+          this.startLevel();
+
+          document.getElementById("startBtn").disabled = true;
+          document.getElementById("pauseBtn").disabled = false;
+          document.getElementById("restartBtn").disabled = false;
+        }
+
+        togglePause() {
+          if (!this.gameActive) return;
+
+          this.gameActive = !this.gameActive;
+          const pauseBtn = document.getElementById("pauseBtn");
+
+          if (this.gameActive) {
+            pauseBtn.textContent = "暫停";
+            this.startTimer();
+          } else {
+            pauseBtn.textContent = "繼續";
+            clearInterval(this.gameTimer);
+          }
+        }
+
+        restartGame() {
+          this.endGame();
+          setTimeout(() => this.startGame(), 100);
+        }
+
+        startTimer() {
+          this.gameTimer = setInterval(() => {
+            if (!this.gameActive) return;
+
+            this.timeLeft--;
+            this.updateDisplay();
+
+            if (this.timeLeft <= 5) {
+              document
+                .getElementById("progressFill")
+                .classList.add("timer-warning");
+            }
+
+            if (this.timeLeft <= 0) {
+              this.endGame();
+            }
+          }, 1000);
+        }
+
+        startLevel() {
+          if (!this.gameActive) return;
+
+          const settings = this.difficultySettings[this.difficulty];
+          const sequenceLength = Math.min(
+            settings.initialLength + Math.floor((this.level - 1) / 2),
+            settings.maxLength
+          );
+
+          this.sequence = [];
+          this.playerSequence = [];
+          this.roundStartTime = Date.now();
+
+          // 生成隨機序列
+          for (let i = 0; i < sequenceLength; i++) {
+            this.sequence.push(Math.floor(Math.random() * 16));
+          }
+
+          document.getElementById(
+            "instructionPanel"
+          ).textContent = `關卡 ${this.level} - 觀察序列 (${sequenceLength} 個符號)`;
+          document.getElementById(
+            "levelIndicator"
+          ).textContent = `關卡 ${this.level} - 序列長度: ${sequenceLength}`;
+
+          this.updateSpeedMeter();
+          this.updateDisplay();
+          this.showSequence();
+        }
+
+        showSequence() {
+          this.showingSequence = true;
+          const settings = this.difficultySettings[this.difficulty];
+          const cells = document.querySelectorAll(".pattern-cell");
+
+          // 清除所有格子
+          cells.forEach((cell) => {
+            cell.textContent = "";
+            cell.className = "pattern-cell";
+          });
+
+          let sequenceIndex = 0;
+
+          const showNext = () => {
+            if (sequenceIndex >= this.sequence.length) {
+              this.showingSequence = false;
+              document.getElementById("instructionPanel").textContent =
+                "按照剛才顯示的順序點擊格子！";
+              return;
+            }
+
+            const cellIndex = this.sequence[sequenceIndex];
+            const cell = cells[cellIndex];
+            const symbol = this.symbols[sequenceIndex % this.symbols.length];
+
+            cell.textContent = symbol;
+            cell.classList.add("sequence");
+
+            setTimeout(() => {
+              cell.classList.remove("sequence");
+              if (sequenceIndex < this.sequence.length - 1) {
+                setTimeout(showNext, settings.pauseBetween);
+              } else {
+                setTimeout(() => {
+                  cells.forEach((cell) => {
+                    cell.textContent = "";
+                    cell.className = "pattern-cell";
+                  });
+                  this.showingSequence = false;
+                  document.getElementById("instructionPanel").textContent =
+                    "按照剛才顯示的順序點擊格子！";
+                }, 500);
+              }
+            }, settings.displaySpeed);
+
+            sequenceIndex++;
+          };
+
+          setTimeout(showNext, 1000);
+        }
+
+        handleCellClick(index) {
+          if (!this.gameActive || this.showingSequence) return;
+
+          const cell = document.querySelectorAll(".pattern-cell")[index];
+          this.playerSequence.push(index);
+          this.totalAttempts++;
+
+          const expectedIndex = this.playerSequence.length - 1;
+          const isCorrect = index === this.sequence[expectedIndex];
+
+          if (isCorrect) {
+            this.correctAttempts++;
+            cell.classList.add("correct");
+
+            // 記錄反應時間
+            const responseTime = Date.now() - this.roundStartTime;
+            this.responseTimes.push(responseTime);
+
+            if (this.playerSequence.length === this.sequence.length) {
+              // 完成這一輪
+              this.completeRound();
+            }
+          } else {
+            // 錯誤
+            cell.classList.add("wrong");
+            this.handleMistake();
+          }
+
+          setTimeout(() => {
+            cell.classList.remove("correct", "wrong");
+          }, 500);
+        }
+
+        completeRound() {
+          this.streak++;
+          const roundTime = Date.now() - this.roundStartTime;
+          const isPerfect =
+            roundTime < 5000 &&
+            this.playerSequence.length === this.sequence.length;
+
+          if (isPerfect) {
+            this.perfectRounds++;
+            this.showPerfectRound();
+          }
+
+          // 計算分數
+          let points = this.sequence.length * 10;
+          points += this.streak * 5; // 連勝獎勵
+          if (isPerfect) points *= 2; // 完美獎勵
+
+          this.score += points;
+          this.level++;
+          this.maxLevel = Math.max(this.maxLevel, this.level);
+
+          // 顯示連擊效果
+          if (this.streak >= 3) {
+            this.showComboEffect();
+          }
+
+          this.checkAchievements();
+          this.updateDisplay();
+
+          setTimeout(() => {
+            this.startLevel();
+          }, 1500);
+        }
+
+        handleMistake() {
+          this.streak = 0;
+
+          // 顯示正確答案
+          this.sequence.forEach((cellIndex, i) => {
+            setTimeout(() => {
+              const cell =
+                document.querySelectorAll(".pattern-cell")[cellIndex];
+              const symbol = this.symbols[i % this.symbols.length];
+              cell.textContent = symbol;
+              cell.classList.add("sequence");
+
+              setTimeout(() => {
+                cell.classList.remove("sequence");
+                cell.textContent = "";
+              }, 800);
+            }, i * 200);
+          });
+
+          setTimeout(() => {
+            this.startLevel();
+          }, this.sequence.length * 200 + 1000);
+        }
+
+        showComboEffect() {
+          const existing = document.querySelector(".combo-display");
+          if (existing) existing.remove();
+
+          const comboDisplay = document.createElement("div");
+          comboDisplay.className = "combo-display";
+          comboDisplay.textContent = `${this.streak}x 連勝!`;
+
+          document.getElementById("patternDisplay").appendChild(comboDisplay);
+
+          setTimeout(() => comboDisplay.remove(), 2000);
+        }
+
+        showPerfectRound() {
+          const perfectBanner = document.createElement("div");
+          perfectBanner.className = "perfect-round";
+          perfectBanner.textContent = "🎉 完美回合! 獲得雙倍分數!";
+
+          document
+            .getElementById("achievementContainer")
+            .appendChild(perfectBanner);
+
+          setTimeout(() => perfectBanner.remove(), 3000);
+        }
+
+        updateSpeedMeter() {
+          const indicators = document.querySelectorAll(".speed-indicator");
+          const speedLevel = Math.min(5, Math.floor(this.level / 3) + 1);
+
+          indicators.forEach((indicator, index) => {
+            indicator.classList.toggle("active", index < speedLevel);
+          });
+        }
+
+        checkAchievements() {
+          const container = document.getElementById("achievementContainer");
+
+          const achievements = [];
+          if (this.streak >= 5) achievements.push("連勝達人");
+          if (this.level >= 10) achievements.push("記憶大師");
+          if (this.perfectRounds >= 3) achievements.push("完美主義者");
+          if (this.score >= 1000) achievements.push("高分王者");
+
+          achievements.forEach((achievement) => {
+            const banner = document.createElement("div");
+            banner.className = "achievement-banner";
+            banner.textContent = `🏆 成就解鎖: ${achievement}`;
+            container.appendChild(banner);
+
+            setTimeout(() => banner.remove(), 3000);
+          });
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("level").textContent = this.level;
+          document.getElementById("sequenceLength").textContent =
+            this.sequence.length || 3;
+          document.getElementById("streak").textContent = this.streak;
+          document.getElementById("timeLeft").textContent = this.timeLeft;
+          document.getElementById("maxLevel").textContent = this.maxLevel;
+          document.getElementById("perfectRounds").textContent =
+            this.perfectRounds;
+
+          // 準確率
+          const accuracy =
+            this.totalAttempts > 0
+              ? Math.round((this.correctAttempts / this.totalAttempts) * 100)
+              : 100;
+          document.getElementById("accuracy").textContent = accuracy + "%";
+
+          // 平均反應時間
+          const avgTime =
+            this.responseTimes.length > 0
+              ? (
+                  this.responseTimes.reduce((a, b) => a + b, 0) /
+                  this.responseTimes.length /
+                  1000
+                ).toFixed(1)
+              : "0.0";
+          document.getElementById("avgTime").textContent = avgTime + "s";
+
+          // 進度條
+          const timePercent =
+            (this.timeLeft /
+              this.difficultySettings[this.difficulty].timeLimit) *
+            100;
+          document.getElementById("progressFill").style.width =
+            timePercent + "%";
+        }
+
+        endGame() {
+          this.gameActive = false;
+          clearInterval(this.gameTimer);
+
+          this.saveStats();
+          this.showFinalStats();
+
+          document.getElementById("startBtn").disabled = false;
+          document.getElementById("pauseBtn").disabled = true;
+          document.getElementById("restartBtn").disabled = true;
+        }
+
+        showFinalStats() {
+          const accuracy =
+            this.totalAttempts > 0
+              ? Math.round((this.correctAttempts / this.totalAttempts) * 100)
+              : 100;
+          const avgTime =
+            this.responseTimes.length > 0
+              ? (
+                  this.responseTimes.reduce((a, b) => a + b, 0) /
+                  this.responseTimes.length /
+                  1000
+                ).toFixed(1)
+              : "0.0";
+
+          document.getElementById("instructionPanel").innerHTML = `
+                    <h3>遊戲結束!</h3>
+                    <p><strong>最終分數:</strong> ${this.score}</p>
+                    <p><strong>達到關卡:</strong> ${this.maxLevel}</p>
+                    <p><strong>最高連勝:</strong> ${this.streak}</p>
+                    <p><strong>準確率:</strong> ${accuracy}%</p>
+                    <p><strong>完美回合:</strong> ${this.perfectRounds}</p>
+                    <p><strong>平均反應時間:</strong> ${avgTime}秒</p>
+                `;
+        }
+
+        setupHelpModal() {
+          this.helpModal = new GameUtils.Modal(
+            "helpModal",
+            "記憶競速 - 遊戲說明",
+            `
+                    <h3>遊戲規則：</h3>
+                    <ul>
+                        <li>觀察電腦顯示的符號序列</li>
+                        <li>記住符號出現的位置和順序</li>
+                        <li>按照相同順序點擊對應位置</li>
+                        <li>隨關卡進展序列變長</li>
+                        <li>時間限制內盡可能達到高關卡</li>
+                    </ul>
+                    
+                    <h3>計分方式：</h3>
+                    <ul>
+                        <li>每個正確位置: 10分</li>
+                        <li>連勝獎勵: 每次連勝 +5分</li>
+                        <li>完美回合: 雙倍分數</li>
+                        <li>關卡越高，基礎分數越多</li>
+                    </ul>
+                    
+                    <h3>難度差異：</h3>
+                    <ul>
+                        <li>簡單: 較長時間限制，慢速顯示</li>
+                        <li>中等: 中等時間和速度</li>
+                        <li>困難: 較短時間，快速顯示</li>
+                        <li>專家: 極限挑戰模式</li>
+                    </ul>
+                    
+                    <h3>特殊成就：</h3>
+                    <ul>
+                        <li>連勝達人: 連續5關不出錯</li>
+                        <li>記憶大師: 達到關卡10</li>
+                        <li>完美主義者: 3個完美回合</li>
+                        <li>高分王者: 分數達到1000</li>
+                    </ul>
+                `
+          );
+        }
+
+        showHelp() {
+          this.helpModal.show();
+        }
+
+        saveStats() {
+          const stats = {
+            bestScore: this.score,
+            maxLevel: this.maxLevel,
+            totalGames: 1,
+            perfectRounds: this.perfectRounds,
+            bestAccuracy:
+              this.totalAttempts > 0
+                ? Math.round((this.correctAttempts / this.totalAttempts) * 100)
+                : 100,
+            lastPlayed: Date.now(),
+          };
+
+          const existing = JSON.parse(
+            localStorage.getItem("memoryPatternRaceStats") || "{}"
+          );
+
+          stats.bestScore = Math.max(stats.bestScore, existing.bestScore || 0);
+          stats.maxLevel = Math.max(stats.maxLevel, existing.maxLevel || 1);
+          stats.totalGames = (existing.totalGames || 0) + 1;
+          stats.perfectRounds =
+            (existing.perfectRounds || 0) + this.perfectRounds;
+          stats.bestAccuracy = Math.max(
+            stats.bestAccuracy,
+            existing.bestAccuracy || 0
+          );
+
+          localStorage.setItem("memoryPatternRaceStats", JSON.stringify(stats));
+        }
+
+        loadStats() {
+          const stats = JSON.parse(
+            localStorage.getItem("memoryPatternRaceStats") || "{}"
+          );
+          this.maxLevel = stats.maxLevel || 1;
+          // 可以在這裡顯示歷史最佳成績
+        }
+      }
+
+      // 等待頁面加載完成
+      document.addEventListener("DOMContentLoaded", () => {
+        new MemoryPatternRace();
+      });
+    </script>
+  </body>
+</html>

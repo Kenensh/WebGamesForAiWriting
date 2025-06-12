@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>彈跳球 - 小遊戲合集</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "微軟正黑體", "Microsoft JhengHei", Arial, sans-serif;
+      }
+
+      body {
+        background-color: #f5f5f5;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      header {
+        background-color: #3498db;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 1rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      footer {
+        background-color: #34495e;
+        color: white;
+        text-align: center;
+        padding: 1rem;
+        margin-top: auto;
+      }
+
+      .back-button {
+        display: inline-block;
+        margin: 0.5rem 0;
+        padding: 0.5rem 1rem;
+        background-color: #3498db;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+      }
+
+      .back-button:hover {
+        background-color: #2980b9;
+      }
+
+      .game-info {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .game-title {
+        font-size: 1.8rem;
+        color: #3498db;
+        margin-bottom: 0.5rem;
+      }
+
+      .game-instructions {
+        margin-bottom: 1rem;
+        line-height: 1.6;
+      }
+
+      .game-container {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .difficulty {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+      }
+
+      .difficulty label {
+        margin-right: 1rem;
+        font-weight: bold;
+      }
+
+      .difficulty button {
+        margin-right: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        background-color: #ecf0f1;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .difficulty button.active {
+        background-color: #3498db;
+        color: white;
+      }
+
+      .game-buttons {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .game-button {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .start-btn {
+        background-color: #2ecc71;
+        color: white;
+      }
+
+      .start-btn:hover {
+        background-color: #27ae60;
+      }
+
+      .pause-btn {
+        background-color: #f39c12;
+        color: white;
+      }
+
+      .pause-btn:hover {
+        background-color: #d35400;
+      }
+
+      .restart-btn {
+        background-color: #e74c3c;
+        color: white;
+      }
+
+      .restart-btn:hover {
+        background-color: #c0392b;
+      }
+
+      .game-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        background-color: #ecf0f1;
+        padding: 0.5rem;
+        border-radius: 4px;
+      }
+
+      .stat {
+        font-weight: bold;
+      }
+
+      .game-area {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+
+      #game-canvas {
+        background-color: #2c3e50;
+        border-radius: 4px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+      }
+
+      .message-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 2rem;
+        text-align: center;
+        z-index: 10;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+
+      .message-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .message-overlay button {
+        margin-top: 1rem;
+        padding: 0.5rem 1.5rem;
+        font-size: 1.2rem;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .message-overlay button:hover {
+        background-color: #2980b9;
+      }
+
+      .power-meter {
+        width: 100%;
+        height: 10px;
+        background-color: #ecf0f1;
+        border-radius: 5px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+      }
+
+      .power-bar {
+        height: 100%;
+        width: 0;
+        background-color: #3498db;
+        transition: width 0.1s ease;
+      }
+
+      .bonus-score {
+        position: absolute;
+        color: gold;
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        pointer-events: none;
+        animation: float-up 1s forwards;
+      }
+
+      @keyframes float-up {
+        0% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-20px);
+          opacity: 0;
+        }
+      }
+
+      .ball-color-options {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .ball-color {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.2s;
+      }
+
+      .ball-color.active {
+        border-color: #2c3e50;
+        transform: scale(1.2);
+      }
+
+      .ball-color:hover {
+        transform: scale(1.1);
+      }
+
+      .ball-red {
+        background-color: #e74c3c;
+      }
+      .ball-blue {
+        background-color: #3498db;
+      }
+      .ball-green {
+        background-color: #2ecc71;
+      }
+      .ball-yellow {
+        background-color: #f1c40f;
+      }
+      .ball-purple {
+        background-color: #9b59b6;
+      }
+
+      .combo-indicator {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: gold;
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .combo-indicator.visible {
+        opacity: 1;
+      }
+
+      @media screen and (max-width: 768px) {
+        .container {
+          padding: 0.5rem;
+        }
+
+        .controls {
+          flex-direction: column;
+        }
+
+        #game-canvas {
+          width: 100%;
+          height: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>小遊戲合集</h1>
+      <p>好玩的小遊戲，休閒時間的最佳選擇！</p>
+      <a href="index.html" class="back-button">回到遊戲列表</a>
+    </header>
+
+    <div class="container">
+      <div class="game-info">
+        <h2 class="game-title">彈跳球</h2>
+        <div class="game-instructions">
+          <p><strong>遊戲說明：</strong></p>
+          <p>
+            彈跳球遊戲！點擊並拖曳來設定發射角度和力度，釋放滑鼠以發射彈跳球。
+          </p>
+          <ol>
+            <li>點擊並拖曳滑鼠來瞄準，釋放滑鼠以發射球</li>
+            <li>球必須彈到籃框內才能得分</li>
+            <li>每個得分籃框會給予不同分數，取決於難度</li>
+            <li>連續進球可獲得連擊加成，分數倍增</li>
+            <li>
+              選擇不同顏色的球會有不同特性：
+              <ul>
+                <li>紅色：標準球</li>
+                <li>藍色：彈跳高但體積小</li>
+                <li>綠色：較不受重力影響</li>
+                <li>黃色：速度快</li>
+                <li>紫色：體積大但彈跳低</li>
+              </ul>
+            </li>
+            <li>隨著關卡進展，籃框位置會變得更具挑戰性</li>
+            <li>每關限時60秒，嘗試獲得最高分數！</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="game-container">
+        <div class="controls">
+          <div class="difficulty">
+            <label>難度：</label>
+            <button class="difficulty-btn active" data-difficulty="easy">
+              簡單
+            </button>
+            <button class="difficulty-btn" data-difficulty="medium">
+              中等
+            </button>
+            <button class="difficulty-btn" data-difficulty="hard">困難</button>
+          </div>
+          <div class="game-buttons">
+            <button class="game-button start-btn">開始遊戲</button>
+            <button class="game-button pause-btn" disabled>暫停</button>
+            <button class="game-button restart-btn" disabled>重新開始</button>
+          </div>
+        </div>
+
+        <div class="game-stats">
+          <div class="stat">分數：<span id="score">0</span></div>
+          <div class="stat">關卡：<span id="level">1</span></div>
+          <div class="stat">時間：<span id="time">60</span></div>
+          <div class="stat">連擊：<span id="combo">0</span></div>
+        </div>
+
+        <div class="ball-color-options">
+          <div class="ball-color ball-red active" data-color="red"></div>
+          <div class="ball-color ball-blue" data-color="blue"></div>
+          <div class="ball-color ball-green" data-color="green"></div>
+          <div class="ball-color ball-yellow" data-color="yellow"></div>
+          <div class="ball-color ball-purple" data-color="purple"></div>
+        </div>
+
+        <div class="power-meter">
+          <div class="power-bar" id="power-bar"></div>
+        </div>
+
+        <div class="game-area">
+          <canvas id="game-canvas" width="800" height="600"></canvas>
+          <div class="combo-indicator" id="combo-indicator">
+            連擊 x<span id="combo-count">2</span>!
+          </div>
+
+          <div class="message-overlay" id="start-message">
+            <div>準備好了嗎？</div>
+            <div>點擊「開始」按鈕來開始遊戲！</div>
+          </div>
+
+          <div class="message-overlay" id="pause-message">
+            <div>遊戲暫停</div>
+            <div>點擊「繼續」按鈕來繼續遊戲</div>
+            <button id="resume-btn">繼續</button>
+          </div>
+
+          <div class="message-overlay" id="game-over-message">
+            <div>時間到！</div>
+            <div>你的分數：<span id="final-score">0</span></div>
+            <div>最高關卡：<span id="final-level">1</span></div>
+            <div>最高連擊：<span id="final-combo">0</span></div>
+            <button id="play-again-btn">再玩一次</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>&copy; 2023 小遊戲合集 版權所有</p>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 遊戲常量
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 600;
+        const BALL_RADIUS = 15;
+        const GRAVITY = 0.5;
+        const FRICTION = 0.97;
+        const AIR_RESISTANCE = 0.995;
+        const POWER_FACTOR = 0.15;
+
+        // 球的類型與特性
+        const BALL_TYPES = {
+          red: {
+            radius: BALL_RADIUS,
+            gravity: GRAVITY,
+            friction: FRICTION,
+            speedFactor: 1,
+            restitution: 0.8, // 彈跳因子
+            color: "#e74c3c",
+          },
+          blue: {
+            radius: BALL_RADIUS * 0.8,
+            gravity: GRAVITY,
+            friction: FRICTION,
+            speedFactor: 1,
+            restitution: 0.9,
+            color: "#3498db",
+          },
+          green: {
+            radius: BALL_RADIUS,
+            gravity: GRAVITY * 0.7,
+            friction: FRICTION,
+            speedFactor: 1,
+            restitution: 0.85,
+            color: "#2ecc71",
+          },
+          yellow: {
+            radius: BALL_RADIUS,
+            gravity: GRAVITY,
+            friction: FRICTION,
+            speedFactor: 1.2,
+            restitution: 0.8,
+            color: "#f1c40f",
+          },
+          purple: {
+            radius: BALL_RADIUS * 1.3,
+            gravity: GRAVITY,
+            friction: FRICTION,
+            speedFactor: 0.9,
+            restitution: 0.7,
+            color: "#9b59b6",
+          },
+        };
+
+        // 遊戲設置
+        const gameSettings = {
+          easy: {
+            basketSize: 100,
+            basketCount: 1,
+            basketSpeed: 0,
+            pointsPerBasket: 100,
+            timePerLevel: 60,
+          },
+          medium: {
+            basketSize: 80,
+            basketCount: 2,
+            basketSpeed: 1,
+            pointsPerBasket: 150,
+            timePerLevel: 60,
+          },
+          hard: {
+            basketSize: 60,
+            basketCount: 3,
+            basketSpeed: 2,
+            pointsPerBasket: 200,
+            timePerLevel: 60,
+          },
+        };
+
+        // 遊戲狀態
+        const gameState = {
+          isPlaying: false,
+          isPaused: false,
+          difficulty: "easy",
+          score: 0,
+          level: 1,
+          time: 60,
+          combo: 0,
+          maxCombo: 0,
+          balls: [],
+          baskets: [],
+          ballColor: "red",
+          isAiming: false,
+          aimStartX: 0,
+          aimStartY: 0,
+          aimEndX: 0,
+          aimEndY: 0,
+          power: 0,
+          timerInterval: null,
+          animationFrameId: null,
+          lastComboTime: 0,
+          basketSizes: [],
+          basketPoints: [],
+        };
+
+        // DOM 元素
+        const canvas = document.getElementById("game-canvas");
+        const ctx = canvas.getContext("2d");
+
+        const scoreDisplay = document.getElementById("score");
+        const levelDisplay = document.getElementById("level");
+        const timeDisplay = document.getElementById("time");
+        const comboDisplay = document.getElementById("combo");
+        const powerBar = document.getElementById("power-bar");
+        const comboIndicator = document.getElementById("combo-indicator");
+        const comboCount = document.getElementById("combo-count");
+
+        const finalScoreDisplay = document.getElementById("final-score");
+        const finalLevelDisplay = document.getElementById("final-level");
+        const finalComboDisplay = document.getElementById("final-combo");
+
+        const startBtn = document.querySelector(".start-btn");
+        const pauseBtn = document.querySelector(".pause-btn");
+        const restartBtn = document.querySelector(".restart-btn");
+
+        const difficultyBtns = document.querySelectorAll(".difficulty-btn");
+        const ballColorBtns = document.querySelectorAll(".ball-color");
+
+        const startMessage = document.getElementById("start-message");
+        const pauseMessage = document.getElementById("pause-message");
+        const gameOverMessage = document.getElementById("game-over-message");
+        const resumeBtn = document.getElementById("resume-btn");
+        const playAgainBtn = document.getElementById("play-again-btn");
+
+        // 根據畫布大小調整
+        function resizeCanvas() {
+          const gameArea = document.querySelector(".game-area");
+          const maxWidth = gameArea.clientWidth;
+          const maxHeight = gameArea.clientHeight;
+
+          const scale = Math.min(
+            maxWidth / CANVAS_WIDTH,
+            maxHeight / CANVAS_HEIGHT,
+            1
+          );
+
+          canvas.style.width = `${CANVAS_WIDTH * scale}px`;
+          canvas.style.height = `${CANVAS_HEIGHT * scale}px`;
+        }
+
+        // 初始化遊戲
+        function initializeGame() {
+          // 調整畫布大小
+          resizeCanvas();
+
+          window.addEventListener("resize", resizeCanvas);
+
+          // 難度選擇
+          difficultyBtns.forEach((btn) => {
+            btn.addEventListener("click", () => {
+              if (gameState.isPlaying && !gameState.isPaused) return;
+
+              difficultyBtns.forEach((b) => b.classList.remove("active"));
+              btn.classList.add("active");
+              gameState.difficulty = btn.dataset.difficulty;
+            });
+          });
+
+          // 球顏色選擇
+          ballColorBtns.forEach((btn) => {
+            btn.addEventListener("click", () => {
+              ballColorBtns.forEach((b) => b.classList.remove("active"));
+              btn.classList.add("active");
+              gameState.ballColor = btn.dataset.color;
+            });
+          });
+
+          // 設置按鈕事件
+          startBtn.addEventListener("click", startGame);
+          pauseBtn.addEventListener("click", togglePause);
+          restartBtn.addEventListener("click", restartGame);
+          resumeBtn.addEventListener("click", togglePause);
+          playAgainBtn.addEventListener("click", restartGame);
+
+          // 設置畫布事件
+          canvas.addEventListener("mousedown", startAim);
+          canvas.addEventListener("mousemove", updateAim);
+          canvas.addEventListener("mouseup", releaseAim);
+          canvas.addEventListener("mouseleave", resetAim);
+
+          // 適配觸控設備
+          canvas.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+            const y =
+              (touch.clientY - rect.top) * (canvas.height / rect.height);
+            gameState.aimStartX = x;
+            gameState.aimStartY = y;
+            gameState.isAiming = true;
+          });
+
+          canvas.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+            if (!gameState.isAiming) return;
+
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+            const y =
+              (touch.clientY - rect.top) * (canvas.height / rect.height);
+
+            gameState.aimEndX = x;
+            gameState.aimEndY = y;
+
+            calculatePower();
+          });
+
+          canvas.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            if (!gameState.isAiming) return;
+
+            shootBall();
+
+            gameState.isAiming = false;
+            gameState.power = 0;
+
+            updatePowerBar();
+          });
+
+          // 顯示開始訊息
+          startMessage.classList.add("visible");
+        }
+
+        // 開始遊戲
+        function startGame() {
+          // 重設遊戲狀態
+          resetGameState();
+
+          // 設置遊戲參數
+          const settings = gameSettings[gameState.difficulty];
+          gameState.time = settings.timePerLevel;
+
+          // 創建籃框
+          createBaskets();
+
+          // 更新UI
+          updateDisplays();
+
+          // 啟用按鈕
+          pauseBtn.disabled = false;
+          restartBtn.disabled = false;
+          startBtn.disabled = true;
+
+          // 隱藏開始訊息
+          startMessage.classList.remove("visible");
+
+          // 設置遊戲狀態
+          gameState.isPlaying = true;
+
+          // 開始遊戲循環
+          startGameLoop();
+
+          // 開始計時器
+          startTimer();
+        }
+
+        // 重設遊戲狀態
+        function resetGameState() {
+          gameState.isPlaying = false;
+          gameState.isPaused = false;
+          gameState.score = 0;
+          gameState.level = 1;
+          gameState.time = 60;
+          gameState.combo = 0;
+          gameState.maxCombo = 0;
+          gameState.balls = [];
+          gameState.baskets = [];
+          gameState.isAiming = false;
+          gameState.power = 0;
+
+          // 清除計時器
+          clearInterval(gameState.timerInterval);
+          cancelAnimationFrame(gameState.animationFrameId);
+        }
+
+        // 開始計時器
+        function startTimer() {
+          clearInterval(gameState.timerInterval);
+
+          gameState.timerInterval = setInterval(() => {
+            if (gameState.isPaused) return;
+
+            gameState.time--;
+
+            if (gameState.time <= 0) {
+              endGame();
+            }
+
+            updateDisplays();
+          }, 1000);
+        }
+
+        // 創建籃框
+        function createBaskets() {
+          gameState.baskets = [];
+          gameState.basketSizes = [];
+          gameState.basketPoints = [];
+
+          const settings = gameSettings[gameState.difficulty];
+          const basketWidth = settings.basketSize;
+          const basketHeight = basketWidth / 2;
+
+          for (let i = 0; i < settings.basketCount; i++) {
+            let x, y;
+
+            // 根據難度和關卡調整籃框位置
+            if (settings.basketCount === 1) {
+              // 簡單模式 - 籃框在中間右側
+              x = CANVAS_WIDTH * 0.7;
+              y = CANVAS_HEIGHT * 0.5;
+            } else {
+              // 中等和困難模式 - 籃框分散在場景右側
+              x = CANVAS_WIDTH * (0.6 + Math.random() * 0.3);
+              y = CANVAS_HEIGHT * (0.2 + Math.random() * 0.6);
+            }
+
+            // 調整籃框大小 - 較高關卡的籃框更小
+            const sizeAdjust = Math.max(
+              0.7,
+              1.0 - (gameState.level - 1) * 0.05
+            );
+            const adjustedWidth = basketWidth * sizeAdjust;
+            const adjustedHeight = basketHeight * sizeAdjust;
+
+            // 計算籃框得分 - 較小的籃框得分更高
+            const pointsMultiplier = 1.0 + (1.0 - sizeAdjust);
+            const points = Math.round(
+              settings.pointsPerBasket * pointsMultiplier
+            );
+
+            gameState.baskets.push({
+              x: x,
+              y: y,
+              width: adjustedWidth,
+              height: adjustedHeight,
+              speedX:
+                (Math.random() - 0.5) *
+                settings.basketSpeed *
+                (gameState.level * 0.5),
+              speedY:
+                (Math.random() - 0.5) *
+                settings.basketSpeed *
+                (gameState.level * 0.5),
+              direction: Math.random() > 0.5 ? 1 : -1,
+            });
+
+            gameState.basketSizes.push({
+              width: adjustedWidth,
+              height: adjustedHeight,
+            });
+
+            gameState.basketPoints.push(points);
+          }
+        }
+
+        // 開始瞄準
+        function startAim(e) {
+          if (!gameState.isPlaying || gameState.isPaused) return;
+
+          const rect = canvas.getBoundingClientRect();
+          const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+          const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+          gameState.aimStartX = x;
+          gameState.aimStartY = y;
+          gameState.isAiming = true;
+        }
+
+        // 更新瞄準
+        function updateAim(e) {
+          if (!gameState.isAiming) return;
+
+          const rect = canvas.getBoundingClientRect();
+          const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+          const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+          gameState.aimEndX = x;
+          gameState.aimEndY = y;
+
+          calculatePower();
+          updatePowerBar();
+        }
+
+        // 釋放瞄準，發射球
+        function releaseAim(e) {
+          if (!gameState.isAiming) return;
+
+          shootBall();
+
+          gameState.isAiming = false;
+          gameState.power = 0;
+
+          updatePowerBar();
+        }
+
+        // 重置瞄準
+        function resetAim() {
+          gameState.isAiming = false;
+          gameState.power = 0;
+          updatePowerBar();
+        }
+
+        // 計算力度
+        function calculatePower() {
+          const dx = gameState.aimStartX - gameState.aimEndX;
+          const dy = gameState.aimStartY - gameState.aimEndY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          // 力度範圍 0-100
+          gameState.power = Math.min(100, distance * POWER_FACTOR);
+        }
+
+        // 更新力度條
+        function updatePowerBar() {
+          powerBar.style.width = `${gameState.power}%`;
+
+          // 根據力度改變顏色
+          if (gameState.power < 30) {
+            powerBar.style.backgroundColor = "#3498db";
+          } else if (gameState.power < 70) {
+            powerBar.style.backgroundColor = "#f39c12";
+          } else {
+            powerBar.style.backgroundColor = "#e74c3c";
+          }
+        }
+
+        // 發射球
+        function shootBall() {
+          if (gameState.power < 5) return;
+
+          const ballType = BALL_TYPES[gameState.ballColor];
+
+          const dx = gameState.aimStartX - gameState.aimEndX;
+          const dy = gameState.aimStartY - gameState.aimEndY;
+
+          // 計算速度向量
+          let vx = dx * 0.1 * ballType.speedFactor;
+          let vy = dy * 0.1 * ballType.speedFactor;
+
+          // 根據力度調整速度
+          const powerFactor = gameState.power / 50;
+          vx *= powerFactor;
+          vy *= powerFactor;
+
+          // 創建新球
+          const newBall = {
+            x: gameState.aimStartX,
+            y: gameState.aimStartY,
+            vx: vx,
+            vy: vy,
+            radius: ballType.radius,
+            gravity: ballType.gravity,
+            friction: ballType.friction,
+            restitution: ballType.restitution,
+            color: ballType.color,
+            scored: false,
+            bounceCount: 0,
+          };
+
+          gameState.balls.push(newBall);
+
+          // 重置連擊計數（如果超過4秒未得分）
+          const currentTime = Date.now();
+          if (currentTime - gameState.lastComboTime > 4000) {
+            gameState.combo = 0;
+            updateDisplays();
+          }
+        }
+
+        // 更新遊戲狀態
+        function update() {
+          if (!gameState.isPlaying || gameState.isPaused) return;
+
+          // 更新球的位置
+          for (let i = gameState.balls.length - 1; i >= 0; i--) {
+            const ball = gameState.balls[i];
+
+            // 應用重力和空氣阻力
+            ball.vy += ball.gravity;
+            ball.vx *= AIR_RESISTANCE;
+            ball.vy *= AIR_RESISTANCE;
+
+            // 更新位置
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+
+            // 檢查與邊界的碰撞
+            checkBoundaryCollision(ball);
+
+            // 檢查與籃框的碰撞
+            checkBasketCollision(ball);
+
+            // 移除已經離開屏幕或靜止的球
+            if (
+              ball.y > CANVAS_HEIGHT + 50 ||
+              (Math.abs(ball.vx) < 0.1 &&
+                Math.abs(ball.vy) < 0.1 &&
+                ball.bounceCount > 5)
+            ) {
+              gameState.balls.splice(i, 1);
+            }
+          }
+
+          // 更新籃框位置
+          updateBaskets();
+        }
+
+        // 更新籃框位置
+        function updateBaskets() {
+          for (let i = 0; i < gameState.baskets.length; i++) {
+            const basket = gameState.baskets[i];
+
+            basket.x += basket.speedX;
+            basket.y += basket.speedY;
+
+            // 檢查邊界碰撞，反彈方向
+            if (
+              basket.x < basket.width / 2 ||
+              basket.x > CANVAS_WIDTH - basket.width / 2
+            ) {
+              basket.speedX = -basket.speedX;
+            }
+
+            if (
+              basket.y < basket.height / 2 ||
+              basket.y > CANVAS_HEIGHT * 0.8
+            ) {
+              basket.speedY = -basket.speedY;
+            }
+          }
+        }
+
+        // 檢查與邊界的碰撞
+        function checkBoundaryCollision(ball) {
+          // 左右邊界
+          if (ball.x - ball.radius < 0) {
+            ball.x = ball.radius;
+            ball.vx = -ball.vx * ball.restitution;
+            ball.bounceCount++;
+          } else if (ball.x + ball.radius > CANVAS_WIDTH) {
+            ball.x = CANVAS_WIDTH - ball.radius;
+            ball.vx = -ball.vx * ball.restitution;
+            ball.bounceCount++;
+          }
+
+          // 上下邊界
+          if (ball.y - ball.radius < 0) {
+            ball.y = ball.radius;
+            ball.vy = -ball.vy * ball.restitution;
+            ball.bounceCount++;
+          } else if (ball.y + ball.radius > CANVAS_HEIGHT) {
+            ball.y = CANVAS_HEIGHT - ball.radius;
+            ball.vy = -ball.vy * ball.restitution;
+            ball.vx *= ball.friction;
+            ball.bounceCount++;
+          }
+        }
+
+        // 檢查與籃框的碰撞
+        function checkBasketCollision(ball) {
+          if (ball.scored) return;
+
+          for (let i = 0; i < gameState.baskets.length; i++) {
+            const basket = gameState.baskets[i];
+
+            // 籃框頂部開口（得分區域）
+            if (
+              ball.y + ball.radius > basket.y - basket.height / 2 &&
+              ball.y - ball.radius < basket.y &&
+              ball.x > basket.x - basket.width / 2 &&
+              ball.x < basket.x + basket.width / 2 &&
+              ball.vy > 0 // 球必須向下移動
+            ) {
+              // 得分！
+              if (!ball.scored) {
+                ball.scored = true;
+                gameState.combo++;
+
+                if (gameState.combo > gameState.maxCombo) {
+                  gameState.maxCombo = gameState.combo;
+                }
+
+                // 計算加分
+                const points = gameState.basketPoints[i];
+                let comboMultiplier = 1;
+
+                if (gameState.combo > 1) {
+                  comboMultiplier = Math.min(
+                    4,
+                    1 + (gameState.combo - 1) * 0.5
+                  );
+                  showComboIndicator();
+                }
+
+                const scoreToAdd = Math.round(points * comboMultiplier);
+                gameState.score += scoreToAdd;
+
+                // 顯示得分動畫
+                showScoreAnimation(ball.x, ball.y, scoreToAdd);
+
+                // 記錄連擊時間
+                gameState.lastComboTime = Date.now();
+
+                // 檢查是否升級
+                checkLevelUp();
+
+                // 更新UI
+                updateDisplays();
+              }
+            }
+
+            // 籃框的四個邊緣（碰撞）
+            // 左側
+            else if (
+              ball.x + ball.radius > basket.x - basket.width / 2 &&
+              ball.x < basket.x &&
+              ball.y + ball.radius > basket.y - basket.height / 2 &&
+              ball.y - ball.radius < basket.y + basket.height / 2
+            ) {
+              ball.x = basket.x - basket.width / 2 - ball.radius;
+              ball.vx = -ball.vx * ball.restitution;
+              ball.bounceCount++;
+            }
+            // 右側
+            else if (
+              ball.x - ball.radius < basket.x + basket.width / 2 &&
+              ball.x > basket.x &&
+              ball.y + ball.radius > basket.y - basket.height / 2 &&
+              ball.y - ball.radius < basket.y + basket.height / 2
+            ) {
+              ball.x = basket.x + basket.width / 2 + ball.radius;
+              ball.vx = -ball.vx * ball.restitution;
+              ball.bounceCount++;
+            }
+            // 底部
+            else if (
+              ball.y - ball.radius < basket.y + basket.height / 2 &&
+              ball.y > basket.y &&
+              ball.x > basket.x - basket.width / 2 &&
+              ball.x < basket.x + basket.width / 2
+            ) {
+              ball.y = basket.y + basket.height / 2 + ball.radius;
+              ball.vy = -ball.vy * ball.restitution;
+              ball.bounceCount++;
+            }
+          }
+        }
+
+        // 顯示得分動畫
+        function showScoreAnimation(x, y, points) {
+          const scoreAnimation = document.createElement("div");
+          scoreAnimation.className = "bonus-score";
+          scoreAnimation.textContent = `+${points}`;
+          scoreAnimation.style.left = `${x}px`;
+          scoreAnimation.style.top = `${y}px`;
+
+          document.querySelector(".game-area").appendChild(scoreAnimation);
+
+          setTimeout(() => {
+            scoreAnimation.remove();
+          }, 1000);
+        }
+
+        // 顯示連擊指示器
+        function showComboIndicator() {
+          comboCount.textContent = gameState.combo;
+          comboIndicator.classList.add("visible");
+
+          setTimeout(() => {
+            comboIndicator.classList.remove("visible");
+          }, 2000);
+        }
+
+        // 檢查是否升級
+        function checkLevelUp() {
+          // 每獲得1000分提升一級
+          const shouldLevelUp =
+            Math.floor(gameState.score / 1000) + 1 > gameState.level;
+
+          if (shouldLevelUp) {
+            gameState.level++;
+
+            // 重新創建籃框
+            createBaskets();
+          }
+        }
+
+        // 渲染遊戲
+        function render() {
+          // 清除畫布
+          ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+          // 繪製背景
+          drawBackground();
+
+          // 繪製籃框
+          drawBaskets();
+
+          // 繪製球
+          drawBalls();
+
+          // 繪製瞄準線
+          if (gameState.isAiming) {
+            drawAimLine();
+          }
+        }
+
+        // 繪製背景
+        function drawBackground() {
+          // 天空漸變
+          const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+          gradient.addColorStop(0, "#3498db");
+          gradient.addColorStop(1, "#2980b9");
+
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+          // 地面
+          ctx.fillStyle = "#27ae60";
+          ctx.fillRect(0, CANVAS_HEIGHT - 30, CANVAS_WIDTH, 30);
+        }
+
+        // 繪製籃框
+        function drawBaskets() {
+          for (let i = 0; i < gameState.baskets.length; i++) {
+            const basket = gameState.baskets[i];
+            const size = gameState.basketSizes[i];
+            const points = gameState.basketPoints[i];
+
+            // 繪製籃框
+            ctx.fillStyle = "#e67e22";
+            ctx.fillRect(
+              basket.x - size.width / 2,
+              basket.y - size.height / 2,
+              size.width,
+              size.height
+            );
+
+            // 繪製籃框開口
+            ctx.fillStyle = "#2c3e50";
+            ctx.fillRect(
+              basket.x - size.width / 2,
+              basket.y - size.height / 2,
+              size.width,
+              6
+            );
+
+            // 繪製籃框分數
+            ctx.fillStyle = "white";
+            ctx.font = "12px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(`${points}分`, basket.x, basket.y + 5);
+          }
+        }
+
+        // 繪製球
+        function drawBalls() {
+          for (let i = 0; i < gameState.balls.length; i++) {
+            const ball = gameState.balls[i];
+
+            ctx.fillStyle = ball.color;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 添加光澤效果
+            ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+            ctx.beginPath();
+            ctx.arc(
+              ball.x - ball.radius * 0.3,
+              ball.y - ball.radius * 0.3,
+              ball.radius * 0.4,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+          }
+        }
+
+        // 繪製瞄準線
+        function drawAimLine() {
+          // 計算瞄準線的長度
+          const dx = gameState.aimStartX - gameState.aimEndX;
+          const dy = gameState.aimStartY - gameState.aimEndY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          // 繪製瞄準線
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 5]);
+          ctx.beginPath();
+          ctx.moveTo(gameState.aimStartX, gameState.aimStartY);
+          ctx.lineTo(gameState.aimEndX, gameState.aimEndY);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // 繪製預覽球
+          const ballType = BALL_TYPES[gameState.ballColor];
+          ctx.fillStyle = ballType.color;
+          ctx.beginPath();
+          ctx.arc(
+            gameState.aimStartX,
+            gameState.aimStartY,
+            ballType.radius,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+
+        // 開始遊戲循環
+        function startGameLoop() {
+          gameState.animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // 遊戲循環
+        function gameLoop() {
+          update();
+          render();
+
+          if (gameState.isPlaying) {
+            gameState.animationFrameId = requestAnimationFrame(gameLoop);
+          }
+        }
+
+        // 暫停/繼續遊戲
+        function togglePause() {
+          if (!gameState.isPlaying) return;
+
+          gameState.isPaused = !gameState.isPaused;
+
+          if (gameState.isPaused) {
+            // 暫停
+            cancelAnimationFrame(gameState.animationFrameId);
+            pauseMessage.classList.add("visible");
+            pauseBtn.textContent = "繼續";
+          } else {
+            // 繼續
+            startGameLoop();
+            pauseMessage.classList.remove("visible");
+            pauseBtn.textContent = "暫停";
+          }
+        }
+
+        // 重新開始遊戲
+        function restartGame() {
+          // 重置界面
+          gameOverMessage.classList.remove("visible");
+          pauseMessage.classList.remove("visible");
+
+          // 開始新遊戲
+          startGame();
+        }
+
+        // 結束遊戲
+        function endGame() {
+          // 停止遊戲
+          gameState.isPlaying = false;
+          cancelAnimationFrame(gameState.animationFrameId);
+          clearInterval(gameState.timerInterval);
+
+          // 禁用按鈕
+          pauseBtn.disabled = true;
+          restartBtn.disabled = false;
+          startBtn.disabled = false;
+
+          // 顯示結果
+          finalScoreDisplay.textContent = gameState.score;
+          finalLevelDisplay.textContent = gameState.level;
+          finalComboDisplay.textContent = gameState.maxCombo;
+
+          // 顯示遊戲結束訊息
+          gameOverMessage.classList.add("visible");
+        }
+
+        // 更新顯示
+        function updateDisplays() {
+          scoreDisplay.textContent = gameState.score;
+          levelDisplay.textContent = gameState.level;
+          timeDisplay.textContent = gameState.time;
+          comboDisplay.textContent = gameState.combo;
+        }
+
+        // 初始化遊戲
+        initializeGame();
+      });
+    </script>
+  </body>
+</html>

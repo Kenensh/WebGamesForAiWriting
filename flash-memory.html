@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>閃光記憶挑戰 - 網頁小遊戲</title>
+    <meta name="game-id" content="flash-memory" />
+    <meta name="game-name" content="閃光記憶挑戰" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .game-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      .flash-game-board {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        width: 100%;
+        max-width: 700px;
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .game-stats {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 25px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 10px 15px;
+        color: white;
+        min-width: 80px;
+        backdrop-filter: blur(10px);
+      }
+
+      .stat-item h3 {
+        margin: 0 0 5px 0;
+        font-size: 12px;
+        opacity: 0.8;
+        font-weight: 500;
+      }
+
+      .stat-item .value {
+        font-size: 20px;
+        font-weight: bold;
+        margin: 0;
+      }
+
+      .sequence-display {
+        margin: 20px 0;
+        color: white;
+        font-size: 18px;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        padding: 20px;
+        position: relative;
+      }
+
+      .flash-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin: 30px 0;
+        max-width: 500px;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 20px;
+      }
+
+      .flash-cell {
+        width: 80px;
+        height: 80px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: linear-gradient(45deg, #34495e, #2c3e50);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .flash-cell:hover {
+        border-color: rgba(255, 255, 255, 0.6);
+        transform: scale(1.05);
+      }
+
+      .flash-cell.active {
+        background: linear-gradient(45deg, #3498db, #2980b9);
+        border-color: #3498db;
+        box-shadow: 0 0 20px rgba(52, 152, 219, 0.6);
+        animation: flashPulse 0.3s ease;
+      }
+
+      .flash-cell.flashing {
+        background: linear-gradient(45deg, #f1c40f, #f39c12);
+        border-color: #f1c40f;
+        box-shadow: 0 0 25px rgba(241, 196, 15, 0.8);
+        animation: flashBlink 0.6s ease;
+      }
+
+      .flash-cell.correct {
+        background: linear-gradient(45deg, #2ecc71, #27ae60);
+        border-color: #2ecc71;
+        animation: correctFlash 0.5s ease;
+      }
+
+      .flash-cell.wrong {
+        background: linear-gradient(45deg, #e74c3c, #c0392b);
+        border-color: #e74c3c;
+        animation: wrongFlash 0.5s ease;
+      }
+
+      @keyframes flashPulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+      }
+
+      @keyframes flashBlink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      @keyframes correctFlash {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.15);
+        }
+      }
+
+      @keyframes wrongFlash {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-5px);
+        }
+        75% {
+          transform: translateX(5px);
+        }
+      }
+
+      .control-buttons {
+        display: flex;
+        gap: 15px;
+        margin: 20px 0;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .control-btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 120px;
+      }
+
+      .start-btn {
+        background: linear-gradient(45deg, #27ae60, #2ecc71);
+        color: white;
+        box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+      }
+
+      .start-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(39, 174, 96, 0.6);
+      }
+
+      .start-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .difficulty-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .difficulty-btn {
+        padding: 8px 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+      }
+
+      .difficulty-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+      }
+
+      .difficulty-btn.active {
+        background: white;
+        color: var(--primary-color);
+        border-color: white;
+      }
+
+      .sequence-number {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(255, 255, 255, 0.8);
+        color: #333;
+        font-size: 12px;
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-weight: bold;
+      }
+
+      .level-indicator {
+        background: linear-gradient(45deg, #9b59b6, #8e44ad);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        margin: 10px 0;
+        font-weight: bold;
+        display: inline-block;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 15px 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3498db, #2980b9);
+        border-radius: 4px;
+        transition: width 0.5s ease;
+        width: 0%;
+      }
+
+      .achievement-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        background: linear-gradient(45deg, #f1c40f, #f39c12);
+        color: white;
+        padding: 20px 30px;
+        border-radius: 20px;
+        font-size: 20px;
+        font-weight: bold;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        transition: transform 0.3s ease;
+      }
+
+      .achievement-popup.show {
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      .best-records {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+        width: 100%;
+      }
+
+      .record-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 15px;
+        text-align: center;
+        color: white;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .record-card h4 {
+        margin: 0 0 5px 0;
+        font-size: 14px;
+        opacity: 0.8;
+      }
+
+      .record-card .score {
+        font-size: 18px;
+        font-weight: bold;
+        color: #f1c40f;
+      }
+
+      /* 響應式設計 */
+      @media (max-width: 600px) {
+        .flash-grid {
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+          max-width: 300px;
+        }
+
+        .flash-cell {
+          width: 60px;
+          height: 60px;
+          font-size: 14px;
+        }
+
+        .game-stats {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .stat-item {
+          min-width: 100px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .flash-game-board {
+          padding: 20px;
+        }
+
+        .flash-cell {
+          width: 50px;
+          height: 50px;
+          font-size: 12px;
+        }
+
+        .control-btn {
+          min-width: 100px;
+          padding: 10px 20px;
+          font-size: 14px;
+        }
+
+        .sequence-display {
+          font-size: 16px;
+          padding: 15px;
+        }
+      }
+
+      /* Modal Styles */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+
+      .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        border-radius: 10px;
+        width: 80%;
+        max-width: 500px;
+        position: relative;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+      }
+
+      .modal h2 {
+        margin-top: 0;
+        color: #333;
+      }
+
+      .modal p {
+        line-height: 1.6;
+        color: #666;
+      }
+
+      .modal ul {
+        padding-left: 20px;
+      }
+
+      .modal li {
+        margin-bottom: 8px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <h1 class="site-title">
+          <a href="index.html">
+            <i class="fas fa-gamepad"></i>
+            網頁小遊戲
+          </a>
+        </h1>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>閃光記憶挑戰</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="game-container">
+        <div class="flash-game-board">
+          <div class="difficulty-buttons">
+            <button class="difficulty-btn active" data-difficulty="easy">
+              簡單
+            </button>
+            <button class="difficulty-btn" data-difficulty="medium">
+              中等
+            </button>
+            <button class="difficulty-btn" data-difficulty="hard">困難</button>
+          </div>
+
+          <div class="level-indicator" id="levelIndicator">關卡 1</div>
+
+          <div class="game-stats">
+            <div class="stat-item">
+              <h3>分數</h3>
+              <div class="value" id="currentScore">0</div>
+            </div>
+            <div class="stat-item">
+              <h3>關卡</h3>
+              <div class="value" id="currentLevel">1</div>
+            </div>
+            <div class="stat-item">
+              <h3>序列長度</h3>
+              <div class="value" id="sequenceLength">3</div>
+            </div>
+            <div class="stat-item">
+              <h3>連勝</h3>
+              <div class="value" id="winStreak">0</div>
+            </div>
+          </div>
+
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+
+          <div class="sequence-display" id="sequenceDisplay">
+            準備開始你的記憶挑戰！
+          </div>
+
+          <div class="flash-grid" id="flashGrid">
+            <!-- 格子將由 JavaScript 動態生成 -->
+          </div>
+
+          <div class="control-buttons">
+            <button class="control-btn start-btn" id="startButton">
+              開始遊戲
+            </button>
+          </div>
+        </div>
+
+        <div class="best-records">
+          <div class="record-card">
+            <h4>最高分數</h4>
+            <div class="score" id="bestScore">0</div>
+          </div>
+          <div class="record-card">
+            <h4>最高關卡</h4>
+            <div class="score" id="bestLevel">1</div>
+          </div>
+          <div class="record-card">
+            <h4>最長序列</h4>
+            <div class="score" id="longestSequence">3</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="achievement-popup" id="achievementPopup">恭喜達成成就！</div>
+
+      <div id="gamePaused" class="game-paused">暫停中</div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "遊戲說明",
+          `
+          <h3>閃光記憶挑戰說明</h3>
+          <p>這是一個測試短期記憶和注意力的挑戰性遊戲。</p>
+          <h4>遊戲玩法：</h4>
+          <ul>
+            <li>遊戲會在網格中閃光顯示一個序列</li>
+            <li>記住閃光的順序和位置</li>
+            <li>序列顯示完畢後，按照相同順序點擊格子</li>
+            <li>正確重現序列即可進入下一關</li>
+            <li>錯誤會結束遊戲或扣除生命值</li>
+          </ul>
+          <h4>難度級別：</h4>
+          <ul>
+            <li><strong>簡單</strong>：3x3 網格，較慢速度</li>
+            <li><strong>中等</strong>：4x4 網格，中等速度</li>
+            <li><strong>困難</strong>：4x4 網格，快速度</li>
+          </ul>
+          <h4>計分規則：</h4>
+          <ul>
+            <li>每完成一個序列：+10 分</li>
+            <li>關卡獎勵：關卡數 × 5 分</li>
+            <li>連勝獎勵：連勝次數 × 2 分</li>
+            <li>完美記憶獎勵：無錯誤的額外分數</li>
+          </ul>
+          <h4>遊戲提示：</h4>
+          <ul>
+            <li>專注觀察每個閃光的位置</li>
+            <li>可以在腦中重複序列順序</li>
+            <li>保持冷靜，不要急躁</li>
+          </ul>
+        `
+        );
+
+        const gameController = new GameUtils.GameController();
+        const scoreManager = new GameUtils.ScoreManager("flashMemoryScore", 0);
+
+        // DOM 元素
+        const startButton = document.getElementById("startButton");
+        const flashGrid = document.getElementById("flashGrid");
+        const sequenceDisplay = document.getElementById("sequenceDisplay");
+        const levelIndicator = document.getElementById("levelIndicator");
+        const currentScore = document.getElementById("currentScore");
+        const currentLevel = document.getElementById("currentLevel");
+        const sequenceLength = document.getElementById("sequenceLength");
+        const winStreak = document.getElementById("winStreak");
+        const progressFill = document.getElementById("progressFill");
+        const bestScore = document.getElementById("bestScore");
+        const bestLevel = document.getElementById("bestLevel");
+        const longestSequence = document.getElementById("longestSequence");
+        const achievementPopup = document.getElementById("achievementPopup");
+        const difficultyButtons = document.querySelectorAll(".difficulty-btn");
+
+        // 遊戲變數
+        let gameActive = false;
+        let currentDifficulty = "easy";
+        let gameScore = 0;
+        let level = 1;
+        let streak = 0;
+        let sequence = [];
+        let playerSequence = [];
+        let showingSequence = false;
+        let gridSize = 3;
+        let flashSpeed = 800;
+
+        // 難度設置
+        const difficultySettings = {
+          easy: { gridSize: 3, flashSpeed: 800, initialLength: 3 },
+          medium: { gridSize: 4, flashSpeed: 600, initialLength: 4 },
+          hard: { gridSize: 4, flashSpeed: 400, initialLength: 4 },
+        };
+
+        // 初始化遊戲
+        function initGame() {
+          gameActive = false;
+          gameScore = 0;
+          level = 1;
+          streak = 0;
+          sequence = [];
+          playerSequence = [];
+          showingSequence = false;
+
+          const settings = difficultySettings[currentDifficulty];
+          gridSize = settings.gridSize;
+          flashSpeed = settings.flashSpeed;
+
+          createGrid();
+          updateDisplay();
+          updateBestScores();
+
+          sequenceDisplay.textContent = "準備開始你的記憶挑戰！";
+          startButton.textContent = "開始遊戲";
+          startButton.disabled = false;
+        }
+
+        // 創建網格
+        function createGrid() {
+          flashGrid.innerHTML = "";
+          flashGrid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
+          for (let i = 0; i < gridSize * gridSize; i++) {
+            const cell = document.createElement("div");
+            cell.className = "flash-cell";
+            cell.dataset.index = i;
+            cell.addEventListener("click", () => handleCellClick(i));
+            flashGrid.appendChild(cell);
+          }
+        }
+
+        // 開始遊戲
+        function startGame() {
+          if (gameActive) return;
+
+          gameActive = true;
+          gameScore = 0;
+          level = 1;
+          streak = 0;
+
+          startButton.disabled = true;
+          startButton.textContent = "遊戲中...";
+
+          startLevel();
+        }
+
+        // 開始關卡
+        function startLevel() {
+          sequence = [];
+          playerSequence = [];
+
+          const settings = difficultySettings[currentDifficulty];
+          const baseLength = settings.initialLength;
+          const currentLength = baseLength + Math.floor((level - 1) / 2);
+
+          // 生成序列
+          for (let i = 0; i < currentLength; i++) {
+            sequence.push(Math.floor(Math.random() * (gridSize * gridSize)));
+          }
+
+          sequenceDisplay.textContent = `觀察序列 - 長度: ${sequence.length}`;
+          levelIndicator.textContent = `關卡 ${level}`;
+
+          updateDisplay();
+          showSequence();
+        }
+
+        // 顯示序列
+        function showSequence() {
+          showingSequence = true;
+          let index = 0;
+
+          const showNext = () => {
+            if (index >= sequence.length) {
+              showingSequence = false;
+              sequenceDisplay.textContent = "現在請按照順序點擊格子！";
+              return;
+            }
+
+            const cellIndex = sequence[index];
+            const cell = document.querySelector(`[data-index="${cellIndex}"]`);
+
+            // 顯示序列號碼
+            const numberElement = document.createElement("div");
+            numberElement.className = "sequence-number";
+            numberElement.textContent = index + 1;
+            cell.appendChild(numberElement);
+
+            cell.classList.add("flashing");
+
+            setTimeout(() => {
+              cell.classList.remove("flashing");
+              if (numberElement) {
+                numberElement.remove();
+              }
+
+              index++;
+              setTimeout(showNext, flashSpeed * 0.3);
+            }, flashSpeed);
+          };
+
+          // 延遲開始顯示
+          setTimeout(showNext, 1000);
+        }
+
+        // 處理格子點擊
+        function handleCellClick(cellIndex) {
+          if (!gameActive || showingSequence) return;
+
+          const cell = document.querySelector(`[data-index="${cellIndex}"]`);
+          playerSequence.push(cellIndex);
+
+          // 檢查是否正確
+          const currentIndex = playerSequence.length - 1;
+          const isCorrect = cellIndex === sequence[currentIndex];
+
+          if (isCorrect) {
+            cell.classList.add("correct");
+            setTimeout(() => cell.classList.remove("correct"), 500);
+
+            // 檢查是否完成序列
+            if (playerSequence.length === sequence.length) {
+              setTimeout(() => {
+                completeLevel();
+              }, 600);
+            }
+          } else {
+            cell.classList.add("wrong");
+            setTimeout(() => cell.classList.remove("wrong"), 500);
+
+            setTimeout(() => {
+              gameOver();
+            }, 600);
+          }
+        }
+
+        // 完成關卡
+        function completeLevel() {
+          streak++;
+          level++;
+
+          // 計算分數
+          let points = 10; // 基礎分數
+          points += level * 5; // 關卡獎勵
+          points += streak * 2; // 連勝獎勵
+
+          gameScore += points;
+          scoreManager.add(points);
+
+          // 更新顯示
+          updateDisplay();
+
+          // 檢查成就
+          checkAchievements();
+
+          // 開始下一關
+          setTimeout(() => {
+            if (gameActive) {
+              startLevel();
+            }
+          }, 1500);
+        }
+
+        // 遊戲結束
+        function gameOver() {
+          gameActive = false;
+          showingSequence = false;
+
+          // 更新最佳紀錄
+          updateBestRecords();
+
+          sequenceDisplay.textContent = "遊戲結束！";
+          startButton.disabled = false;
+          startButton.textContent = "再玩一次";
+
+          // 顯示遊戲結束訊息
+          const message = `
+            遊戲結束！<br>
+            最終分數：${gameScore}<br>
+            達到關卡：${level}<br>
+            最長序列：${sequence.length}<br>
+            連勝紀錄：${streak}
+          `;
+
+          gameController.endGame(gameScore, message);
+        }
+
+        // 更新顯示
+        function updateDisplay() {
+          currentScore.textContent = gameScore;
+          currentLevel.textContent = level;
+          sequenceLength.textContent =
+            sequence.length ||
+            difficultySettings[currentDifficulty].initialLength;
+          winStreak.textContent = streak;
+
+          // 更新進度條
+          const progress = Math.min(100, (level - 1) * 10);
+          progressFill.style.width = progress + "%";
+        }
+
+        // 更新最佳分數
+        function updateBestScores() {
+          const scores = {
+            bestScore: localStorage.getItem("flashMemoryBestScore") || 0,
+            bestLevel: localStorage.getItem("flashMemoryBestLevel") || 1,
+            longestSequence:
+              localStorage.getItem("flashMemoryLongestSequence") || 3,
+          };
+
+          bestScore.textContent = scores.bestScore;
+          bestLevel.textContent = scores.bestLevel;
+          longestSequence.textContent = scores.longestSequence;
+        }
+
+        // 更新最佳紀錄
+        function updateBestRecords() {
+          const currentBestScore = parseInt(
+            localStorage.getItem("flashMemoryBestScore") || 0
+          );
+          const currentBestLevel = parseInt(
+            localStorage.getItem("flashMemoryBestLevel") || 1
+          );
+          const currentLongestSequence = parseInt(
+            localStorage.getItem("flashMemoryLongestSequence") || 3
+          );
+
+          if (gameScore > currentBestScore) {
+            localStorage.setItem("flashMemoryBestScore", gameScore);
+          }
+          if (level > currentBestLevel) {
+            localStorage.setItem("flashMemoryBestLevel", level);
+          }
+          if (sequence.length > currentLongestSequence) {
+            localStorage.setItem("flashMemoryLongestSequence", sequence.length);
+          }
+
+          updateBestScores();
+        }
+
+        // 檢查成就
+        function checkAchievements() {
+          let achievementMessage = "";
+
+          if (level === 5) {
+            achievementMessage = "成就解鎖：記憶新手！";
+          } else if (level === 10) {
+            achievementMessage = "成就解鎖：記憶達人！";
+          } else if (level === 15) {
+            achievementMessage = "成就解鎖：記憶大師！";
+          } else if (streak === 10) {
+            achievementMessage = "成就解鎖：連勝專家！";
+          } else if (sequence.length >= 8) {
+            achievementMessage = "成就解鎖：序列大師！";
+          }
+
+          if (achievementMessage) {
+            showAchievement(achievementMessage);
+          }
+        }
+
+        // 顯示成就
+        function showAchievement(message) {
+          achievementPopup.textContent = message;
+          achievementPopup.classList.add("show");
+
+          setTimeout(() => {
+            achievementPopup.classList.remove("show");
+          }, 3000);
+        }
+
+        // 設置難度
+        function setDifficulty(difficulty) {
+          if (gameActive) return;
+
+          currentDifficulty = difficulty;
+
+          difficultyButtons.forEach((btn) => {
+            btn.classList.toggle(
+              "active",
+              btn.dataset.difficulty === difficulty
+            );
+          });
+
+          initGame();
+        }
+
+        // 事件監聽器
+        startButton.addEventListener("click", startGame);
+
+        difficultyButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            setDifficulty(btn.dataset.difficulty);
+          });
+        });
+
+        // 設置遊戲控制器
+        gameController.setRestartHandler(() => {
+          initGame();
+        });
+
+        // 處理暫停狀態變化
+        gameController.onPauseStateChange = function (isPaused) {
+          const pauseIndicator = document.getElementById("gamePaused");
+          if (pauseIndicator) {
+            pauseIndicator.style.display = isPaused ? "flex" : "none";
+          }
+        };
+
+        // 初始化遊戲
+        gameController.showStartAnimation(() => {
+          initGame();
+        });
+      });
+    </script>
+  </body>
+</html>

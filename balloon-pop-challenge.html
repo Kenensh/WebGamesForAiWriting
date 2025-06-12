@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>氣球爆破挑戰 - 網頁小遊戲</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #ff6b6b;
+        --secondary-color: #4ecdc4;
+        --accent-color: #ffe66d;
+        --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --text-light: #ffffff;
+        --text-dark: #333333;
+        --border-radius: 12px;
+        --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        --glass-bg: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        background: var(--background);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .header {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--glass-border);
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        z-index: 1000;
+      }
+
+      .title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-light);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: var(--border-radius);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--glass-bg);
+        color: var(--text-light);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .btn-primary {
+        background: var(--primary-color);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #ff5252;
+      }
+
+      .stats {
+        display: flex;
+        gap: 2rem;
+        font-size: 1rem;
+        color: var(--text-light);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-container {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .balloon {
+        position: absolute;
+        width: 60px;
+        height: 80px;
+        cursor: pointer;
+        transition: transform 0.1s ease;
+        z-index: 100;
+      }
+
+      .balloon:hover {
+        transform: scale(1.1);
+      }
+
+      .balloon-body {
+        width: 60px;
+        height: 60px;
+        border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+        position: relative;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .balloon-string {
+        width: 2px;
+        height: 20px;
+        background: #333;
+        position: absolute;
+        bottom: -20px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .balloon-red {
+        background: linear-gradient(135deg, #ff6b6b, #ff5252);
+      }
+      .balloon-blue {
+        background: linear-gradient(135deg, #4ecdc4, #42a5a0);
+      }
+      .balloon-yellow {
+        background: linear-gradient(135deg, #ffe66d, #ffd700);
+      }
+      .balloon-green {
+        background: linear-gradient(135deg, #51cf66, #40c057);
+      }
+      .balloon-purple {
+        background: linear-gradient(135deg, #cc5de8, #be4bdb);
+      }
+      .balloon-orange {
+        background: linear-gradient(135deg, #ff8c42, #fd7e14);
+      }
+
+      .special-balloon {
+        border: 3px solid gold;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        animation: specialGlow 2s infinite alternate;
+      }
+
+      @keyframes specialGlow {
+        from {
+          box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        }
+        to {
+          box-shadow: 0 0 30px rgba(255, 215, 0, 0.9);
+        }
+      }
+
+      .pop-effect {
+        position: absolute;
+        pointer-events: none;
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--accent-color);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        animation: popAnimation 1s ease-out forwards;
+      }
+
+      @keyframes popAnimation {
+        0% {
+          opacity: 1;
+          transform: scale(0.5);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.2);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(1) translateY(-50px);
+        }
+      }
+
+      .combo-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3rem;
+        font-weight: bold;
+        color: var(--accent-color);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+        animation: comboAnimation 2s ease-out forwards;
+        z-index: 500;
+      }
+
+      @keyframes comboAnimation {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.5);
+        }
+        50% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1.2);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+        color: var(--text-light);
+      }
+
+      .modal h2 {
+        margin-bottom: 1rem;
+        color: var(--accent-color);
+      }
+
+      .game-over-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--glass-border);
+      }
+
+      .difficulty-selector {
+        display: flex;
+        gap: 0.5rem;
+        margin: 1rem 0;
+        justify-content: center;
+      }
+
+      .difficulty-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--glass-border);
+        background: var(--glass-bg);
+        color: var(--text-light);
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .difficulty-btn.active {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .help-list {
+        text-align: left;
+        margin: 1rem 0;
+      }
+
+      .help-list li {
+        margin: 0.5rem 0;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      @media (max-width: 768px) {
+        .header {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .controls {
+          order: -1;
+        }
+
+        .stats {
+          gap: 1rem;
+          font-size: 0.9rem;
+        }
+
+        .balloon {
+          width: 50px;
+          height: 70px;
+        }
+
+        .balloon-body {
+          width: 50px;
+          height: 50px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1 class="title">🎈 氣球爆破挑戰</h1>
+      <div class="controls">
+        <button id="playBtn" class="btn btn-primary">
+          <i class="fas fa-play"></i> 開始
+        </button>
+        <button id="pauseBtn" class="btn" style="display: none">
+          <i class="fas fa-pause"></i> 暫停
+        </button>
+        <button id="helpBtn" class="btn">
+          <i class="fas fa-question-circle"></i> 說明
+        </button>
+        <a href="index.html" class="btn"> <i class="fas fa-home"></i> 首頁 </a>
+      </div>
+      <div class="stats">
+        <div>分數: <span id="score">0</span></div>
+        <div>組合: <span id="combo">0</span></div>
+        <div>時間: <span id="timer">60</span>s</div>
+        <div>難度: <span id="currentDifficulty">簡單</span></div>
+      </div>
+    </div>
+
+    <div class="game-container" id="gameContainer">
+      <!-- Balloons will be spawned here -->
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <h2><i class="fas fa-question-circle"></i> 遊戲說明</h2>
+        <ul class="help-list">
+          <li><strong>目標：</strong>在時間內爆破越多氣球越好</li>
+          <li><strong>操作：</strong>點擊氣球來爆破它們</li>
+          <li><strong>得分：</strong>不同顏色氣球分數不同</li>
+          <li><strong>組合：</strong>連續爆破獲得額外分數</li>
+          <li><strong>特殊氣球：</strong>金邊氣球有更高分數</li>
+          <li><strong>難度：</strong>影響氣球速度和出現頻率</li>
+        </ul>
+        <div class="difficulty-selector">
+          <button class="difficulty-btn active" data-difficulty="easy">
+            簡單
+          </button>
+          <button class="difficulty-btn" data-difficulty="medium">中等</button>
+          <button class="difficulty-btn" data-difficulty="hard">困難</button>
+          <button class="difficulty-btn" data-difficulty="expert">專家</button>
+        </div>
+        <button id="closeHelp" class="btn btn-primary">開始遊戲</button>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="modal">
+      <div class="modal-content">
+        <h2><i class="fas fa-trophy"></i> 遊戲結束</h2>
+        <div class="game-over-stats">
+          <div class="stat-item">
+            <div>最終分數</div>
+            <div id="finalScore">0</div>
+          </div>
+          <div class="stat-item">
+            <div>最高組合</div>
+            <div id="maxCombo">0</div>
+          </div>
+          <div class="stat-item">
+            <div>爆破總數</div>
+            <div id="totalPops">0</div>
+          </div>
+          <div class="stat-item">
+            <div>準確率</div>
+            <div id="accuracy">0%</div>
+          </div>
+        </div>
+        <div style="margin-top: 1rem">
+          <button id="restartBtn" class="btn btn-primary">
+            <i class="fas fa-redo"></i> 再玩一次
+          </button>
+          <button id="backToMenuBtn" class="btn">
+            <i class="fas fa-home"></i> 返回主選單
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class BalloonPopGame {
+        constructor() {
+          this.gameContainer = document.getElementById("gameContainer");
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.timeLeft = 60;
+          this.gameActive = false;
+          this.balloons = [];
+          this.difficulty = "easy";
+          this.totalPops = 0;
+          this.totalClicks = 0;
+          this.gameTimer = null;
+          this.spawnTimer = null;
+
+          this.difficulties = {
+            easy: {
+              spawnRate: 1500,
+              speed: 0.5,
+              timeLimit: 60,
+              maxBalloons: 8,
+              specialChance: 0.1,
+            },
+            medium: {
+              spawnRate: 1200,
+              speed: 0.8,
+              timeLimit: 45,
+              maxBalloons: 10,
+              specialChance: 0.15,
+            },
+            hard: {
+              spawnRate: 1000,
+              speed: 1.2,
+              timeLimit: 30,
+              maxBalloons: 12,
+              specialChance: 0.2,
+            },
+            expert: {
+              spawnRate: 800,
+              speed: 1.8,
+              timeLimit: 20,
+              maxBalloons: 15,
+              specialChance: 0.25,
+            },
+          };
+
+          this.balloonColors = [
+            "red",
+            "blue",
+            "yellow",
+            "green",
+            "purple",
+            "orange",
+          ];
+          this.balloonScores = {
+            red: 10,
+            blue: 15,
+            yellow: 20,
+            green: 25,
+            purple: 30,
+            orange: 35,
+          };
+
+          this.initializeGame();
+          this.bindEvents();
+          this.loadStats();
+        }
+
+        initializeGame() {
+          this.updateDisplay();
+          this.showHelp();
+        }
+
+        bindEvents() {
+          document
+            .getElementById("playBtn")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("pauseBtn")
+            .addEventListener("click", () => this.pauseGame());
+          document
+            .getElementById("helpBtn")
+            .addEventListener("click", () => this.showHelp());
+          document
+            .getElementById("closeHelp")
+            .addEventListener("click", () => this.closeHelp());
+          document
+            .getElementById("restartBtn")
+            .addEventListener("click", () => this.restartGame());
+          document
+            .getElementById("backToMenuBtn")
+            .addEventListener("click", () => this.backToMenu());
+
+          // Difficulty selection
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              document
+                .querySelectorAll(".difficulty-btn")
+                .forEach((b) => b.classList.remove("active"));
+              e.target.classList.add("active");
+              this.difficulty = e.target.dataset.difficulty;
+              this.timeLeft = this.difficulties[this.difficulty].timeLimit;
+              this.updateDisplay();
+            });
+          });
+
+          // Game container click for missed clicks
+          this.gameContainer.addEventListener("click", (e) => {
+            if (this.gameActive && !e.target.closest(".balloon")) {
+              this.totalClicks++;
+              this.combo = 0;
+              this.updateDisplay();
+            }
+          });
+        }
+
+        startGame() {
+          this.gameActive = true;
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.totalPops = 0;
+          this.totalClicks = 0;
+          this.timeLeft = this.difficulties[this.difficulty].timeLimit;
+          this.balloons = [];
+
+          // Clear existing balloons
+          this.gameContainer.innerHTML = "";
+
+          document.getElementById("playBtn").style.display = "none";
+          document.getElementById("pauseBtn").style.display = "inline-flex";
+
+          this.updateDisplay();
+          this.startGameTimer();
+          this.startBalloonSpawning();
+        }
+
+        pauseGame() {
+          if (this.gameActive) {
+            this.gameActive = false;
+            document.getElementById("playBtn").style.display = "inline-flex";
+            document.getElementById("pauseBtn").style.display = "none";
+
+            if (this.gameTimer) clearInterval(this.gameTimer);
+            if (this.spawnTimer) clearInterval(this.spawnTimer);
+
+            // Pause balloon movement
+            this.balloons.forEach((balloon) => {
+              balloon.element.style.animationPlayState = "paused";
+            });
+          } else {
+            this.gameActive = true;
+            document.getElementById("playBtn").style.display = "none";
+            document.getElementById("pauseBtn").style.display = "inline-flex";
+
+            this.startGameTimer();
+            this.startBalloonSpawning();
+
+            // Resume balloon movement
+            this.balloons.forEach((balloon) => {
+              balloon.element.style.animationPlayState = "running";
+            });
+          }
+        }
+
+        startGameTimer() {
+          this.gameTimer = setInterval(() => {
+            if (this.gameActive) {
+              this.timeLeft--;
+              this.updateDisplay();
+
+              if (this.timeLeft <= 0) {
+                this.endGame();
+              }
+            }
+          }, 1000);
+        }
+
+        startBalloonSpawning() {
+          this.spawnTimer = setInterval(() => {
+            if (
+              this.gameActive &&
+              this.balloons.length <
+                this.difficulties[this.difficulty].maxBalloons
+            ) {
+              this.spawnBalloon();
+            }
+          }, this.difficulties[this.difficulty].spawnRate);
+        }
+
+        spawnBalloon() {
+          const balloon = document.createElement("div");
+          balloon.className = "balloon";
+
+          const color =
+            this.balloonColors[
+              Math.floor(Math.random() * this.balloonColors.length)
+            ];
+          const isSpecial =
+            Math.random() < this.difficulties[this.difficulty].specialChance;
+
+          balloon.innerHTML = `
+                    <div class="balloon-body balloon-${color} ${
+            isSpecial ? "special-balloon" : ""
+          }"></div>
+                    <div class="balloon-string"></div>
+                `;
+
+          // Random position
+          const containerRect = this.gameContainer.getBoundingClientRect();
+          const x = Math.random() * (containerRect.width - 60);
+          const y = containerRect.height;
+
+          balloon.style.left = x + "px";
+          balloon.style.top = y + "px";
+
+          // Create balloon object
+          const balloonObj = {
+            element: balloon,
+            color: color,
+            isSpecial: isSpecial,
+            x: x,
+            y: y,
+            speed:
+              this.difficulties[this.difficulty].speed + Math.random() * 0.5,
+          };
+
+          // Add click event
+          balloon.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.popBalloon(balloonObj);
+          });
+
+          this.balloons.push(balloonObj);
+          this.gameContainer.appendChild(balloon);
+
+          // Start movement
+          this.moveBalloon(balloonObj);
+        }
+
+        moveBalloon(balloonObj) {
+          const move = () => {
+            if (!this.gameActive || !balloonObj.element.parentNode) return;
+
+            balloonObj.y -= balloonObj.speed;
+            balloonObj.element.style.top = balloonObj.y + "px";
+
+            // Remove if off screen
+            if (balloonObj.y < -100) {
+              this.removeBalloon(balloonObj);
+              this.combo = 0;
+              this.updateDisplay();
+              return;
+            }
+
+            requestAnimationFrame(move);
+          };
+          requestAnimationFrame(move);
+        }
+
+        popBalloon(balloonObj) {
+          if (!this.gameActive) return;
+
+          this.totalClicks++;
+          this.totalPops++;
+          this.combo++;
+          this.maxCombo = Math.max(this.maxCombo, this.combo);
+
+          // Calculate score
+          let baseScore = this.balloonScores[balloonObj.color];
+          if (balloonObj.isSpecial) baseScore *= 3;
+
+          // Combo multiplier
+          const comboMultiplier = Math.min(1 + (this.combo - 1) * 0.1, 3);
+          const finalScore = Math.floor(baseScore * comboMultiplier);
+
+          this.score += finalScore;
+
+          // Show pop effect
+          this.showPopEffect(balloonObj.element, "+" + finalScore);
+
+          // Show combo effect
+          if (this.combo >= 5 && this.combo % 5 === 0) {
+            this.showComboEffect(this.combo + "x COMBO!");
+          }
+
+          this.removeBalloon(balloonObj);
+          this.updateDisplay();
+        }
+
+        removeBalloon(balloonObj) {
+          const index = this.balloons.indexOf(balloonObj);
+          if (index > -1) {
+            this.balloons.splice(index, 1);
+            if (balloonObj.element.parentNode) {
+              balloonObj.element.remove();
+            }
+          }
+        }
+
+        showPopEffect(element, text) {
+          const effect = document.createElement("div");
+          effect.className = "pop-effect";
+          effect.textContent = text;
+
+          const rect = element.getBoundingClientRect();
+          const containerRect = this.gameContainer.getBoundingClientRect();
+
+          effect.style.left = rect.left - containerRect.left + "px";
+          effect.style.top = rect.top - containerRect.top + "px";
+
+          this.gameContainer.appendChild(effect);
+
+          setTimeout(() => {
+            if (effect.parentNode) {
+              effect.remove();
+            }
+          }, 1000);
+        }
+
+        showComboEffect(text) {
+          const effect = document.createElement("div");
+          effect.className = "combo-text";
+          effect.textContent = text;
+          this.gameContainer.appendChild(effect);
+
+          setTimeout(() => {
+            if (effect.parentNode) {
+              effect.remove();
+            }
+          }, 2000);
+        }
+
+        endGame() {
+          this.gameActive = false;
+
+          if (this.gameTimer) clearInterval(this.gameTimer);
+          if (this.spawnTimer) clearInterval(this.spawnTimer);
+
+          document.getElementById("playBtn").style.display = "inline-flex";
+          document.getElementById("pauseBtn").style.display = "none";
+
+          // Save stats
+          this.saveStats();
+
+          // Show game over modal
+          this.showGameOver();
+        }
+
+        showGameOver() {
+          document.getElementById("finalScore").textContent = this.score;
+          document.getElementById("maxCombo").textContent = this.maxCombo;
+          document.getElementById("totalPops").textContent = this.totalPops;
+
+          const accuracy =
+            this.totalClicks > 0
+              ? Math.round((this.totalPops / this.totalClicks) * 100)
+              : 0;
+          document.getElementById("accuracy").textContent = accuracy + "%";
+
+          document.getElementById("gameOverModal").style.display = "flex";
+        }
+
+        restartGame() {
+          document.getElementById("gameOverModal").style.display = "none";
+          this.gameContainer.innerHTML = "";
+          this.startGame();
+        }
+
+        backToMenu() {
+          window.location.href = "index.html";
+        }
+
+        showHelp() {
+          document.getElementById("helpModal").style.display = "flex";
+        }
+
+        closeHelp() {
+          document.getElementById("helpModal").style.display = "none";
+          if (!this.gameActive) {
+            this.startGame();
+          }
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("combo").textContent = this.combo;
+          document.getElementById("timer").textContent = this.timeLeft;
+
+          const difficultyNames = {
+            easy: "簡單",
+            medium: "中等",
+            hard: "困難",
+            expert: "專家",
+          };
+          document.getElementById("currentDifficulty").textContent =
+            difficultyNames[this.difficulty];
+        }
+
+        saveStats() {
+          if (typeof saveGameStats === "function") {
+            const stats = {
+              score: this.score,
+              maxCombo: this.maxCombo,
+              totalPops: this.totalPops,
+              accuracy:
+                this.totalClicks > 0
+                  ? Math.round((this.totalPops / this.totalClicks) * 100)
+                  : 0,
+              difficulty: this.difficulty,
+              timestamp: Date.now(),
+            };
+            saveGameStats("balloon-pop-challenge", stats);
+          }
+        }
+
+        loadStats() {
+          if (typeof loadGameStats === "function") {
+            const stats = loadGameStats("balloon-pop-challenge");
+            if (stats && stats.score) {
+              // Could display best score or other stats
+            }
+          }
+        }
+      }
+
+      // Initialize game when page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        new BalloonPopGame();
+      });
+    </script>
+  </body>
+</html>

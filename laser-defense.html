@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>雷射防禦 - Laser Defense</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        background: linear-gradient(
+          135deg,
+          #0a0a0a 0%,
+          #1a1a2e 50%,
+          #16213e 100%
+        );
+        min-height: 100vh;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .starfield {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+          radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+          radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+          radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+          radial-gradient(2px 2px at 160px 30px, #ddd, transparent);
+        background-repeat: repeat;
+        background-size: 200px 100px;
+        animation: twinkle 3s ease-in-out infinite alternate;
+      }
+
+      @keyframes twinkle {
+        0% {
+          opacity: 0.7;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        z-index: 1;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .title {
+        font-size: 2.5rem;
+        background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .subtitle {
+        font-size: 1.2rem;
+        color: #00ffff;
+        margin-bottom: 20px;
+        text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+      }
+
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .score-info {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .score-item {
+        background: rgba(0, 255, 255, 0.1);
+        padding: 8px 16px;
+        border-radius: 25px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+      }
+
+      .score-label {
+        font-size: 0.9rem;
+        color: #00ffff;
+        font-weight: 500;
+      }
+
+      .score-value {
+        font-size: 1.1rem;
+        color: #ffffff;
+        font-weight: 700;
+        text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #ff0080, #ff8000);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 0, 128, 0.3);
+      }
+
+      .btn-secondary {
+        background: rgba(0, 255, 255, 0.2);
+        color: #00ffff;
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 255, 255, 0.5);
+      }
+
+      .game-area {
+        flex: 1;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        padding: 0;
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        position: relative;
+        overflow: hidden;
+        box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.1);
+      }
+
+      .game-canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        border-radius: 13px;
+      }
+
+      .game-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: #00ffff;
+        font-size: 2rem;
+        font-weight: 700;
+        text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      .health-bar {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: 200px;
+        height: 20px;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 10px;
+        border: 2px solid #00ffff;
+        overflow: hidden;
+      }
+
+      .health-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00);
+        transition: width 0.3s ease;
+        box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+      }
+
+      .ammo-counter {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(0, 255, 255, 0.1);
+        padding: 10px 15px;
+        border-radius: 10px;
+        border: 1px solid rgba(0, 255, 255, 0.3);
+        color: #00ffff;
+        font-weight: 600;
+      }
+
+      .instructions {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 15px;
+        border-radius: 10px;
+        max-width: 250px;
+        font-size: 0.9rem;
+        color: #00ffff;
+        border: 1px solid rgba(0, 255, 255, 0.3);
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        animation: fadeIn 0.3s ease;
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 30px rgba(0, 255, 255, 0.3);
+        position: relative;
+        border: 2px solid rgba(0, 255, 255, 0.3);
+        color: #ffffff;
+      }
+
+      .close {
+        color: #00ffff;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .close:hover {
+        color: #ff00ff;
+        text-shadow: 0 0 10px rgba(255, 0, 255, 0.8);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .title {
+          font-size: 2rem;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .instructions {
+          position: static;
+          margin-top: 20px;
+          width: 100%;
+          max-width: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="starfield"></div>
+
+    <div class="container">
+      <div class="header">
+        <h1 class="title">🚀 雷射防禦</h1>
+        <p class="subtitle">保衛地球，擊退外星入侵者！</p>
+      </div>
+
+      <div class="controls">
+        <div class="score-info">
+          <div class="score-item">
+            <div class="score-label">得分</div>
+            <div class="score-value" id="score">0</div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">等級</div>
+            <div class="score-value" id="level">1</div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">擊毀</div>
+            <div class="score-value" id="destroyed">0</div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-secondary" onclick="showInstructions()">
+            <i class="fas fa-question-circle"></i> 說明
+          </button>
+          <button class="btn btn-primary" onclick="startGame()">
+            <i class="fas fa-play"></i> 開始防禦
+          </button>
+          <button class="btn btn-secondary" onclick="pauseGame()">
+            <i class="fas fa-pause"></i> 暫停
+          </button>
+          <a href="index.html" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 返回
+          </a>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <canvas id="gameCanvas" class="game-canvas"></canvas>
+        <div class="game-overlay" id="gameOverlay">點擊開始防禦</div>
+
+        <div class="health-bar">
+          <div class="health-fill" id="healthFill" style="width: 100%"></div>
+        </div>
+
+        <div class="ammo-counter" id="ammoCounter">彈藥: ∞</div>
+
+        <div class="instructions">
+          <strong>操作說明：</strong><br />
+          • 滑鼠移動瞄準<br />
+          • 點擊發射雷射<br />
+          • 摧毀所有敵人<br />
+          • 避免敵人到達底部
+        </div>
+      </div>
+    </div>
+
+    <!-- 說明模態框 -->
+    <div id="instructionModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>🚀 雷射防禦 - 遊戲說明</h2>
+        <br />
+        <h3>🎯 遊戲目標</h3>
+        <p>保衛地球免受外星入侵者的攻擊，擊毀所有敵人獲得高分！</p>
+        <br />
+        <h3>🎮 操作方式</h3>
+        <ul>
+          <li><strong>瞄準：</strong>滑鼠移動控制瞄準器</li>
+          <li><strong>射擊：</strong>點擊滑鼠左鍵發射雷射</li>
+          <li><strong>暫停：</strong>點擊暫停按鈕或按ESC鍵</li>
+          <li><strong>重新開始：</strong>遊戲結束後點擊重新開始</li>
+        </ul>
+        <br />
+        <h3>👾 敵人類型</h3>
+        <ul>
+          <li><strong>小型飛船：</strong>移動快速，1發摧毀 - 10分</li>
+          <li><strong>中型飛船：</strong>移動中等，2發摧毀 - 25分</li>
+          <li><strong>大型飛船：</strong>移動緩慢，3發摧毀 - 50分</li>
+          <li><strong>BOSS飛船：</strong>血量很高，獎勵豐厚 - 200分</li>
+        </ul>
+        <br />
+        <h3>💥 遊戲機制</h3>
+        <ul>
+          <li>敵人到達底部會造成生命值損失</li>
+          <li>生命值歸零即遊戲結束</li>
+          <li>每個等級敵人數量和速度增加</li>
+          <li>連續擊中可獲得連擊加成</li>
+          <li>特殊敵人會掉落能量補給</li>
+        </ul>
+        <br />
+        <p><strong>準備好拯救地球了嗎？🌍</strong></p>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class LaserDefenseGame {
+        constructor() {
+          this.canvas = document.getElementById("gameCanvas");
+          this.ctx = this.canvas.getContext("2d");
+          this.resizeCanvas();
+
+          this.gameState = "waiting"; // waiting, playing, paused, gameOver
+          this.score = 0;
+          this.level = 1;
+          this.health = 100;
+          this.destroyed = 0;
+          this.mouseX = 0;
+          this.mouseY = 0;
+
+          this.player = {
+            x: this.canvas.width / 2,
+            y: this.canvas.height - 50,
+            size: 30,
+          };
+
+          this.lasers = [];
+          this.enemies = [];
+          this.particles = [];
+          this.powerUps = [];
+
+          this.enemySpawnTimer = 0;
+          this.enemySpawnDelay = 60; // frames
+          this.combo = 0;
+          this.comboTimer = 0;
+
+          this.bindEvents();
+          this.updateDisplay();
+
+          // 遊戲循環
+          this.gameLoop = this.gameLoop.bind(this);
+          this.animationId = null;
+        }
+
+        resizeCanvas() {
+          const container = this.canvas.parentElement;
+          this.canvas.width = container.clientWidth;
+          this.canvas.height = container.clientHeight;
+        }
+
+        bindEvents() {
+          // 滑鼠事件
+          this.canvas.addEventListener("mousemove", (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            this.mouseX = e.clientX - rect.left;
+            this.mouseY = e.clientY - rect.top;
+          });
+
+          this.canvas.addEventListener("click", (e) => {
+            if (this.gameState === "playing") {
+              this.shootLaser();
+            }
+          });
+
+          // 鍵盤事件
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+              this.pauseGame();
+            }
+          });
+
+          // 視窗大小調整
+          window.addEventListener("resize", () => {
+            this.resizeCanvas();
+          });
+
+          // 說明模態框
+          const modal = document.getElementById("instructionModal");
+          const closeBtn = modal.querySelector(".close");
+
+          closeBtn.onclick = () => (modal.style.display = "none");
+          window.onclick = (e) => {
+            if (e.target === modal) modal.style.display = "none";
+          };
+        }
+
+        startGame() {
+          if (this.gameState === "waiting" || this.gameState === "gameOver") {
+            this.resetGame();
+          }
+
+          this.gameState = "playing";
+          document.getElementById("gameOverlay").style.display = "none";
+
+          if (!this.animationId) {
+            this.gameLoop();
+          }
+        }
+
+        pauseGame() {
+          if (this.gameState === "playing") {
+            this.gameState = "paused";
+            document.getElementById("gameOverlay").textContent = "遊戲暫停";
+            document.getElementById("gameOverlay").style.display = "block";
+          } else if (this.gameState === "paused") {
+            this.gameState = "playing";
+            document.getElementById("gameOverlay").style.display = "none";
+          }
+        }
+
+        resetGame() {
+          this.score = 0;
+          this.level = 1;
+          this.health = 100;
+          this.destroyed = 0;
+          this.combo = 0;
+          this.comboTimer = 0;
+          this.lasers = [];
+          this.enemies = [];
+          this.particles = [];
+          this.powerUps = [];
+          this.enemySpawnTimer = 0;
+          this.enemySpawnDelay = 60;
+
+          this.player.x = this.canvas.width / 2;
+          this.player.y = this.canvas.height - 50;
+
+          this.updateDisplay();
+        }
+
+        gameLoop() {
+          if (this.gameState === "playing") {
+            this.update();
+            this.draw();
+          }
+
+          this.animationId = requestAnimationFrame(this.gameLoop);
+        }
+
+        update() {
+          // 更新玩家位置（跟隨滑鼠）
+          this.player.x = this.mouseX;
+
+          // 生成敵人
+          this.spawnEnemies();
+
+          // 更新雷射
+          this.updateLasers();
+
+          // 更新敵人
+          this.updateEnemies();
+
+          // 更新粒子效果
+          this.updateParticles();
+
+          // 更新能量包
+          this.updatePowerUps();
+
+          // 碰撞檢測
+          this.checkCollisions();
+
+          // 更新連擊計時器
+          if (this.comboTimer > 0) {
+            this.comboTimer--;
+            if (this.comboTimer <= 0) {
+              this.combo = 0;
+            }
+          }
+
+          // 檢查遊戲結束
+          if (this.health <= 0) {
+            this.gameOver();
+          }
+
+          // 檢查升級
+          this.checkLevelUp();
+        }
+
+        spawnEnemies() {
+          this.enemySpawnTimer++;
+          if (this.enemySpawnTimer >= this.enemySpawnDelay) {
+            this.enemySpawnTimer = 0;
+
+            // 隨機敵人類型
+            const types = ["small", "medium", "large"];
+            const weights = [60, 30, 10];
+            let randomValue = Math.random() * 100;
+            let enemyType = "small";
+
+            for (let i = 0; i < types.length; i++) {
+              if (randomValue <= weights[i]) {
+                enemyType = types[i];
+                break;
+              }
+              randomValue -= weights[i];
+            }
+
+            // 創建敵人
+            const enemy = this.createEnemy(enemyType);
+            this.enemies.push(enemy);
+
+            // 調整生成頻率
+            this.enemySpawnDelay = Math.max(20, 60 - this.level * 3);
+          }
+        }
+
+        createEnemy(type) {
+          const enemy = {
+            x: Math.random() * (this.canvas.width - 40) + 20,
+            y: -30,
+            type: type,
+            speed: 1 + this.level * 0.2,
+            angle: 0,
+          };
+
+          switch (type) {
+            case "small":
+              enemy.size = 20;
+              enemy.health = 1;
+              enemy.maxHealth = 1;
+              enemy.points = 10;
+              enemy.color = "#ff4444";
+              enemy.speed *= 1.5;
+              break;
+            case "medium":
+              enemy.size = 35;
+              enemy.health = 2;
+              enemy.maxHealth = 2;
+              enemy.points = 25;
+              enemy.color = "#ffaa44";
+              enemy.speed *= 1.0;
+              break;
+            case "large":
+              enemy.size = 50;
+              enemy.health = 3;
+              enemy.maxHealth = 3;
+              enemy.points = 50;
+              enemy.color = "#ff8844";
+              enemy.speed *= 0.7;
+              break;
+          }
+
+          return enemy;
+        }
+
+        shootLaser() {
+          const laser = {
+            x: this.player.x,
+            y: this.player.y - 20,
+            targetX: this.mouseX,
+            targetY: this.mouseY,
+            speed: 10,
+            size: 3,
+          };
+
+          // 計算方向
+          const dx = laser.targetX - laser.x;
+          const dy = laser.targetY - laser.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          laser.vx = (dx / distance) * laser.speed;
+          laser.vy = (dy / distance) * laser.speed;
+
+          this.lasers.push(laser);
+
+          // 創建發射粒子效果
+          this.createParticles(this.player.x, this.player.y - 20, "#00ffff", 5);
+        }
+
+        updateLasers() {
+          for (let i = this.lasers.length - 1; i >= 0; i--) {
+            const laser = this.lasers[i];
+
+            laser.x += laser.vx;
+            laser.y += laser.vy;
+
+            // 移除超出邊界的雷射
+            if (
+              laser.x < 0 ||
+              laser.x > this.canvas.width ||
+              laser.y < 0 ||
+              laser.y > this.canvas.height
+            ) {
+              this.lasers.splice(i, 1);
+            }
+          }
+        }
+
+        updateEnemies() {
+          for (let i = this.enemies.length - 1; i >= 0; i--) {
+            const enemy = this.enemies[i];
+
+            enemy.y += enemy.speed;
+            enemy.angle += 0.02;
+
+            // 移除到達底部的敵人並扣血
+            if (enemy.y > this.canvas.height + enemy.size) {
+              this.enemies.splice(i, 1);
+              this.health -= 10;
+              this.updateDisplay();
+            }
+          }
+        }
+
+        updateParticles() {
+          for (let i = this.particles.length - 1; i >= 0; i--) {
+            const particle = this.particles[i];
+
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            particle.life -= particle.decay;
+            particle.size *= 0.98;
+
+            if (particle.life <= 0 || particle.size < 0.5) {
+              this.particles.splice(i, 1);
+            }
+          }
+        }
+
+        updatePowerUps() {
+          for (let i = this.powerUps.length - 1; i >= 0; i--) {
+            const powerUp = this.powerUps[i];
+
+            powerUp.y += powerUp.speed;
+            powerUp.angle += 0.05;
+
+            // 移除超出邊界的能量包
+            if (powerUp.y > this.canvas.height + powerUp.size) {
+              this.powerUps.splice(i, 1);
+            }
+          }
+        }
+
+        checkCollisions() {
+          // 雷射 vs 敵人
+          for (let i = this.lasers.length - 1; i >= 0; i--) {
+            const laser = this.lasers[i];
+
+            for (let j = this.enemies.length - 1; j >= 0; j--) {
+              const enemy = this.enemies[j];
+
+              const distance = Math.sqrt(
+                (laser.x - enemy.x) ** 2 + (laser.y - enemy.y) ** 2
+              );
+
+              if (distance < enemy.size / 2 + laser.size) {
+                // 移除雷射
+                this.lasers.splice(i, 1);
+
+                // 傷害敵人
+                enemy.health--;
+
+                if (enemy.health <= 0) {
+                  // 摧毀敵人
+                  this.destroyEnemy(enemy, j);
+                } else {
+                  // 創建命中效果
+                  this.createParticles(enemy.x, enemy.y, "#ffff00", 3);
+                }
+
+                break;
+              }
+            }
+          }
+        }
+
+        destroyEnemy(enemy, index) {
+          // 計分
+          let points = enemy.points;
+          if (this.combo > 0) {
+            points *= 1 + this.combo * 0.1;
+          }
+          this.score += Math.floor(points);
+          this.destroyed++;
+          this.combo++;
+          this.comboTimer = 120; // 2秒
+
+          // 創建爆炸效果
+          this.createParticles(enemy.x, enemy.y, enemy.color, 15);
+
+          // 隨機掉落能量包
+          if (Math.random() < 0.2) {
+            this.powerUps.push({
+              x: enemy.x,
+              y: enemy.y,
+              size: 15,
+              speed: 2,
+              angle: 0,
+              type: "health",
+            });
+          }
+
+          // 移除敵人
+          this.enemies.splice(index, 1);
+
+          this.updateDisplay();
+        }
+
+        createParticles(x, y, color, count) {
+          for (let i = 0; i < count; i++) {
+            this.particles.push({
+              x: x + (Math.random() - 0.5) * 20,
+              y: y + (Math.random() - 0.5) * 20,
+              vx: (Math.random() - 0.5) * 8,
+              vy: (Math.random() - 0.5) * 8,
+              size: Math.random() * 4 + 2,
+              color: color,
+              life: 1,
+              decay: 0.02,
+            });
+          }
+        }
+
+        checkLevelUp() {
+          const newLevel = Math.floor(this.destroyed / 10) + 1;
+          if (newLevel > this.level) {
+            this.level = newLevel;
+            this.health = Math.min(100, this.health + 20); // 升級獎勵
+            this.updateDisplay();
+          }
+        }
+
+        gameOver() {
+          this.gameState = "gameOver";
+          document.getElementById(
+            "gameOverlay"
+          ).textContent = `遊戲結束！\n得分: ${this.score}\n點擊重新開始`;
+          document.getElementById("gameOverlay").style.display = "block";
+
+          // 保存最高分
+          if (typeof saveGameData === "function") {
+            saveGameData("laser-defense", { score: this.score });
+          }
+        }
+
+        draw() {
+          // 清空畫布
+          this.ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+          // 繪製玩家
+          this.drawPlayer();
+
+          // 繪製雷射
+          this.drawLasers();
+
+          // 繪製敵人
+          this.drawEnemies();
+
+          // 繪製粒子效果
+          this.drawParticles();
+
+          // 繪製能量包
+          this.drawPowerUps();
+
+          // 繪製瞄準線
+          this.drawCrosshair();
+
+          // 繪製連擊顯示
+          if (this.combo > 1) {
+            this.drawCombo();
+          }
+        }
+
+        drawPlayer() {
+          this.ctx.save();
+          this.ctx.translate(this.player.x, this.player.y);
+
+          // 飛船本體
+          this.ctx.fillStyle = "#00ffff";
+          this.ctx.beginPath();
+          this.ctx.moveTo(0, -15);
+          this.ctx.lineTo(-15, 15);
+          this.ctx.lineTo(0, 10);
+          this.ctx.lineTo(15, 15);
+          this.ctx.closePath();
+          this.ctx.fill();
+
+          // 發光效果
+          this.ctx.shadowColor = "#00ffff";
+          this.ctx.shadowBlur = 20;
+          this.ctx.stroke();
+
+          this.ctx.restore();
+        }
+
+        drawLasers() {
+          this.ctx.save();
+          this.ctx.shadowColor = "#00ffff";
+          this.ctx.shadowBlur = 10;
+
+          for (const laser of this.lasers) {
+            this.ctx.fillStyle = "#00ffff";
+            this.ctx.fillRect(
+              laser.x - laser.size / 2,
+              laser.y - laser.size / 2,
+              laser.size * 2,
+              laser.size * 8
+            );
+          }
+
+          this.ctx.restore();
+        }
+
+        drawEnemies() {
+          for (const enemy of this.enemies) {
+            this.ctx.save();
+            this.ctx.translate(enemy.x, enemy.y);
+            this.ctx.rotate(enemy.angle);
+
+            // 敵人飛船
+            this.ctx.fillStyle = enemy.color;
+            this.ctx.fillRect(
+              -enemy.size / 2,
+              -enemy.size / 2,
+              enemy.size,
+              enemy.size
+            );
+
+            // 血量條
+            if (enemy.health < enemy.maxHealth) {
+              this.ctx.restore();
+              this.ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+              this.ctx.fillRect(
+                enemy.x - enemy.size / 2,
+                enemy.y - enemy.size / 2 - 10,
+                enemy.size,
+                3
+              );
+              this.ctx.fillStyle = "rgba(0, 255, 0, 0.8)";
+              this.ctx.fillRect(
+                enemy.x - enemy.size / 2,
+                enemy.y - enemy.size / 2 - 10,
+                enemy.size * (enemy.health / enemy.maxHealth),
+                3
+              );
+            } else {
+              this.ctx.restore();
+            }
+          }
+        }
+
+        drawParticles() {
+          for (const particle of this.particles) {
+            this.ctx.save();
+            this.ctx.globalAlpha = particle.life;
+            this.ctx.fillStyle = particle.color;
+            this.ctx.fillRect(
+              particle.x - particle.size / 2,
+              particle.y - particle.size / 2,
+              particle.size,
+              particle.size
+            );
+            this.ctx.restore();
+          }
+        }
+
+        drawPowerUps() {
+          for (const powerUp of this.powerUps) {
+            this.ctx.save();
+            this.ctx.translate(powerUp.x, powerUp.y);
+            this.ctx.rotate(powerUp.angle);
+
+            this.ctx.fillStyle = "#00ff00";
+            this.ctx.shadowColor = "#00ff00";
+            this.ctx.shadowBlur = 15;
+            this.ctx.fillRect(
+              -powerUp.size / 2,
+              -powerUp.size / 2,
+              powerUp.size,
+              powerUp.size
+            );
+
+            this.ctx.restore();
+          }
+        }
+
+        drawCrosshair() {
+          this.ctx.save();
+          this.ctx.strokeStyle = "#00ffff";
+          this.ctx.lineWidth = 2;
+          this.ctx.shadowColor = "#00ffff";
+          this.ctx.shadowBlur = 10;
+
+          // 十字準心
+          this.ctx.beginPath();
+          this.ctx.moveTo(this.mouseX - 10, this.mouseY);
+          this.ctx.lineTo(this.mouseX + 10, this.mouseY);
+          this.ctx.moveTo(this.mouseX, this.mouseY - 10);
+          this.ctx.lineTo(this.mouseX, this.mouseY + 10);
+          this.ctx.stroke();
+
+          // 圓圈
+          this.ctx.beginPath();
+          this.ctx.arc(this.mouseX, this.mouseY, 15, 0, Math.PI * 2);
+          this.ctx.stroke();
+
+          this.ctx.restore();
+        }
+
+        drawCombo() {
+          this.ctx.save();
+          this.ctx.fillStyle = "#ffff00";
+          this.ctx.font = "bold 24px Arial";
+          this.ctx.textAlign = "center";
+          this.ctx.shadowColor = "#ffff00";
+          this.ctx.shadowBlur = 15;
+          this.ctx.fillText(`${this.combo}x COMBO!`, this.canvas.width / 2, 50);
+          this.ctx.restore();
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("level").textContent = this.level;
+          document.getElementById("destroyed").textContent = this.destroyed;
+
+          const healthFill = document.getElementById("healthFill");
+          healthFill.style.width = Math.max(0, this.health) + "%";
+
+          if (this.health > 60) {
+            healthFill.style.background =
+              "linear-gradient(90deg, #00ff00, #ffff00)";
+          } else if (this.health > 30) {
+            healthFill.style.background =
+              "linear-gradient(90deg, #ffff00, #ff8000)";
+          } else {
+            healthFill.style.background =
+              "linear-gradient(90deg, #ff0000, #ff0000)";
+          }
+        }
+      }
+
+      // 初始化遊戲
+      let game;
+
+      function initGame() {
+        game = new LaserDefenseGame();
+      }
+
+      function startGame() {
+        if (game) {
+          game.startGame();
+        }
+      }
+
+      function pauseGame() {
+        if (game) {
+          game.pauseGame();
+        }
+      }
+
+      function showInstructions() {
+        document.getElementById("instructionModal").style.display = "block";
+      }
+
+      // 當頁面載入完成時初始化遊戲
+      window.addEventListener("load", initGame);
+
+      // 遊戲工具函數
+      if (typeof initializeGameUtils === "function") {
+        initializeGameUtils("laser-defense");
+      }
+    </script>
+  </body>
+</html>

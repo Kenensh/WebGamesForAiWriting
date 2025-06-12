@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>快速數學 - 網頁小遊戲</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        overflow: hidden;
+        user-select: none;
+      }
+
+      .game-container {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 2rem;
+        border-radius: 25px;
+        backdrop-filter: blur(15px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        max-width: 800px;
+        width: 90vw;
+        text-align: center;
+      }
+
+      .game-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 2rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .info-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.8rem;
+        border-radius: 10px;
+        min-width: 100px;
+      }
+
+      .info-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-bottom: 0.3rem;
+      }
+
+      .info-value {
+        font-size: 1.3rem;
+        font-weight: bold;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        margin: 1rem 0;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #8bc34a);
+        border-radius: 4px;
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      .game-area {
+        margin: 2rem 0;
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+      }
+
+      .status-text {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        min-height: 40px;
+      }
+
+      .equation-display {
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 2rem 0;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        min-height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Courier New", monospace;
+      }
+
+      .timer-display {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #ff5722;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        margin: 1rem 0;
+      }
+
+      .answer-input {
+        font-size: 2rem;
+        padding: 1rem 2rem;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        text-align: center;
+        font-weight: bold;
+        outline: none;
+        font-family: "Courier New", monospace;
+        min-width: 200px;
+      }
+
+      .answer-input:focus {
+        border-color: #ffd700;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+      }
+
+      .answer-input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .answer-options {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 2rem 0;
+        max-width: 400px;
+        width: 100%;
+      }
+
+      .option-btn {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 15px;
+        color: white;
+        font-size: 1.5rem;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: bold;
+        font-family: "Courier New", monospace;
+        border: 3px solid transparent;
+      }
+
+      .option-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        background: linear-gradient(45deg, #4caf50, #8bc34a);
+      }
+
+      .option-btn.correct {
+        background: linear-gradient(45deg, #4caf50, #8bc34a);
+        border-color: #4caf50;
+        animation: correctAnswer 0.5s ease;
+      }
+
+      .option-btn.wrong {
+        background: linear-gradient(45deg, #f44336, #e91e63);
+        border-color: #f44336;
+        animation: wrongAnswer 0.5s ease;
+      }
+
+      @keyframes correctAnswer {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes wrongAnswer {
+        0% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-10px);
+        }
+        75% {
+          transform: translateX(10px);
+        }
+        100% {
+          transform: translateX(0);
+        }
+      }
+
+      .controls {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 10px;
+        color: white;
+        font-size: 1rem;
+        padding: 12px 24px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        min-width: 120px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(45deg, #4caf50, #8bc34a);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(45deg, #ff9800, #ff5722);
+      }
+
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .difficulty-select {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        color: white;
+        padding: 8px 16px;
+        font-size: 1rem;
+      }
+
+      .feedback {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        z-index: 1000;
+        transition: all 0.3s ease;
+      }
+
+      .feedback.show {
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      .feedback.correct {
+        background: linear-gradient(45deg, #4caf50, #8bc34a);
+      }
+
+      .feedback.wrong {
+        background: linear-gradient(45deg, #f44336, #e91e63);
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 5% auto;
+        padding: 2rem;
+        border-radius: 25px;
+        width: 90%;
+        max-width: 600px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        color: white;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .modal h2 {
+        margin-bottom: 1rem;
+        color: #ffd700;
+      }
+
+      .modal p,
+      .modal li {
+        margin-bottom: 0.8rem;
+        line-height: 1.6;
+      }
+
+      .modal ul {
+        margin-left: 1rem;
+      }
+
+      @media (max-width: 768px) {
+        .game-container {
+          padding: 1rem;
+          width: 95vw;
+        }
+
+        .game-title {
+          font-size: 2rem;
+        }
+
+        .equation-display {
+          font-size: 2rem;
+        }
+
+        .answer-input {
+          font-size: 1.5rem;
+          min-width: 150px;
+        }
+
+        .option-btn {
+          font-size: 1.2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1 class="game-title"><i class="fas fa-calculator"></i> 快速數學</h1>
+
+      <div class="game-info">
+        <div class="info-item">
+          <div class="info-label">分數</div>
+          <div class="info-value" id="score">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">連擊</div>
+          <div class="info-value" id="streak">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">正確率</div>
+          <div class="info-value" id="accuracy">100%</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">時間</div>
+          <div class="info-value" id="timeLeft">60</div>
+        </div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <div class="game-area" id="gameArea">
+        <div class="status-text" id="statusText">選擇難度開始挑戰</div>
+
+        <div class="timer-display" id="timerDisplay" style="display: none">
+          5.0s
+        </div>
+
+        <div
+          class="equation-display"
+          id="equationDisplay"
+          style="display: none"
+        >
+          2 + 3 = ?
+        </div>
+
+        <div id="inputMode" style="display: none">
+          <input
+            type="number"
+            class="answer-input"
+            id="answerInput"
+            placeholder="輸入答案..."
+            disabled
+          />
+        </div>
+
+        <div class="answer-options" id="optionMode" style="display: none">
+          <!-- 選項會動態生成 -->
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="startBtn">開始遊戲</button>
+        <button class="btn btn-secondary" id="resetBtn">重置</button>
+        <button class="btn" id="helpBtn">說明</button>
+        <select class="btn difficulty-select" id="difficultySelect">
+          <option value="easy">簡單</option>
+          <option value="medium">普通</option>
+          <option value="hard">困難</option>
+          <option value="expert">專家</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <!-- 說明模態框 -->
+    <div class="modal" id="helpModal">
+      <div class="modal-content">
+        <h2><i class="fas fa-calculator"></i> 快速數學說明</h2>
+        <p><strong>遊戲目標：</strong>在時間限制內快速解答數學問題</p>
+        <p><strong>操作方式：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li>觀察螢幕顯示的數學算式</li>
+          <li>簡單/普通模式：點擊正確答案選項</li>
+          <li>困難/專家模式：輸入正確答案並按Enter</li>
+          <li>每題都有時間限制，超時算錯誤</li>
+        </ul>
+        <p><strong>計分系統：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li>正確答案：基礎分數 + 速度獎勵</li>
+          <li>連擊獎勵：連續正確可獲得額外分數</li>
+          <li>速度獎勵：答題越快獎勵越高</li>
+          <li>錯誤會重置連擊數</li>
+        </ul>
+        <p><strong>難度等級：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li><strong>簡單</strong>：5秒時間，基礎加減法，4選項</li>
+          <li><strong>普通</strong>：4秒時間，乘除法，4選項</li>
+          <li><strong>困難</strong>：3秒時間，複合運算，輸入答案</li>
+          <li><strong>專家</strong>：2秒時間，進階運算，輸入答案</li>
+        </ul>
+        <button class="btn btn-primary" onclick="closeModal('helpModal')">
+          了解了
+        </button>
+      </div>
+    </div>
+
+    <!-- 遊戲結束模態框 -->
+    <div class="modal" id="gameOverModal">
+      <div class="modal-content">
+        <h2><i class="fas fa-trophy"></i> 遊戲結束</h2>
+        <div id="finalStats"></div>
+        <button class="btn btn-primary" onclick="closeModal('gameOverModal')">
+          繼續
+        </button>
+        <button class="btn btn-secondary" onclick="resetGame()">
+          再玩一次
+        </button>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class QuickMathGame {
+        constructor() {
+          this.score = 0;
+          this.streak = 0;
+          this.maxStreak = 0;
+          this.totalQuestions = 0;
+          this.correctAnswers = 0;
+          this.isPlaying = false;
+          this.timeLeft = 0;
+          this.questionTimer = null;
+          this.gameTimer = null;
+          this.currentDifficulty = "easy";
+          this.currentQuestion = {};
+          this.questionStartTime = 0;
+
+          this.difficultySettings = {
+            easy: {
+              timeLimit: 5.0,
+              operations: ["+", "-"],
+              range: { min: 1, max: 20 },
+              mode: "multiple",
+              name: "簡單",
+            },
+            medium: {
+              timeLimit: 4.0,
+              operations: ["+", "-", "*"],
+              range: { min: 1, max: 50 },
+              mode: "multiple",
+              name: "普通",
+            },
+            hard: {
+              timeLimit: 3.0,
+              operations: ["+", "-", "*", "/"],
+              range: { min: 1, max: 100 },
+              mode: "input",
+              name: "困難",
+            },
+            expert: {
+              timeLimit: 2.0,
+              operations: ["+", "-", "*", "/", "^", "%"],
+              range: { min: 1, max: 200 },
+              mode: "input",
+              name: "專家",
+            },
+          };
+
+          this.initializeGame();
+        }
+
+        initializeGame() {
+          this.bindEvents();
+          this.loadStats();
+          this.updateDisplay();
+        }
+
+        bindEvents() {
+          document
+            .getElementById("startBtn")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("resetBtn")
+            .addEventListener("click", () => this.resetGame());
+          document
+            .getElementById("helpBtn")
+            .addEventListener("click", () => this.showModal("helpModal"));
+          document
+            .getElementById("difficultySelect")
+            .addEventListener("change", (e) =>
+              this.changeDifficulty(e.target.value)
+            );
+
+          const answerInput = document.getElementById("answerInput");
+          answerInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && this.isPlaying) {
+              this.submitAnswer(parseInt(e.target.value));
+            }
+          });
+        }
+
+        changeDifficulty(difficulty) {
+          this.currentDifficulty = difficulty;
+        }
+
+        startGame() {
+          this.isPlaying = true;
+          this.score = 0;
+          this.streak = 0;
+          this.totalQuestions = 0;
+          this.correctAnswers = 0;
+          this.timeLeft = 60; // 總遊戲時間60秒
+
+          document.getElementById("startBtn").textContent = "遊戲中...";
+          document.getElementById("startBtn").disabled = true;
+
+          this.showGameElements();
+          this.generateQuestion();
+          this.startGameTimer();
+          this.updateDisplay();
+        }
+
+        showGameElements() {
+          document.getElementById("equationDisplay").style.display = "flex";
+          document.getElementById("timerDisplay").style.display = "block";
+
+          const settings = this.difficultySettings[this.currentDifficulty];
+          if (settings.mode === "multiple") {
+            document.getElementById("optionMode").style.display = "grid";
+            document.getElementById("inputMode").style.display = "none";
+          } else {
+            document.getElementById("optionMode").style.display = "none";
+            document.getElementById("inputMode").style.display = "block";
+            document.getElementById("answerInput").disabled = false;
+            document.getElementById("answerInput").focus();
+          }
+        }
+
+        generateQuestion() {
+          if (!this.isPlaying) return;
+
+          const settings = this.difficultySettings[this.currentDifficulty];
+          this.questionStartTime = Date.now();
+
+          // 生成問題
+          const operation =
+            settings.operations[
+              Math.floor(Math.random() * settings.operations.length)
+            ];
+          let num1, num2, answer;
+
+          switch (operation) {
+            case "+":
+              num1 = this.randomInt(settings.range.min, settings.range.max);
+              num2 = this.randomInt(settings.range.min, settings.range.max);
+              answer = num1 + num2;
+              break;
+
+            case "-":
+              num1 = this.randomInt(settings.range.min, settings.range.max);
+              num2 = this.randomInt(
+                settings.range.min,
+                Math.min(num1, settings.range.max)
+              );
+              answer = num1 - num2;
+              break;
+
+            case "*":
+              num1 = this.randomInt(
+                settings.range.min,
+                Math.min(12, settings.range.max)
+              );
+              num2 = this.randomInt(
+                settings.range.min,
+                Math.min(12, settings.range.max)
+              );
+              answer = num1 * num2;
+              break;
+
+            case "/":
+              answer = this.randomInt(1, 20);
+              num2 = this.randomInt(2, 10);
+              num1 = answer * num2;
+              break;
+
+            case "^":
+              num1 = this.randomInt(2, 10);
+              num2 = this.randomInt(2, 4);
+              answer = Math.pow(num1, num2);
+              break;
+
+            case "%":
+              num1 = this.randomInt(10, 100);
+              num2 = this.randomInt(2, 10);
+              answer = num1 % num2;
+              break;
+          }
+
+          this.currentQuestion = {
+            num1,
+            num2,
+            operation,
+            answer,
+            equation: `${num1} ${operation} ${num2} = ?`,
+          };
+
+          document.getElementById("equationDisplay").textContent =
+            this.currentQuestion.equation;
+
+          if (settings.mode === "multiple") {
+            this.generateOptions();
+          } else {
+            document.getElementById("answerInput").value = "";
+            document.getElementById("answerInput").focus();
+          }
+
+          this.startQuestionTimer();
+        }
+
+        generateOptions() {
+          const answer = this.currentQuestion.answer;
+          const options = [answer];
+
+          // 生成3個錯誤選項
+          while (options.length < 4) {
+            const wrongAnswer = answer + this.randomInt(-10, 10);
+            if (
+              wrongAnswer !== answer &&
+              !options.includes(wrongAnswer) &&
+              wrongAnswer >= 0
+            ) {
+              options.push(wrongAnswer);
+            }
+          }
+
+          // 隨機排序
+          this.shuffleArray(options);
+
+          const optionsContainer = document.getElementById("optionMode");
+          optionsContainer.innerHTML = "";
+
+          options.forEach((option, index) => {
+            const button = document.createElement("button");
+            button.className = "option-btn";
+            button.textContent = option;
+            button.onclick = () => this.submitAnswer(option);
+            optionsContainer.appendChild(button);
+          });
+        }
+
+        startQuestionTimer() {
+          const settings = this.difficultySettings[this.currentDifficulty];
+          let timeLeft = settings.timeLimit;
+
+          document.getElementById("timerDisplay").textContent =
+            timeLeft.toFixed(1) + "s";
+
+          this.questionTimer = setInterval(() => {
+            timeLeft -= 0.1;
+            document.getElementById("timerDisplay").textContent =
+              timeLeft.toFixed(1) + "s";
+
+            if (timeLeft <= 0) {
+              this.handleTimeout();
+            }
+          }, 100);
+        }
+
+        startGameTimer() {
+          this.gameTimer = setInterval(() => {
+            this.timeLeft--;
+            this.updateDisplay();
+
+            if (this.timeLeft <= 0) {
+              this.endGame();
+            }
+          }, 1000);
+        }
+
+        submitAnswer(userAnswer) {
+          if (!this.isPlaying) return;
+
+          clearInterval(this.questionTimer);
+          this.totalQuestions++;
+
+          const reactionTime = Date.now() - this.questionStartTime;
+          const isCorrect = userAnswer === this.currentQuestion.answer;
+
+          if (isCorrect) {
+            this.correctAnswers++;
+            this.streak++;
+            this.maxStreak = Math.max(this.maxStreak, this.streak);
+
+            // 計算分數
+            const baseScore = 100;
+            const speedBonus = Math.max(0, 50 - Math.floor(reactionTime / 100));
+            const streakBonus = this.streak * 10;
+            const totalScore = baseScore + speedBonus + streakBonus;
+
+            this.score += totalScore;
+            this.showFeedback(`正確! +${totalScore}分`, "correct");
+
+            // 視覺反饋
+            if (
+              this.difficultySettings[this.currentDifficulty].mode ===
+              "multiple"
+            ) {
+              const buttons = document.querySelectorAll(".option-btn");
+              buttons.forEach((btn) => {
+                if (parseInt(btn.textContent) === userAnswer) {
+                  btn.classList.add("correct");
+                }
+              });
+            }
+          } else {
+            this.streak = 0;
+            this.showFeedback(
+              `錯誤! 正確答案是 ${this.currentQuestion.answer}`,
+              "wrong"
+            );
+
+            // 視覺反饋
+            if (
+              this.difficultySettings[this.currentDifficulty].mode ===
+              "multiple"
+            ) {
+              const buttons = document.querySelectorAll(".option-btn");
+              buttons.forEach((btn) => {
+                const value = parseInt(btn.textContent);
+                if (value === userAnswer) {
+                  btn.classList.add("wrong");
+                } else if (value === this.currentQuestion.answer) {
+                  btn.classList.add("correct");
+                }
+              });
+            }
+          }
+
+          setTimeout(() => {
+            if (this.isPlaying) {
+              this.generateQuestion();
+            }
+          }, 1500);
+
+          this.updateDisplay();
+        }
+
+        handleTimeout() {
+          clearInterval(this.questionTimer);
+          this.totalQuestions++;
+          this.streak = 0;
+
+          this.showFeedback(
+            `時間到! 正確答案是 ${this.currentQuestion.answer}`,
+            "wrong"
+          );
+
+          setTimeout(() => {
+            if (this.isPlaying) {
+              this.generateQuestion();
+            }
+          }, 1500);
+
+          this.updateDisplay();
+        }
+
+        calculateAccuracy() {
+          return this.totalQuestions > 0
+            ? Math.round((this.correctAnswers / this.totalQuestions) * 100)
+            : 100;
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("streak").textContent = this.streak;
+          document.getElementById("accuracy").textContent =
+            this.calculateAccuracy() + "%";
+          document.getElementById("timeLeft").textContent = this.timeLeft;
+
+          // 更新進度條
+          const progress = ((60 - this.timeLeft) / 60) * 100;
+          document.getElementById("progressFill").style.width = progress + "%";
+        }
+
+        showFeedback(message, type) {
+          const feedback = document.getElementById("feedback");
+          feedback.textContent = message;
+          feedback.className = `feedback show ${type}`;
+
+          setTimeout(() => {
+            feedback.classList.remove("show");
+          }, 1000);
+        }
+
+        endGame() {
+          this.isPlaying = false;
+          clearInterval(this.questionTimer);
+          clearInterval(this.gameTimer);
+
+          document.getElementById("startBtn").textContent = "開始遊戲";
+          document.getElementById("startBtn").disabled = false;
+          document.getElementById("statusText").textContent = "遊戲結束";
+          document.getElementById("answerInput").disabled = true;
+
+          document.getElementById("equationDisplay").style.display = "none";
+          document.getElementById("timerDisplay").style.display = "none";
+          document.getElementById("optionMode").style.display = "none";
+          document.getElementById("inputMode").style.display = "none";
+
+          this.saveStats();
+          this.showGameOverModal();
+        }
+
+        resetGame() {
+          this.isPlaying = false;
+          clearInterval(this.questionTimer);
+          clearInterval(this.gameTimer);
+
+          this.score = 0;
+          this.streak = 0;
+          this.totalQuestions = 0;
+          this.correctAnswers = 0;
+          this.timeLeft = 60;
+
+          document.getElementById("startBtn").textContent = "開始遊戲";
+          document.getElementById("startBtn").disabled = false;
+          document.getElementById("statusText").textContent =
+            "選擇難度開始挑戰";
+          document.getElementById("answerInput").disabled = true;
+          document.getElementById("answerInput").value = "";
+
+          document.getElementById("equationDisplay").style.display = "none";
+          document.getElementById("timerDisplay").style.display = "none";
+          document.getElementById("optionMode").style.display = "none";
+          document.getElementById("inputMode").style.display = "none";
+
+          this.updateDisplay();
+          this.closeModal("gameOverModal");
+        }
+
+        showModal(modalId) {
+          document.getElementById(modalId).style.display = "block";
+        }
+
+        closeModal(modalId) {
+          document.getElementById(modalId).style.display = "none";
+        }
+
+        showGameOverModal() {
+          const stats = this.loadStats();
+          const isNewRecord = this.score > stats.bestScore;
+          const settings = this.difficultySettings[this.currentDifficulty];
+
+          document.getElementById("finalStats").innerHTML = `
+            <p>最終分數: <strong>${this.score.toLocaleString()}</strong></p>
+            <p>答對題數: <strong>${this.correctAnswers} / ${
+            this.totalQuestions
+          }</strong></p>
+            <p>準確率: <strong>${this.calculateAccuracy()}%</strong></p>
+            <p>最高連擊: <strong>${this.maxStreak}</strong></p>
+            <p>難度: <strong>${settings.name}</strong></p>
+            ${
+              isNewRecord
+                ? '<p style="color: #FFD700;"><i class="fas fa-crown"></i> 新紀錄！</p>'
+                : ""
+            }
+            <hr style="margin: 1rem 0; border: 1px solid rgba(255,255,255,0.3);">
+            <p>歷史最佳: <strong>${stats.bestScore.toLocaleString()}</strong></p>
+            <p>遊戲次數: <strong>${stats.gamesPlayed}</strong></p>
+            <p>總答題數: <strong>${stats.totalQuestions.toLocaleString()}</strong></p>
+          `;
+
+          this.showModal("gameOverModal");
+        }
+
+        saveStats() {
+          const stats = this.loadStats();
+
+          stats.gamesPlayed++;
+          stats.totalQuestions += this.totalQuestions;
+          stats.totalCorrect += this.correctAnswers;
+
+          if (this.score > stats.bestScore) {
+            stats.bestScore = this.score;
+          }
+
+          if (this.maxStreak > stats.bestStreak) {
+            stats.bestStreak = this.maxStreak;
+          }
+
+          localStorage.setItem("quickMathStats", JSON.stringify(stats));
+        }
+
+        loadStats() {
+          const defaultStats = {
+            gamesPlayed: 0,
+            totalQuestions: 0,
+            totalCorrect: 0,
+            bestScore: 0,
+            bestStreak: 0,
+          };
+
+          const saved = localStorage.getItem("quickMathStats");
+          return saved ? JSON.parse(saved) : defaultStats;
+        }
+
+        randomInt(min, max) {
+          return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        shuffleArray(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+          }
+        }
+      }
+
+      // 全局函數
+      function startGame() {
+        if (window.game) {
+          window.game.startGame();
+        }
+      }
+
+      function resetGame() {
+        if (window.game) {
+          window.game.resetGame();
+        }
+      }
+
+      function showHelp() {
+        if (window.game) {
+          window.game.showModal("helpModal");
+        }
+      }
+
+      function closeModal(modalId) {
+        if (window.game) {
+          window.game.closeModal(modalId);
+        }
+      }
+
+      // 初始化遊戲
+      window.addEventListener("DOMContentLoaded", () => {
+        window.game = new QuickMathGame();
+      });
+    </script>
+  </body>
+</html>

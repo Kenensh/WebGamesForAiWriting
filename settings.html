@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>遊戲設定 - 網頁小遊戲</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      .settings-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      
+      .settings-card {
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      }
+      
+      .settings-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      
+      .settings-icon {
+        width: 40px;
+        height: 40px;
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 15px;
+      }
+      
+      .settings-title {
+        margin: 0;
+        font-size: 22px;
+        color: var(--text-color-dark);
+      }
+      
+      .settings-group {
+        margin-bottom: 25px;
+      }
+      
+      .setting-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-color);
+      }
+      
+      .setting-item:last-child {
+        border-bottom: none;
+      }
+      
+      .setting-label {
+        display: flex;
+        align-items: center;
+      }
+      
+      .setting-label i {
+        width: 24px;
+        margin-right: 10px;
+        color: var(--text-color-light);
+      }
+      
+      .setting-name {
+        font-weight: 500;
+        margin-right: 10px;
+      }
+      
+      .setting-description {
+        font-size: 14px;
+        color: var(--text-color-light);
+        margin-top: 4px;
+      }
+      
+      /* Toggle開關 */
+      .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+      }
+      
+      .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      
+      .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+      }
+      
+      .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+      }
+      
+      input:checked + .toggle-slider {
+        background-color: var(--primary-color);
+      }
+      
+      input:checked + .toggle-slider:before {
+        transform: translateX(24px);
+      }
+      
+      /* 滑動條 */
+      .slider-container {
+        display: flex;
+        align-items: center;
+        width: 180px;
+      }
+      
+      .value-display {
+        min-width: 40px;
+        text-align: right;
+        margin-left: 10px;
+        font-size: 14px;
+      }
+      
+      .slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 6px;
+        border-radius: 5px;  
+        background: #d3d3d3;
+        outline: none;
+      }
+      
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        cursor: pointer;
+      }
+      
+      .slider::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        cursor: pointer;
+      }
+
+      /* 顏色選擇器 */
+      .color-preview {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid #ddd;
+        cursor: pointer;
+      }
+
+      /* 按鈕組 */
+      .button-group {
+        display: flex;
+        justify-content: space-between;
+      }
+      
+      .button-group .btn {
+        flex: 1;
+        text-align: center;
+        padding: 8px;
+        margin: 0 5px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.3s;
+      }
+      
+      .button-group .btn:first-child {
+        margin-left: 0;
+      }
+      
+      .button-group .btn:last-child {
+        margin-right: 0;
+      }
+      
+      .btn-outline {
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        background-color: transparent;
+      }
+      
+      .btn-outline:hover {
+        background-color: var(--primary-light);
+      }
+      
+      .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+        border: 1px solid var(--primary-color);
+      }
+      
+      .btn-primary:hover {
+        background-color: var(--primary-dark);
+      }
+      
+      .btn-danger {
+        background-color: #e74c3c;
+        color: white;
+        border: 1px solid #e74c3c;
+      }
+      
+      .btn-danger:hover {
+        background-color: #c0392b;
+      }
+      
+      /* 選擇框 */
+      .select-container {
+        position: relative;
+        width: 180px;
+      }
+      
+      .select-styled {
+        padding: 8px 15px;
+        border-radius: 5px;
+        border: 1px solid var(--border-color);
+        background-color: var(--background-color);
+        font-family: 'Noto Sans TC', sans-serif;
+        cursor: pointer;
+        position: relative;
+      }
+      
+      .select-styled:after {
+        content: '\f078';
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        position: absolute;
+        right: 15px;
+      }
+      
+      /* 提示信息 */
+      .settings-message {
+        display: none;
+        padding: 12px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        transition: opacity 0.3s;
+      }
+      
+      .settings-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      
+      .settings-message.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      
+      /* 密度選項 */
+      .density-options {
+        display: flex;
+        justify-content: space-between;
+      }
+      
+      .density-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+      }
+      
+      .density-preview {
+        width: 60px;
+        height: 50px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: center;
+        padding: 5px 0;
+      }
+      
+      .density-line {
+        height: 4px;
+        background-color: var(--text-color-light);
+        border-radius: 2px;
+      }
+      
+      .density-preview.compact .density-line {
+        width: 85%;
+        margin: 2px 0;
+      }
+      
+      .density-preview.comfortable .density-line {
+        width: 85%;
+        margin: 4px 0;
+      }
+      
+      .density-preview.spacious .density-line {
+        width: 85%;
+        margin: 6px 0;
+      }
+      
+      .density-option.active .density-preview {
+        border-color: var(--primary-color);
+      }
+      
+      .density-option.active .density-line {
+        background-color: var(--primary-color);
+      }
+      
+      .density-option.active .density-name {
+        color: var(--primary-color);
+        font-weight: 500;
+      }
+      
+      /* 深色模式調整 */
+      @media (prefers-color-scheme: dark) {
+        .settings-card {
+          background-color: #2a2a2a;
+        }
+        
+        .select-styled {
+          background-color: #333;
+          color: #fff;
+        }
+        
+        .toggle-slider {
+          background-color: #555;
+        }
+        
+        .slider {
+          background: #555;
+        }
+        
+        .density-preview {
+          border-color: #555;
+          background-color: #333;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+            <li><a href="profile.html">個人檔案</a></li>
+            <li>
+              <button id="theme-toggle" aria-label="切換主題">
+                <span class="theme-icon light-icon">☀️</span>
+                <span class="theme-icon dark-icon">🌙</span>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="page-title">
+        <div class="container">
+          <h1>遊戲設定</h1>
+          <p>自定義你的遊戲體驗</p>
+        </div>
+      </div>
+
+      <div class="settings-container">
+        <!-- 設定保存成功/失敗提示 -->
+        <div id="settings-message" class="settings-message"></div>
+        
+        <!-- 外觀設定 -->
+        <div class="settings-card">
+          <div class="settings-header">
+            <div class="settings-icon">
+              <i class="fas fa-palette"></i>
+            </div>
+            <h2 class="settings-title">外觀設定</h2>
+          </div>
+          
+          <div class="settings-group">
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-moon"></i>
+                <div>
+                  <div class="setting-name">深色模式</div>
+                  <div class="setting-description">切換深色/淺色主題</div>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="theme-mode">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-arrows-alt-v"></i>
+                <div>
+                  <div class="setting-name">介面密度</div>
+                  <div class="setting-description">調整元素間距</div>
+                </div>
+              </div>
+              <div class="density-options">
+                <div class="density-option" data-density="compact">
+                  <div class="density-preview compact">
+                    <div class="density-line"></div>
+                    <div class="density-line"></div>
+                    <div class="density-line"></div>
+                  </div>
+                  <div class="density-name">緊湊</div>
+                </div>
+                <div class="density-option active" data-density="comfortable">
+                  <div class="density-preview comfortable">
+                    <div class="density-line"></div>
+                    <div class="density-line"></div>
+                    <div class="density-line"></div>
+                  </div>
+                  <div class="density-name">適中</div>
+                </div>
+                <div class="density-option" data-density="spacious">
+                  <div class="density-preview spacious">
+                    <div class="density-line"></div>
+                    <div class="density-line"></div>
+                    <div class="density-line"></div>
+                  </div>
+                  <div class="density-name">寬敞</div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-text-height"></i>
+                <div>
+                  <div class="setting-name">字體大小</div>
+                  <div class="setting-description">調整網站文字大小</div>
+                </div>
+              </div>
+              <div class="slider-container">
+                <input type="range" min="90" max="130" value="100" class="slider" id="font-size-slider">
+                <div class="value-display">100%</div>
+              </div>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-paint-brush"></i>
+                <div>
+                  <div class="setting-name">主題顏色</div>
+                  <div class="setting-description">選擇喜歡的主題色</div>
+                </div>
+              </div>
+              <div class="button-group">
+                <div class="btn btn-outline" data-color="#2196f3">藍色</div>
+                <div class="btn btn-outline" data-color="#4caf50">綠色</div>
+                <div class="btn btn-outline" data-color="#ff9800">橙色</div>
+                <div class="btn btn-outline" data-color="#9c27b0">紫色</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 遊戲設定 -->
+        <div class="settings-card">
+          <div class="settings-header">
+            <div class="settings-icon">
+              <i class="fas fa-gamepad"></i>
+            </div>
+            <h2 class="settings-title">遊戲設定</h2>
+          </div>
+          
+          <div class="settings-group">
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-volume-up"></i>
+                <div>
+                  <div class="setting-name">遊戲音效</div>
+                  <div class="setting-description">控制遊戲音效的音量</div>
+                </div>
+              </div>
+              <div class="slider-container">
+                <input type="range" min="0" max="100" value="70" class="slider" id="sound-volume-slider">
+                <div class="value-display">70%</div>
+              </div>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-music"></i>
+                <div>
+                  <div class="setting-name">背景音樂</div>
+                  <div class="setting-description">控制背景音樂的音量</div>
+                </div>
+              </div>
+              <div class="slider-container">
+                <input type="range" min="0" max="100" value="50" class="slider" id="music-volume-slider">
+                <div class="value-display">50%</div>
+              </div>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-volume-mute"></i>
+                <div>
+                  <div class="setting-name">靜音所有聲音</div>
+                  <div class="setting-description">關閉所有遊戲音效和音樂</div>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="mute-all">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-hand-paper"></i>
+                <div>
+                  <div class="setting-name">觸控控制</div>
+                  <div class="setting-description">啟用移動設備的觸控控制</div>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="touch-controls" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-trophy"></i>
+                <div>
+                  <div class="setting-name">成就通知</div>
+                  <div class="setting-description">獲得成就時顯示通知</div>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="achievement-notifications" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-tachometer-alt"></i>
+                <div>
+                  <div class="setting-name">預設難度</div>
+                  <div class="setting-description">設置新遊戲的預設難度</div>
+                </div>
+              </div>
+              <div class="select-container">
+                <select id="default-difficulty" class="select-styled">
+                  <option value="easy">簡單</option>
+                  <option value="medium" selected>中等</option>
+                  <option value="hard">困難</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-sync-alt"></i>
+                <div>
+                  <div class="setting-name">自動重新開始</div>
+                  <div class="setting-description">遊戲結束後自動重新開始</div>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="auto-restart">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 資料管理 -->
+        <div class="settings-card">
+          <div class="settings-header">
+            <div class="settings-icon">
+              <i class="fas fa-database"></i>
+            </div>
+            <h2 class="settings-title">資料管理</h2>
+          </div>
+          
+          <div class="settings-group">
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-save"></i>
+                <div>
+                  <div class="setting-name">備份遊戲資料</div>
+                  <div class="setting-description">將所有遊戲資料和設定匯出成檔案</div>
+                </div>
+              </div>
+              <button id="backup-data" class="btn btn-outline">匯出資料</button>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-file-import"></i>
+                <div>
+                  <div class="setting-name">還原遊戲資料</div>
+                  <div class="setting-description">從檔案匯入遊戲資料和設定</div>
+                </div>
+              </div>
+              <button id="restore-data" class="btn btn-outline">匯入資料</button>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-eraser"></i>
+                <div>
+                  <div class="setting-name">重設最高分數</div>
+                  <div class="setting-description">清除所有遊戲的最高分數記錄</div>
+                </div>
+              </div>
+              <button id="reset-scores" class="btn btn-outline">重設分數</button>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <i class="fas fa-trash-alt"></i>
+                <div>
+                  <div class="setting-name">清除所有資料</div>
+                  <div class="setting-description">刪除所有遊戲資料和設定</div>
+                </div>
+              </div>
+              <button id="clear-all-data" class="btn btn-danger">清除資料</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="button-group" style="margin-top: 30px;">
+          <button id="reset-settings" class="btn btn-outline">重設所有設定</button>
+          <button id="save-settings" class="btn btn-primary">儲存設定</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-links">
+            <a href="profile.html#achievements">成就一覽</a>
+            <a href="profile.html#statistics">遊戲統計</a>
+            <a href="dashboard.html">遊戲儀表板</a>
+          </div>
+          <p>&copy; 2025 網頁小遊戲合集 | 使用純 JavaScript 開發</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="gameUtils.js"></script>
+    <script src="themeManager.js"></script>
+    <script src="soundManager.js"></script>
+    
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        // DOM 元素
+        const themeModeToggle = document.getElementById('theme-mode');
+        const fontSizeSlider = document.getElementById('font-size-slider');
+        const fontSizeDisplay = fontSizeSlider.nextElementSibling;
+        const soundVolumeSlider = document.getElementById('sound-volume-slider');
+        const soundVolumeDisplay = soundVolumeSlider.nextElementSibling;
+        const musicVolumeSlider = document.getElementById('music-volume-slider');
+        const musicVolumeDisplay = musicVolumeSlider.nextElementSibling;
+        const muteAllToggle = document.getElementById('mute-all');
+        const touchControlsToggle = document.getElementById('touch-controls');
+        const achievementNotificationsToggle = document.getElementById('achievement-notifications');
+        const defaultDifficultySelect = document.getElementById('default-difficulty');
+        const autoRestartToggle = document.getElementById('auto-restart');
+        const backupDataBtn = document.getElementById('backup-data');
+        const restoreDataBtn = document.getElementById('restore-data');
+        const resetScoresBtn = document.getElementById('reset-scores');
+        const clearAllDataBtn = document.getElementById('clear-all-data');
+        const resetSettingsBtn = document.getElementById('reset-settings');
+        const saveSettingsBtn = document.getElementById('save-settings');
+        const settingsMessage = document.getElementById('settings-message');
+        const themeColorButtons = document.querySelectorAll('.button-group .btn-outline[data-color]');
+        const densityOptions = document.querySelectorAll('.density-option');
+
+        // 載入設定
+        function loadSettings() {
+          // 從 localStorage 獲取設定
+          const settings = JSON.parse(localStorage.getItem('gameSettings') || '{}');
+          
+          // 設置預設值
+          const defaultSettings = {
+            theme: 'auto',
+            fontSize: 100,
+            soundVolume: 70,
+            musicVolume: 50,
+            muteAll: false,
+            touchControls: true,
+            achievementNotifications: true,
+            defaultDifficulty: 'medium',
+            autoRestart: false,
+            themeColor: '#2196f3',
+            density: 'comfortable'
+          };
+          
+          // 合併設定
+          const mergedSettings = {...defaultSettings, ...settings};
+          
+          // 應用設定到 UI
+          themeModeToggle.checked = mergedSettings.theme === 'dark';
+          fontSizeSlider.value = mergedSettings.fontSize;
+          fontSizeDisplay.textContent = `${mergedSettings.fontSize}%`;
+          soundVolumeSlider.value = mergedSettings.soundVolume;
+          soundVolumeDisplay.textContent = `${mergedSettings.soundVolume}%`;
+          musicVolumeSlider.value = mergedSettings.musicVolume;
+          musicVolumeDisplay.textContent = `${mergedSettings.musicVolume}%`;
+          muteAllToggle.checked = mergedSettings.muteAll;
+          touchControlsToggle.checked = mergedSettings.touchControls;
+          achievementNotificationsToggle.checked = mergedSettings.achievementNotifications;
+          defaultDifficultySelect.value = mergedSettings.defaultDifficulty;
+          autoRestartToggle.checked = mergedSettings.autoRestart;
+          
+          // 設置主題顏色
+          themeColorButtons.forEach(button => {
+            if (button.dataset.color === mergedSettings.themeColor) {
+              button.classList.remove('btn-outline');
+              button.classList.add('btn-primary');
+            } else {
+              button.classList.add('btn-outline');
+              button.classList.remove('btn-primary');
+            }
+          });
+          
+          // 設置密度選項
+          densityOptions.forEach(option => {
+            if (option.dataset.density === mergedSettings.density) {
+              option.classList.add('active');
+            } else {
+              option.classList.remove('active');
+            }
+          });
+          
+          // 設置音效音量
+          if (window.soundManager) {
+            soundManager.setSoundVolume(mergedSettings.soundVolume / 100);
+            soundManager.setMusicVolume(mergedSettings.musicVolume / 100);
+            soundManager.setMuted(mergedSettings.muteAll);
+          }
+          
+          // 應用字體大小
+          document.documentElement.style.fontSize = `${mergedSettings.fontSize}%`;
+        }
+        
+        // 保存設定
+        function saveSettings() {
+          const settings = {
+            theme: themeModeToggle.checked ? 'dark' : 'light',
+            fontSize: parseInt(fontSizeSlider.value),
+            soundVolume: parseInt(soundVolumeSlider.value),
+            musicVolume: parseInt(musicVolumeSlider.value),
+            muteAll: muteAllToggle.checked,
+            touchControls: touchControlsToggle.checked,
+            achievementNotifications: achievementNotificationsToggle.checked,
+            defaultDifficulty: defaultDifficultySelect.value,
+            autoRestart: autoRestartToggle.checked,
+            themeColor: document.querySelector('.button-group .btn-primary[data-color]').dataset.color,
+            density: document.querySelector('.density-option.active').dataset.density
+          };
+          
+          // 保存到 localStorage
+          localStorage.setItem('gameSettings', JSON.stringify(settings));
+          
+          // 設置音效音量
+          if (window.soundManager) {
+            soundManager.setSoundVolume(settings.soundVolume / 100);
+            soundManager.setMusicVolume(settings.musicVolume / 100);
+            soundManager.setMuted(settings.muteAll);
+          }
+          
+          // 應用字體大小
+          document.documentElement.style.fontSize = `${settings.fontSize}%`;
+          
+          // 應用主題
+          if (window.themeManager) {
+            themeManager.setTheme(settings.theme);
+          }
+          
+          // 顯示保存成功消息
+          showMessage('設定已成功保存！', 'success');
+        }
+        
+        // 顯示消息
+        function showMessage(msg, type) {
+          settingsMessage.textContent = msg;
+          settingsMessage.className = `settings-message ${type}`;
+          settingsMessage.style.display = 'block';
+          
+          setTimeout(() => {
+            settingsMessage.style.opacity = '0';
+            setTimeout(() => {
+              settingsMessage.style.display = 'none';
+              settingsMessage.style.opacity = '1';
+            }, 300);
+          }, 3000);
+        }
+        
+        // 備份資料
+        function backupData() {
+          try {
+            const data = {
+              gameSettings: JSON.parse(localStorage.getItem('gameSettings') || '{}'),
+              gameStats: JSON.parse(localStorage.getItem('gameStats') || '{}'),
+              highScores: JSON.parse(localStorage.getItem('highScores') || '{}'),
+              achievements: JSON.parse(localStorage.getItem('achievements') || '[]'),
+              timestamp: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `web-game-backup-${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage('資料備份成功！', 'success');
+          } catch (error) {
+            console.error('備份資料錯誤:', error);
+            showMessage('備份資料時發生錯誤', 'error');
+          }
+        }
+        
+        // 還原資料
+        function restoreData() {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = '.json';
+          
+          input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = event => {
+              try {
+                const data = JSON.parse(event.target.result);
+                
+                // 驗證資料
+                if (!data.gameSettings && !data.gameStats) {
+                  throw new Error('無效的備份檔案');
+                }
+                
+                // 儲存資料
+                if (data.gameSettings) localStorage.setItem('gameSettings', JSON.stringify(data.gameSettings));
+                if (data.gameStats) localStorage.setItem('gameStats', JSON.stringify(data.gameStats));
+                if (data.highScores) localStorage.setItem('highScores', JSON.stringify(data.highScores));
+                if (data.achievements) localStorage.setItem('achievements', JSON.stringify(data.achievements));
+                
+                // 重新載入設定
+                loadSettings();
+                
+                showMessage('資料還原成功！', 'success');
+              } catch (error) {
+                console.error('還原資料錯誤:', error);
+                showMessage('還原資料時發生錯誤', 'error');
+              }
+            };
+            reader.readAsText(file);
+          };
+          
+          input.click();
+        }
+        
+        // 重設最高分數
+        function resetScores() {
+          if (confirm('確定要重設所有遊戲的最高分數嗎？此操作無法撤銷。')) {
+            localStorage.setItem('highScores', JSON.stringify({}));
+            
+            // 更新遊戲統計中的高分
+            const gameStats = JSON.parse(localStorage.getItem('gameStats') || '{"games":{}}');
+            Object.keys(gameStats.games).forEach(gameId => {
+              gameStats.games[gameId].highScore = 0;
+            });
+            localStorage.setItem('gameStats', JSON.stringify(gameStats));
+            
+            showMessage('所有最高分數已重設', 'success');
+          }
+        }
+        
+        // 清除所有資料
+        function clearAllData() {
+          if (confirm('確定要清除所有遊戲資料和設定嗎？此操作無法撤銷。')) {
+            localStorage.removeItem('gameSettings');
+            localStorage.removeItem('gameStats');
+            localStorage.removeItem('highScores');
+            localStorage.removeItem('achievements');
+            localStorage.removeItem('soundSettings');
+            
+            // 重載設定
+            loadSettings();
+            
+            showMessage('所有遊戲資料已清除', 'success');
+          }
+        }
+        
+        // 事件監聽
+        fontSizeSlider.addEventListener('input', () => {
+          const value = fontSizeSlider.value;
+          fontSizeDisplay.textContent = `${value}%`;
+          document.documentElement.style.fontSize = `${value}%`;
+        });
+        
+        soundVolumeSlider.addEventListener('input', () => {
+          const value = soundVolumeSlider.value;
+          soundVolumeDisplay.textContent = `${value}%`;
+          if (window.soundManager && !muteAllToggle.checked) {
+            soundManager.setSoundVolume(value / 100);
+          }
+        });
+        
+        musicVolumeSlider.addEventListener('input', () => {
+          const value = musicVolumeSlider.value;
+          musicVolumeDisplay.textContent = `${value}%`;
+          if (window.soundManager && !muteAllToggle.checked) {
+            soundManager.setMusicVolume(value / 100);
+          }
+        });
+        
+        muteAllToggle.addEventListener('change', () => {
+          if (window.soundManager) {
+            soundManager.setMuted(muteAllToggle.checked);
+          }
+        });
+        
+        themeColorButtons.forEach(button => {
+          button.addEventListener('click', () => {
+            themeColorButtons.forEach(btn => {
+              btn.classList.remove('btn-primary');
+              btn.classList.add('btn-outline');
+            });
+            button.classList.remove('btn-outline');
+            button.classList.add('btn-primary');
+          });
+        });
+        
+        densityOptions.forEach(option => {
+          option.addEventListener('click', () => {
+            densityOptions.forEach(opt => opt.classList.remove('active'));
+            option.classList.add('active');
+          });
+        });
+        
+        backupDataBtn.addEventListener('click', backupData);
+        restoreDataBtn.addEventListener('click', restoreData);
+        resetScoresBtn.addEventListener('click', resetScores);
+        clearAllDataBtn.addEventListener('click', clearAllData);
+        resetSettingsBtn.addEventListener('click', () => {
+          if (confirm('確定要重設所有設定嗎？')) {
+            localStorage.removeItem('gameSettings');
+            loadSettings();
+            showMessage('所有設定已重設為預設值', 'success');
+          }
+        });
+        
+        saveSettingsBtn.addEventListener('click', saveSettings);
+        
+        // 初始化設定
+        loadSettings();
+        
+        // 測試音效
+        soundVolumeSlider.addEventListener('change', () => {
+          if (window.soundManager && !muteAllToggle.checked) {
+            soundManager.playSound('ding.mp3', {volume: soundVolumeSlider.value / 100});
+          }
+        });
+        
+        // 嘗試播放一個測試音效
+        if (window.soundManager) {
+          soundManager.generateTone(440, 200, {
+            volume: 0.5,
+            type: 'sine'
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>遊戲成就儀表板 - 網頁小遊戲</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .stat-card {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        transition: transform 0.3s ease;
+      }
+
+      .stat-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .stat-icon {
+        font-size: 36px;
+        margin-bottom: 15px;
+        color: var(--primary-color);
+      }
+
+      .stat-value {
+        font-size: 32px;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: var(--text-color-dark);
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: var(--text-color-light);
+      }
+
+      .game-progress {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .progress-title {
+        margin: 0;
+        font-size: 24px;
+        color: var(--text-color-dark);
+      }
+
+      .progress-filter select {
+        padding: 8px 15px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        background-color: white;
+        font-family: 'Noto Sans TC', sans-serif;
+      }
+
+      .game-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+      }
+
+      .game-progress-card {
+        background: linear-gradient(to right, var(--secondary-light), var(--secondary-color));
+        border-radius: 8px;
+        padding: 15px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .game-info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .game-icon {
+        width: 50px;
+        height: 50px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-right: 15px;
+      }
+
+      .game-details h3 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .game-details p {
+        margin: 5px 0 0 0;
+        font-size: 14px;
+        opacity: 0.8;
+      }
+
+      .progress-container {
+        height: 10px;
+        background-color: rgba(255, 255, 255, 0.3);
+        border-radius: 5px;
+        margin-bottom: 10px;
+      }
+
+      .progress-bar {
+        height: 100%;
+        border-radius: 5px;
+        background-color: white;
+        width: 0%;
+        transition: width 1s ease;
+      }
+
+      .progress-stats {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+      }
+
+      .achievement-section {
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        padding: 25px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .achievements-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .achievements-title {
+        margin: 0;
+        font-size: 24px;
+        color: var(--text-color-dark);
+      }
+
+      .achievements-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+      }
+
+      .achievement-card {
+        background-color: var(--background-color);
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        border: 1px solid #eee;
+        transition: transform 0.3s ease;
+      }
+
+      .achievement-card:hover {
+        transform: scale(1.03);
+      }
+
+      .achievement-card.unlocked {
+        border-color: var(--primary-color);
+        box-shadow: 0 5px 15px rgba(33, 150, 243, 0.2);
+      }
+
+      .achievement-card.locked {
+        opacity: 0.7;
+        filter: grayscale(0.8);
+      }
+
+      .achievement-icon {
+        font-size: 32px;
+        margin-bottom: 10px;
+        color: var(--primary-color);
+      }
+
+      .achievement-card.locked .achievement-icon {
+        color: #999;
+      }
+
+      .achievement-name {
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: var(--text-color-dark);
+      }
+
+      .achievement-description {
+        font-size: 12px;
+        color: var(--text-color-light);
+        margin-bottom: 10px;
+      }
+
+      .achievement-progress {
+        height: 6px;
+        background-color: #eee;
+        border-radius: 3px;
+        margin-top: 10px;
+      }
+
+      .achievement-progress-bar {
+        height: 100%;
+        border-radius: 3px;
+        background-color: var(--primary-color);
+        width: 0%;
+      }
+
+      /* 暗黑模式調整 */
+      @media (prefers-color-scheme: dark) {
+        .stat-card {
+          background-color: #2a2a2a;
+        }
+
+        .game-progress, .achievement-section {
+          background-color: #2a2a2a;
+        }
+
+        .progress-filter select {
+          background-color: #333;
+          color: #fff;
+          border-color: #444;
+        }
+
+        .achievement-card {
+          background-color: #333;
+          border-color: #444;
+        }
+
+        .achievement-progress {
+          background-color: #444;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+            <li><a href="profile.html">個人檔案</a></li>
+            <li>
+              <button id="theme-toggle" aria-label="切換主題">
+                <span class="theme-icon light-icon">☀️</span>
+                <span class="theme-icon dark-icon">🌙</span>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="page-title">
+        <div class="container">
+          <h1>遊戲成就儀表板</h1>
+          <p>追蹤你在所有遊戲中的進度與成就</p>
+        </div>
+      </div>
+
+      <div class="dashboard-container">
+        <!-- 統計概覽 -->
+        <div class="stats-overview">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-gamepad"></i>
+            </div>
+            <div class="stat-value" id="played-games">0</div>
+            <div class="stat-label">已玩遊戲數</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-trophy"></i>
+            </div>
+            <div class="stat-value" id="total-achievements">0</div>
+            <div class="stat-label">獲得成就數</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-value" id="total-playtime">0</div>
+            <div class="stat-label">總遊戲時間 (分鐘)</div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">
+              <i class="fas fa-star"></i>
+            </div>
+            <div class="stat-value" id="total-score">0</div>
+            <div class="stat-label">總積分</div>
+          </div>
+        </div>
+
+        <!-- 遊戲進度 -->
+        <div class="game-progress">
+          <div class="progress-header">
+            <h2 class="progress-title">遊戲進度</h2>
+            <div class="progress-filter">
+              <select id="sort-games">
+                <option value="played">依遊玩時間排序</option>
+                <option value="progress">依完成度排序</option>
+                <option value="name">依名稱排序</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="game-list" id="game-list">
+            <!-- 動態填充遊戲進度卡片 -->
+          </div>
+        </div>
+
+        <!-- 成就展示 -->
+        <div class="achievement-section">
+          <div class="achievements-header">
+            <h2 class="achievements-title">最近解鎖的成就</h2>
+            <a href="profile.html#achievements" class="view-all-link">查看全部</a>
+          </div>
+
+          <div class="achievements-grid" id="achievements-grid">
+            <!-- 動態填充成就卡片 -->
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-links">
+            <a href="profile.html#achievements">成就一覽</a>
+            <a href="profile.html#statistics">遊戲統計</a>
+            <a href="profile.html#settings">設定</a>
+          </div>
+          <p>&copy; 2025 網頁小遊戲合集 | 使用純 JavaScript 開發</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="gameUtils.js"></script>
+    <script src="themeManager.js"></script>
+    <script src="achievements.js"></script>
+    <script src="gameStats.js"></script>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        // 獲取DOM元素
+        const playedGamesEl = document.getElementById('played-games');
+        const totalAchievementsEl = document.getElementById('total-achievements');
+        const totalPlaytimeEl = document.getElementById('total-playtime');
+        const totalScoreEl = document.getElementById('total-score');
+        const gameListEl = document.getElementById('game-list');
+        const achievementsGridEl = document.getElementById('achievements-grid');
+        const sortGamesSelect = document.getElementById('sort-games');
+
+        // 從localStorage獲取遊戲資料
+        function getGameStats() {
+          const stats = localStorage.getItem('gameStats');
+          return stats ? JSON.parse(stats) : {
+            games: {},
+            achievements: [],
+            totalPlaytime: 0,
+            totalScore: 0
+          };
+        }
+
+        // 更新統計數據
+        function updateStats() {
+          const stats = getGameStats();
+          const playedGames = Object.keys(stats.games).filter(game => stats.games[game].timesPlayed > 0);
+          
+          playedGamesEl.textContent = playedGames.length;
+          totalAchievementsEl.textContent = stats.achievements.filter(a => a.unlocked).length;
+          totalPlaytimeEl.textContent = Math.floor(stats.totalPlaytime / 60); // 轉換為分鐘
+          totalScoreEl.textContent = stats.totalScore.toLocaleString();
+        }
+
+        // 生成遊戲進度卡片
+        function renderGameProgress(sortBy = 'played') {
+          const stats = getGameStats();
+          const games = Object.keys(stats.games).map(key => {
+            return {
+              id: key,
+              ...stats.games[key]
+            };
+          });
+
+          // 排序遊戲
+          if (sortBy === 'played') {
+            games.sort((a, b) => b.lastPlayed - a.lastPlayed);
+          } else if (sortBy === 'progress') {
+            games.sort((a, b) => b.progress - a.progress);
+          } else if (sortBy === 'name') {
+            games.sort((a, b) => a.name.localeCompare(b.name));
+          }
+
+          gameListEl.innerHTML = '';
+          
+          games.forEach(game => {
+            if (game.timesPlayed > 0) {
+              const progressPercent = Math.min(100, Math.max(0, game.progress || 0));
+              const gameCard = document.createElement('div');
+              gameCard.className = 'game-progress-card';
+              gameCard.innerHTML = `
+                <div class="game-info">
+                  <div class="game-icon">
+                    <i class="fas ${getGameIcon(game.id)}"></i>
+                  </div>
+                  <div class="game-details">
+                    <h3>${game.name || game.id}</h3>
+                    <p>遊玩 ${game.timesPlayed} 次 • 最高分: ${game.highScore.toLocaleString()}</p>
+                  </div>
+                </div>
+                <div class="progress-container">
+                  <div class="progress-bar" style="width: ${progressPercent}%"></div>
+                </div>
+                <div class="progress-stats">
+                  <span>完成度: ${progressPercent}%</span>
+                  <span>最後遊玩: ${formatDate(game.lastPlayed)}</span>
+                </div>
+              `;
+              gameListEl.appendChild(gameCard);
+            }
+          });
+
+          // 如果沒有遊戲記錄
+          if (games.filter(g => g.timesPlayed > 0).length === 0) {
+            gameListEl.innerHTML = '<p style="text-align: center; color: #666;">尚未遊玩任何遊戲</p>';
+          }
+        }
+
+        // 生成成就卡片
+        function renderAchievements() {
+          const stats = getGameStats();
+          const achievements = stats.achievements.filter(a => a.unlocked).sort((a, b) => b.unlockedTime - a.unlockedTime).slice(0, 8);
+          
+          achievementsGridEl.innerHTML = '';
+          
+          achievements.forEach(achievement => {
+            const achievementCard = document.createElement('div');
+            achievementCard.className = `achievement-card unlocked`;
+            achievementCard.innerHTML = `
+              <div class="achievement-icon">
+                <i class="fas ${achievement.icon || 'fa-award'}"></i>
+              </div>
+              <div class="achievement-name">${achievement.name}</div>
+              <div class="achievement-description">${achievement.description}</div>
+              <div class="achievement-date">${formatDate(achievement.unlockedTime)}</div>
+            `;
+            achievementsGridEl.appendChild(achievementCard);
+          });
+
+          // 如果沒有成就
+          if (achievements.length === 0) {
+            achievementsGridEl.innerHTML = '<p style="text-align: center; color: #666; grid-column: 1/-1;">尚未獲得任何成就</p>';
+          }
+        }
+
+        // 幫助函數: 獲取遊戲圖標
+        function getGameIcon(gameId) {
+          const iconMap = {
+            'tetris': 'fa-shapes',
+            'snake-game': 'fa-dragon',
+            'music-memory': 'fa-music',
+            'bouncing-ball': 'fa-basketball-ball',
+            'memory-match': 'fa-brain',
+            'math-challenge': 'fa-calculator',
+            'word-guess': 'fa-spell-check',
+            'breakout': 'fa-cubes',
+            'pacman': 'fa-dot-circle',
+            'whack-a-mole': 'fa-gavel',
+            'rock-paper-scissors': 'fa-hand-rock',
+            'connect-lines': 'fa-project-diagram',
+            'coloring-game': 'fa-paint-brush',
+            'mario': 'fa-running',
+            'shooter': 'fa-fighter-jet',
+            'tower-defense': 'fa-chess-rook',
+            '2048': 'fa-th',
+            'sliding-puzzle': 'fa-puzzle-piece',
+            'maze-game': 'fa-map-signs'
+          };
+          
+          return iconMap[gameId] || 'fa-gamepad';
+        }
+
+        // 幫助函數: 格式化日期
+        function formatDate(timestamp) {
+          if (!timestamp) return '從未遊玩';
+          
+          const date = new Date(timestamp);
+          const now = new Date();
+          const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+          
+          if (diffDays === 0) return '今天';
+          if (diffDays === 1) return '昨天';
+          if (diffDays < 7) return `${diffDays}天前`;
+          return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
+        }
+
+        // 初始化頁面
+        function initDashboard() {
+          updateStats();
+          renderGameProgress('played');
+          renderAchievements();
+          
+          // 監聽排序選擇
+          sortGamesSelect.addEventListener('change', (e) => {
+            renderGameProgress(e.target.value);
+          });
+        }
+
+        // 初始化儀表板
+        initDashboard();
+      });
+    </script>
+  </body>
+</html>

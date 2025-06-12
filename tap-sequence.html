@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>序列點擊 - 網頁小遊戲</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        overflow: hidden;
+        user-select: none;
+      }
+
+      .game-container {
+        text-align: center;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        max-width: 700px;
+        width: 90%;
+      }
+
+      .game-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 2rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .info-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.8rem;
+        border-radius: 10px;
+        min-width: 100px;
+      }
+
+      .info-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-bottom: 0.3rem;
+      }
+
+      .info-value {
+        font-size: 1.3rem;
+        font-weight: bold;
+      }
+
+      .game-area {
+        margin: 2rem 0;
+        min-height: 450px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+      }
+
+      .status-text {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        min-height: 40px;
+        color: #ffd700;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .sequence-display {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: 10px;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .sequence-number {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem;
+        border-radius: 8px;
+        min-width: 40px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .sequence-number.highlight {
+        background: #4caf50;
+        transform: scale(1.2);
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+      }
+
+      .numbers-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        max-width: 300px;
+        width: 100%;
+      }
+
+      .number-btn {
+        width: 80px;
+        height: 80px;
+        border: none;
+        border-radius: 15px;
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        position: relative;
+        overflow: hidden;
+        margin: 0 auto;
+      }
+
+      .number-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .number-btn:active {
+        transform: scale(0.95);
+      }
+
+      .number-btn.correct {
+        animation: correctPulse 0.6s ease-in-out;
+      }
+
+      .number-btn.wrong {
+        animation: wrongShake 0.6s ease-in-out;
+      }
+
+      .number-btn.highlight {
+        background: linear-gradient(135deg, #4caf50, #45a049);
+        box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
+        transform: scale(1.2);
+      }
+
+      .number-btn.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+
+      @keyframes correctPulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.3);
+          background: linear-gradient(135deg, #4caf50, #45a049);
+          box-shadow: 0 0 25px rgba(76, 175, 80, 0.8);
+        }
+      }
+
+      @keyframes wrongShake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-10px);
+        }
+        75% {
+          transform: translateX(10px);
+        }
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 5px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #45a049);
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      .round-indicator {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        opacity: 0.9;
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+      }
+
+      .btn {
+        padding: 0.8rem 1.5rem;
+        border: none;
+        border-radius: 25px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .btn-primary {
+        background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background: rgba(255, 255, 255, 0.95);
+        color: #333;
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      }
+
+      .modal h2 {
+        margin-bottom: 1rem;
+        color: #667eea;
+      }
+
+      .modal p {
+        margin-bottom: 1rem;
+        line-height: 1.6;
+      }
+
+      .countdown {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #ff6b6b;
+        margin: 1rem 0;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .feedback {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2rem;
+        font-weight: bold;
+        z-index: 500;
+        pointer-events: none;
+        opacity: 0;
+        transition: all 0.5s ease;
+      }
+
+      .feedback.show {
+        opacity: 1;
+        transform: translate(-50%, -60%);
+      }
+
+      .feedback.correct {
+        color: #4caf50;
+      }
+
+      .feedback.wrong {
+        color: #f44336;
+      }
+
+      @media (max-width: 768px) {
+        .game-container {
+          padding: 1rem;
+        }
+
+        .game-title {
+          font-size: 2rem;
+        }
+
+        .numbers-grid {
+          max-width: 250px;
+          gap: 0.5rem;
+        }
+
+        .number-btn {
+          width: 70px;
+          height: 70px;
+          font-size: 1.5rem;
+        }
+
+        .status-text {
+          font-size: 1.3rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1 class="game-title"><i class="fas fa-list-ol"></i> 序列點擊</h1>
+
+      <div class="game-info">
+        <div class="info-item">
+          <div class="info-label">分數</div>
+          <div class="info-value" id="score">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">回合</div>
+          <div class="info-value" id="round">1</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">序列長度</div>
+          <div class="info-value" id="sequenceLength">3</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">連擊</div>
+          <div class="info-value" id="streak">0</div>
+        </div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <div class="round-indicator" id="roundIndicator">
+        第 1 回合 - 記住序列並重現
+      </div>
+
+      <div class="game-area" id="gameArea">
+        <div class="status-text" id="statusText">按下開始按鈕準備挑戰</div>
+
+        <div class="sequence-display" id="sequenceDisplay">
+          序列將在這裡顯示
+        </div>
+
+        <div class="numbers-grid" id="numbersGrid">
+          <button class="number-btn disabled" data-number="1">1</button>
+          <button class="number-btn disabled" data-number="2">2</button>
+          <button class="number-btn disabled" data-number="3">3</button>
+          <button class="number-btn disabled" data-number="4">4</button>
+          <button class="number-btn disabled" data-number="5">5</button>
+          <button class="number-btn disabled" data-number="6">6</button>
+          <button class="number-btn disabled" data-number="7">7</button>
+          <button class="number-btn disabled" data-number="8">8</button>
+          <button class="number-btn disabled" data-number="9">9</button>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="startBtn">開始遊戲</button>
+        <button class="btn btn-secondary" id="resetBtn">重置</button>
+        <button class="btn" id="helpBtn">說明</button>
+        <select class="btn" id="difficultySelect">
+          <option value="easy">簡單</option>
+          <option value="medium">普通</option>
+          <option value="hard">困難</option>
+          <option value="expert">專家</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <!-- 說明模態框 -->
+    <div class="modal" id="helpModal">
+      <div class="modal-content">
+        <h2><i class="fas fa-list-ol"></i> 序列點擊說明</h2>
+        <p><strong>遊戲目標：</strong>記住數字序列並按順序重現</p>
+        <p><strong>操作方式：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li>觀察顯示的數字序列</li>
+          <li>序列顯示完後，按照相同順序點擊數字</li>
+          <li>正確完成序列可獲得分數和進入下一回合</li>
+          <li>錯誤會結束遊戲</li>
+        </ul>
+        <p><strong>計分系統：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li>基礎分數：序列長度 × 10</li>
+          <li>連擊獎勵：連擊數 × 5</li>
+          <li>完美獎勵：無錯誤額外 + 20分</li>
+        </ul>
+        <p><strong>難度等級：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li>簡單：序列3-7位，顯示時間長</li>
+          <li>普通：序列3-8位，標準顯示時間</li>
+          <li>困難：序列4-9位，顯示時間短</li>
+          <li>專家：序列5-10位，極短顯示時間</li>
+        </ul>
+        <button class="btn btn-primary" onclick="closeModal('helpModal')">
+          知道了
+        </button>
+      </div>
+    </div>
+
+    <!-- 遊戲結束模態框 -->
+    <div class="modal" id="gameOverModal">
+      <div class="modal-content">
+        <h2><i class="fas fa-trophy"></i> 遊戲結束</h2>
+        <div id="finalStats"></div>
+        <button class="btn btn-primary" onclick="closeModal('gameOverModal')">
+          繼續
+        </button>
+        <button class="btn btn-secondary" onclick="resetGame()">
+          再玩一次
+        </button>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class TapSequenceGame {
+        constructor() {
+          this.score = 0;
+          this.round = 1;
+          this.streak = 0;
+          this.maxStreak = 0;
+          this.isPlaying = false;
+          this.isShowingSequence = false;
+          this.isPlayerTurn = false;
+          this.currentSequence = [];
+          this.playerSequence = [];
+          this.playerIndex = 0;
+          this.currentDifficulty = "easy";
+
+          this.difficultySettings = {
+            easy: {
+              minLength: 3,
+              maxLength: 7,
+              displayTime: 800,
+              name: "簡單",
+            },
+            medium: {
+              minLength: 3,
+              maxLength: 8,
+              displayTime: 600,
+              name: "普通",
+            },
+            hard: {
+              minLength: 4,
+              maxLength: 9,
+              displayTime: 500,
+              name: "困難",
+            },
+            expert: {
+              minLength: 5,
+              maxLength: 10,
+              displayTime: 400,
+              name: "專家",
+            },
+          };
+
+          this.initializeGame();
+        }
+
+        initializeGame() {
+          this.bindEvents();
+          this.loadStats();
+          this.updateDisplay();
+        }
+
+        bindEvents() {
+          document
+            .getElementById("startBtn")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("resetBtn")
+            .addEventListener("click", () => this.resetGame());
+          document
+            .getElementById("helpBtn")
+            .addEventListener("click", () => this.showModal("helpModal"));
+          document
+            .getElementById("difficultySelect")
+            .addEventListener("change", (e) =>
+              this.changeDifficulty(e.target.value)
+            );
+
+          // 綁定數字按鈕
+          document.querySelectorAll(".number-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              const number = parseInt(e.target.dataset.number);
+              this.handleNumberClick(number);
+            });
+          });
+        }
+
+        changeDifficulty(difficulty) {
+          this.currentDifficulty = difficulty;
+        }
+
+        startGame() {
+          this.isPlaying = true;
+          this.score = 0;
+          this.round = 1;
+          this.streak = 0;
+
+          document.getElementById("startBtn").textContent = "遊戲中...";
+          document.getElementById("startBtn").disabled = true;
+
+          this.startRound();
+        }
+
+        startRound() {
+          if (!this.isPlaying) return;
+
+          this.playerSequence = [];
+          this.playerIndex = 0;
+          this.isPlayerTurn = false;
+
+          this.generateSequence();
+          this.updateDisplay();
+          this.showSequence();
+        }
+
+        generateSequence() {
+          const settings = this.difficultySettings[this.currentDifficulty];
+          const baseLength = Math.min(
+            settings.minLength + Math.floor(this.round / 3),
+            settings.maxLength
+          );
+          const length = Math.max(settings.minLength, baseLength);
+
+          this.currentSequence = [];
+          for (let i = 0; i < length; i++) {
+            this.currentSequence.push(Math.floor(Math.random() * 9) + 1);
+          }
+        }
+
+        async showSequence() {
+          this.isShowingSequence = true;
+          this.disableButtons();
+
+          document.getElementById("statusText").textContent = "記住這個序列...";
+          document.getElementById("sequenceDisplay").innerHTML = "";
+
+          // 逐個顯示序列中的數字
+          for (let i = 0; i < this.currentSequence.length; i++) {
+            const number = this.currentSequence[i];
+
+            // 在序列顯示區添加數字
+            const numberElement = document.createElement("div");
+            numberElement.className = "sequence-number highlight";
+            numberElement.textContent = number;
+            document
+              .getElementById("sequenceDisplay")
+              .appendChild(numberElement);
+
+            // 高亮對應的按鈕
+            this.highlightButton(number);
+
+            await this.delay(
+              this.difficultySettings[this.currentDifficulty].displayTime
+            );
+
+            // 移除高亮
+            this.removeButtonHighlight(number);
+            numberElement.classList.remove("highlight");
+          }
+
+          // 序列顯示完成，等待玩家輸入
+          this.isShowingSequence = false;
+          this.isPlayerTurn = true;
+          this.enableButtons();
+
+          document.getElementById("statusText").textContent =
+            "按照順序點擊數字";
+
+          // 添加超時機制（30秒）
+          this.playerTimeout = setTimeout(() => {
+            if (this.isPlayerTurn) {
+              this.endGame();
+            }
+          }, 30000);
+        }
+
+        highlightButton(number) {
+          const btn = document.querySelector(`[data-number="${number}"]`);
+          if (btn) {
+            btn.classList.add("highlight");
+          }
+        }
+
+        removeButtonHighlight(number) {
+          const btn = document.querySelector(`[data-number="${number}"]`);
+          if (btn) {
+            btn.classList.remove("highlight");
+          }
+        }
+
+        handleNumberClick(number) {
+          if (!this.isPlayerTurn || this.isShowingSequence) return;
+
+          const expectedNumber = this.currentSequence[this.playerIndex];
+
+          if (number === expectedNumber) {
+            // 正確
+            this.playerSequence.push(number);
+            this.playerIndex++;
+
+            const btn = document.querySelector(`[data-number="${number}"]`);
+            btn.classList.add("correct");
+            setTimeout(() => btn.classList.remove("correct"), 600);
+
+            this.showFeedback("正確!", "correct");
+
+            // 檢查是否完成整個序列
+            if (this.playerIndex >= this.currentSequence.length) {
+              this.completeRound();
+            }
+          } else {
+            // 錯誤
+            const btn = document.querySelector(`[data-number="${number}"]`);
+            btn.classList.add("wrong");
+            setTimeout(() => btn.classList.remove("wrong"), 600);
+
+            this.showFeedback("錯誤!", "wrong");
+            this.endGame();
+          }
+        }
+
+        completeRound() {
+          clearTimeout(this.playerTimeout);
+          this.isPlayerTurn = false;
+          this.streak++;
+          this.maxStreak = Math.max(this.maxStreak, this.streak);
+
+          // 計算分數
+          const baseScore = this.currentSequence.length * 10;
+          const streakBonus = this.streak * 5;
+          const perfectBonus = 20;
+          const totalScore = baseScore + streakBonus + perfectBonus;
+
+          this.score += totalScore;
+
+          this.showFeedback(`完美! +${totalScore}`, "correct");
+
+          // 更新顯示
+          this.updateDisplay();
+
+          // 短暫延遲後進入下一回合
+          setTimeout(() => {
+            this.round++;
+            this.startRound();
+          }, 2000);
+        }
+
+        showFeedback(text, type) {
+          const feedback = document.getElementById("feedback");
+          feedback.textContent = text;
+          feedback.className = `feedback ${type}`;
+          feedback.classList.add("show");
+
+          setTimeout(() => {
+            feedback.classList.remove("show");
+          }, 1500);
+        }
+
+        enableButtons() {
+          document.querySelectorAll(".number-btn").forEach((btn) => {
+            btn.classList.remove("disabled");
+          });
+        }
+
+        disableButtons() {
+          document.querySelectorAll(".number-btn").forEach((btn) => {
+            btn.classList.add("disabled");
+          });
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("round").textContent = this.round;
+          document.getElementById("sequenceLength").textContent =
+            this.currentSequence.length;
+          document.getElementById("streak").textContent = this.streak;
+          document.getElementById(
+            "roundIndicator"
+          ).textContent = `第 ${this.round} 回合 - 記住序列並重現`;
+
+          // 更新進度條
+          const progress = Math.min((this.round - 1) * 10, 100);
+          document.getElementById("progressFill").style.width = progress + "%";
+        }
+
+        endGame() {
+          this.isPlaying = false;
+          this.isPlayerTurn = false;
+          clearTimeout(this.playerTimeout);
+
+          document.getElementById("startBtn").textContent = "開始遊戲";
+          document.getElementById("startBtn").disabled = false;
+          document.getElementById("statusText").textContent = "遊戲結束";
+
+          this.disableButtons();
+          this.saveStats();
+          this.showGameOverModal();
+        }
+
+        resetGame() {
+          this.isPlaying = false;
+          this.isPlayerTurn = false;
+          this.isShowingSequence = false;
+
+          clearTimeout(this.playerTimeout);
+
+          this.score = 0;
+          this.round = 1;
+          this.streak = 0;
+          this.currentSequence = [];
+          this.playerSequence = [];
+          this.playerIndex = 0;
+
+          document.getElementById("startBtn").textContent = "開始遊戲";
+          document.getElementById("startBtn").disabled = false;
+          document.getElementById("statusText").textContent =
+            "按下開始按鈕準備挑戰";
+          document.getElementById("sequenceDisplay").textContent =
+            "序列將在這裡顯示";
+
+          this.disableButtons();
+          this.updateDisplay();
+          this.closeModal("gameOverModal");
+        }
+
+        showGameOverModal() {
+          let performance = "";
+          if (this.round >= 20 && this.maxStreak >= 15)
+            performance = "記憶大師！";
+          else if (this.round >= 15 && this.maxStreak >= 10)
+            performance = "記憶高手！";
+          else if (this.round >= 10 && this.maxStreak >= 5)
+            performance = "記憶達人！";
+          else if (this.round >= 5) performance = "不錯的表現！";
+          else performance = "需要更多練習！";
+
+          document.getElementById("finalStats").innerHTML = `
+            <p><strong>最終分數：</strong>${this.score}</p>
+            <p><strong>完成回合：</strong>${this.round - 1}</p>
+            <p><strong>最高連擊：</strong>${this.maxStreak}</p>
+            <p><strong>難度：</strong>${
+              this.difficultySettings[this.currentDifficulty].name
+            }</p>
+            <p><strong>評價：</strong>${performance}</p>
+          `;
+
+          this.showModal("gameOverModal");
+        }
+
+        showModal(modalId) {
+          document.getElementById(modalId).style.display = "flex";
+        }
+
+        closeModal(modalId) {
+          document.getElementById(modalId).style.display = "none";
+        }
+
+        delay(ms) {
+          return new Promise((resolve) => setTimeout(resolve, ms));
+        }
+
+        saveStats() {
+          const stats = this.loadStats();
+          stats.gamesPlayed++;
+          stats.totalScore += this.score;
+          stats.bestScore = Math.max(stats.bestScore, this.score);
+          stats.bestRound = Math.max(stats.bestRound, this.round - 1);
+          stats.bestStreak = Math.max(stats.bestStreak, this.maxStreak);
+
+          localStorage.setItem("tapSequenceStats", JSON.stringify(stats));
+        }
+
+        loadStats() {
+          const defaultStats = {
+            gamesPlayed: 0,
+            totalScore: 0,
+            bestScore: 0,
+            bestRound: 0,
+            bestStreak: 0,
+          };
+
+          const saved = localStorage.getItem("tapSequenceStats");
+          return saved ? JSON.parse(saved) : defaultStats;
+        }
+      }
+
+      // 全域函數
+      function closeModal(modalId) {
+        document.getElementById(modalId).style.display = "none";
+      }
+
+      function resetGame() {
+        if (window.game) {
+          window.game.resetGame();
+        }
+      }
+
+      // 初始化遊戲
+      window.addEventListener("DOMContentLoaded", () => {
+        window.game = new TapSequenceGame();
+      });
+    </script>
+  </body>
+</html>

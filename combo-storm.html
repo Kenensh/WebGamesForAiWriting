@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>極速連擊 - Combo Storm</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #ff9a56 0%, #ff6b95 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Arial", sans-serif;
+        overflow: hidden;
+      }
+
+      .game-container {
+        width: 90vw;
+        height: 90vh;
+        max-width: 900px;
+        max-height: 700px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 30px;
+        text-align: center;
+        position: relative;
+      }
+
+      h1 {
+        color: white;
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+        color: white;
+        font-size: 1.1em;
+      }
+
+      .stat-box {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .game-area {
+        width: 100%;
+        height: 400px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 15px;
+        position: relative;
+        margin: 20px 0;
+        overflow: hidden;
+      }
+
+      .combo-target {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .combo-target.type-normal {
+        background: linear-gradient(45deg, #3498db, #2980b9);
+      }
+
+      .combo-target.type-fast {
+        background: linear-gradient(45deg, #e74c3c, #c0392b);
+        animation: pulse 0.8s infinite;
+      }
+
+      .combo-target.type-double {
+        background: linear-gradient(45deg, #f39c12, #d68910);
+        border: 3px solid #fff;
+      }
+
+      .combo-target.type-chain {
+        background: linear-gradient(45deg, #9b59b6, #8e44ad);
+        box-shadow: 0 0 20px rgba(155, 89, 182, 0.6);
+      }
+
+      .combo-target:hover {
+        transform: scale(1.1);
+      }
+
+      .combo-target.clicked {
+        animation: clickExplode 0.3s ease;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+      }
+
+      @keyframes clickExplode {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.5);
+          opacity: 0.7;
+        }
+        100% {
+          transform: scale(2);
+          opacity: 0;
+        }
+      }
+
+      .combo-multiplier {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 3em;
+        color: #f39c12;
+        font-weight: bold;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        transform: scale(1);
+        transition: all 0.3s ease;
+      }
+
+      .combo-multiplier.active {
+        transform: scale(1.3);
+        color: #e74c3c;
+      }
+
+      .chain-indicator {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        color: #9b59b6;
+        font-size: 2em;
+        font-weight: bold;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      }
+
+      .power-up-bar {
+        width: 100%;
+        height: 15px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 7px;
+        margin: 15px 0;
+        overflow: hidden;
+      }
+
+      .power-up-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #e74c3c, #f39c12);
+        border-radius: 7px;
+        transition: width 0.3s ease;
+        width: 0%;
+      }
+
+      .controls {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      /* 幫助模態框樣式 */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #ff9a56 0%, #ff6b95 100%);
+        padding: 30px;
+        border-radius: 20px;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        color: white;
+        position: relative;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+
+      .modal h2 {
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 2em;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .modal h3 {
+        margin: 20px 0 10px 0;
+        color: #fff;
+        font-size: 1.3em;
+      }
+
+      .modal p,
+      .modal li {
+        margin: 10px 0;
+        line-height: 1.6;
+        font-size: 1.1em;
+      }
+
+      .modal ul {
+        margin-left: 20px;
+      }
+
+      .close-help {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 0;
+        line-height: 1;
+      }
+
+      .close-help:hover {
+        color: #ff6b6b;
+        transform: scale(1.1);
+      }
+
+      @keyframes scoreFloat {
+        0% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-50px) scale(1.2);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .game-container {
+          width: 95vw;
+          height: 95vh;
+          padding: 20px;
+        }
+
+        h1 {
+          font-size: 2em;
+        }
+
+        .game-stats {
+          grid-template-columns: repeat(2, 1fr);
+          font-size: 1em;
+        }
+
+        .combo-target {
+          width: 45px;
+          height: 45px;
+        }
+
+        .game-area {
+          height: 350px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1>⚡ 極速連擊</h1>
+
+      <div class="game-stats">
+        <div class="stat-box">分數: <span id="score">0</span></div>
+        <div class="stat-box">連擊: <span id="combo">0</span></div>
+        <div class="stat-box">時間: <span id="timer">60</span></div>
+        <div class="stat-box">最高連擊: <span id="maxCombo">0</span></div>
+      </div>
+
+      <div class="power-up-bar">
+        <div class="power-up-fill" id="powerUpFill"></div>
+      </div>
+
+      <div class="difficulty-select">
+        <button class="btn difficulty-btn active" data-difficulty="normal">
+          普通
+        </button>
+        <button class="btn difficulty-btn" data-difficulty="hard">困難</button>
+        <button class="btn difficulty-btn" data-difficulty="extreme">
+          極限
+        </button>
+      </div>
+
+      <div class="status" id="status">
+        準備進行極速連擊挑戰！點擊目標累積連擊分數！
+      </div>
+
+      <div class="game-area" id="gameArea">
+        <div class="combo-multiplier" id="comboMultiplier">x1</div>
+        <div class="chain-indicator" id="chainIndicator">⚡0</div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="startBtn">開始遊戲</button>
+        <button class="btn" id="pauseBtn" style="display: none">暫停</button>
+        <button class="btn" id="resetBtn">重新開始</button>
+        <button class="btn" id="helpBtn">遊戲說明</button>
+      </div>
+    </div>
+
+    <!-- 幫助模態框 -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <button class="close-help">&times;</button>
+        <h2>⚡ 極速連擊 - 遊戲說明</h2>
+
+        <h3>🎯 遊戲目標</h3>
+        <p>
+          快速點擊出現的目標，建立強大的連擊組合！每次成功擊中都會增加連擊計數，達到更高的分數！
+        </p>
+
+        <h3>🎮 操作方式</h3>
+        <ul>
+          <li><strong>點擊目標</strong>：用滑鼠點擊螢幕上出現的彩色圓形目標</li>
+          <li><strong>快速反應</strong>：目標會在短時間內消失，要快速點擊</li>
+          <li><strong>連續擊中</strong>：不要錯過任何目標，保持連擊不斷</li>
+        </ul>
+
+        <h3>🔴 目標類型</h3>
+        <ul>
+          <li><strong>藍色目標</strong>：普通目標，提供基礎分數</li>
+          <li><strong>紅色目標</strong>：快速目標，出現時間短但分數高</li>
+          <li><strong>金色目標</strong>：雙倍目標，提供雙倍分數獎勵</li>
+          <li><strong>綠色目標</strong>：連鎖目標，可觸發連鎖反應</li>
+        </ul>
+
+        <h3>📊 計分系統</h3>
+        <ul>
+          <li><strong>基礎分數</strong>：每個目標的基本分數</li>
+          <li><strong>連擊獎勵</strong>：連擊數越高，分數倍率越大</li>
+          <li><strong>速度獎勵</strong>：反應越快，獲得額外分數</li>
+          <li><strong>特殊獎勵</strong>：擊中特殊目標獲得大量分數</li>
+        </ul>
+
+        <h3>💡 遊戲技巧</h3>
+        <ul>
+          <li>保持專注，快速識別目標類型</li>
+          <li>優先擊中高價值的特殊目標</li>
+          <li>維持連擊，避免錯過目標</li>
+          <li>練習手眼協調和反應速度</li>
+          <li>觀察目標出現的模式和規律</li>
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      class ComboStorm {
+        constructor() {
+          this.gameArea = document.getElementById("gameArea");
+          this.startBtn = document.getElementById("startBtn");
+          this.pauseBtn = document.getElementById("pauseBtn");
+          this.resetBtn = document.getElementById("resetBtn");
+          this.status = document.getElementById("status");
+          this.scoreEl = document.getElementById("score");
+          this.comboEl = document.getElementById("combo");
+          this.timerEl = document.getElementById("timer");
+          this.maxComboEl = document.getElementById("maxCombo");
+          this.comboMultiplier = document.getElementById("comboMultiplier");
+          this.chainIndicator = document.getElementById("chainIndicator");
+          this.powerUpFill = document.getElementById("powerUpFill");
+
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.timeLeft = 60;
+          this.gameActive = false;
+          this.isPaused = false;
+          this.difficulty = "normal";
+          this.powerUpEnergy = 0;
+          this.chainLevel = 0;
+          this.multiplier = 1;
+
+          this.timerInterval = null;
+          this.spawnInterval = null;
+          this.targets = [];
+
+          this.difficulties = {
+            normal: { spawnRate: 1500, targetLife: 3000, speed: 1 },
+            hard: { spawnRate: 1200, targetLife: 2500, speed: 1.3 },
+            extreme: { spawnRate: 900, targetLife: 2000, speed: 1.6 },
+          };
+
+          this.targetTypes = {
+            normal: { score: 10, weight: 60 },
+            fast: { score: 25, weight: 20 },
+            double: { score: 20, weight: 15 },
+            chain: { score: 30, weight: 5 },
+          };
+
+          this.initializeGame();
+        }
+
+        initializeGame() {
+          this.startBtn.addEventListener("click", () => this.startGame());
+          this.pauseBtn.addEventListener("click", () => this.pauseGame());
+          this.resetBtn.addEventListener("click", () => this.resetGame());
+
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) =>
+              this.setDifficulty(e.target.dataset.difficulty)
+            );
+          });
+
+          // 幫助系統
+          document
+            .getElementById("helpBtn")
+            .addEventListener("click", () => this.showHelp());
+
+          this.updateDisplay();
+        }
+
+        setDifficulty(diff) {
+          if (this.gameActive) return;
+
+          this.difficulty = diff;
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.classList.remove("active");
+          });
+          document
+            .querySelector(`[data-difficulty="${diff}"]`)
+            .classList.add("active");
+        }
+
+        startGame() {
+          this.gameActive = true;
+          this.isPaused = false;
+          this.score = 0;
+          this.combo = 0;
+          this.timeLeft = 60;
+          this.powerUpEnergy = 0;
+          this.chainLevel = 0;
+          this.multiplier = 1;
+
+          this.clearTargets();
+          this.updateDisplay();
+          this.startTimer();
+          this.startSpawning();
+
+          this.startBtn.style.display = "none";
+          this.pauseBtn.style.display = "inline-block";
+          this.status.textContent = "遊戲開始！點擊目標獲得分數！";
+        }
+
+        startTimer() {
+          this.timerInterval = setInterval(() => {
+            if (!this.isPaused) {
+              this.timeLeft--;
+              this.updateDisplay();
+
+              if (this.timeLeft <= 0) {
+                this.endGame();
+              }
+            }
+          }, 1000);
+        }
+
+        startSpawning() {
+          const config = this.difficulties[this.difficulty];
+
+          this.spawnInterval = setInterval(() => {
+            if (!this.isPaused && this.gameActive) {
+              this.spawnTarget();
+            }
+          }, config.spawnRate);
+        }
+
+        spawnTarget() {
+          const type = this.getRandomTargetType();
+          const config = this.difficulties[this.difficulty];
+
+          const target = {
+            id: Date.now() + Math.random(),
+            type: type,
+            x: Math.random() * (this.gameArea.offsetWidth - 60),
+            y: Math.random() * (this.gameArea.offsetHeight - 120) + 60,
+            life: config.targetLife,
+            element: null,
+          };
+
+          this.createTargetElement(target);
+          this.targets.push(target);
+
+          // 設置目標生命週期
+          setTimeout(() => {
+            this.removeTarget(target.id);
+            if (this.gameActive) {
+              this.combo = 0;
+              this.multiplier = 1;
+              this.updateDisplay();
+            }
+          }, target.life);
+        }
+
+        getRandomTargetType() {
+          const rand = Math.random() * 100;
+          let cumulative = 0;
+
+          for (const [type, data] of Object.entries(this.targetTypes)) {
+            cumulative += data.weight;
+            if (rand <= cumulative) {
+              return type;
+            }
+          }
+          return "normal";
+        }
+
+        createTargetElement(target) {
+          const element = document.createElement("div");
+          element.className = `combo-target type-${target.type}`;
+          element.style.left = target.x + "px";
+          element.style.top = target.y + "px";
+          element.dataset.id = target.id;
+
+          // 設置目標內容
+          switch (target.type) {
+            case "normal":
+              element.textContent = "●";
+              break;
+            case "fast":
+              element.textContent = "⚡";
+              break;
+            case "double":
+              element.textContent = "×2";
+              break;
+            case "chain":
+              element.textContent = "⚡⚡";
+              break;
+          }
+
+          element.addEventListener("click", () => this.hitTarget(target));
+          target.element = element;
+          this.gameArea.appendChild(element);
+        }
+
+        hitTarget(target) {
+          if (!this.gameActive || this.isPaused) return;
+
+          const baseScore = this.targetTypes[target.type].score;
+          let earnedScore = baseScore;
+
+          // 計算連擊加成
+          this.combo++;
+          this.multiplier = Math.min(Math.floor(this.combo / 5) + 1, 10);
+          earnedScore = Math.floor(baseScore * this.multiplier);
+
+          // 特殊目標效果
+          switch (target.type) {
+            case "double":
+              earnedScore *= 2;
+              break;
+            case "chain":
+              this.chainLevel++;
+              this.powerUpEnergy = Math.min(this.powerUpEnergy + 20, 100);
+              break;
+            case "fast":
+              this.powerUpEnergy = Math.min(this.powerUpEnergy + 10, 100);
+              break;
+          }
+
+          this.score += earnedScore;
+          this.maxCombo = Math.max(this.maxCombo, this.combo);
+
+          // 顯示分數彈出
+          this.showScorePopup(target.x, target.y, earnedScore);
+
+          // 目標點擊動畫
+          target.element.classList.add("clicked");
+          setTimeout(() => this.removeTarget(target.id), 300);
+
+          // 檢查強化模式
+          if (this.powerUpEnergy >= 100) {
+            this.activatePowerUp();
+          }
+
+          this.updateDisplay();
+        }
+
+        activatePowerUp() {
+          this.powerUpEnergy = 0;
+          this.status.textContent = "🔥 強化模式啟動！雙倍分數持續 5 秒！";
+
+          // 臨時提升分數倍率
+          const originalMultiplier = this.multiplier;
+          this.multiplier *= 2;
+
+          setTimeout(() => {
+            this.multiplier = originalMultiplier;
+            this.status.textContent = "繼續連擊獲得更高分數！";
+          }, 5000);
+        }
+
+        showScorePopup(x, y, score) {
+          const popup = document.createElement("div");
+          popup.className = "score-popup";
+          popup.textContent = `+${score}`;
+          popup.style.left = x + "px";
+          popup.style.top = y + "px";
+
+          this.gameArea.appendChild(popup);
+
+          setTimeout(() => {
+            if (popup.parentNode) {
+              popup.parentNode.removeChild(popup);
+            }
+          }, 1000);
+        }
+
+        removeTarget(targetId) {
+          const index = this.targets.findIndex((t) => t.id === targetId);
+          if (index !== -1) {
+            const target = this.targets[index];
+            if (target.element && target.element.parentNode) {
+              target.element.parentNode.removeChild(target.element);
+            }
+            this.targets.splice(index, 1);
+          }
+        }
+
+        clearTargets() {
+          this.targets.forEach((target) => {
+            if (target.element && target.element.parentNode) {
+              target.element.parentNode.removeChild(target.element);
+            }
+          });
+          this.targets = [];
+        }
+
+        updateDisplay() {
+          this.scoreEl.textContent = this.score;
+          this.comboEl.textContent = this.combo;
+          this.timerEl.textContent = this.timeLeft;
+          this.maxComboEl.textContent = this.maxCombo;
+          this.comboMultiplier.textContent = `x${this.multiplier}`;
+          this.chainIndicator.textContent = `⚡${this.chainLevel}`;
+          this.powerUpFill.style.width = this.powerUpEnergy + "%";
+
+          // 連擊倍率視覺效果
+          if (this.combo > 0 && this.combo % 5 === 0) {
+            this.comboMultiplier.classList.add("active");
+            setTimeout(() => {
+              this.comboMultiplier.classList.remove("active");
+            }, 500);
+          }
+        }
+
+        pauseGame() {
+          if (this.gameActive) {
+            this.isPaused = !this.isPaused;
+            this.pauseBtn.textContent = this.isPaused ? "繼續" : "暫停";
+            this.status.textContent = this.isPaused ? "遊戲已暫停" : "遊戲繼續";
+          }
+        }
+
+        endGame() {
+          this.gameActive = false;
+          clearInterval(this.timerInterval);
+          clearInterval(this.spawnInterval);
+          this.clearTargets();
+
+          this.status.textContent = `🎉 遊戲結束！最終分數: ${this.score} | 最高連擊: ${this.maxCombo}`;
+          this.startBtn.style.display = "inline-block";
+          this.pauseBtn.style.display = "none";
+        }
+
+        resetGame() {
+          this.gameActive = false;
+          this.isPaused = false;
+          clearInterval(this.timerInterval);
+          clearInterval(this.spawnInterval);
+
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.timeLeft = 60;
+          this.powerUpEnergy = 0;
+          this.chainLevel = 0;
+          this.multiplier = 1;
+
+          this.clearTargets();
+          this.updateDisplay();
+
+          this.status.textContent =
+            "準備進行極速連擊挑戰！點擊目標累積連擊分數！";
+          this.startBtn.style.display = "inline-block";
+          this.pauseBtn.style.display = "none";
+        }
+
+        showHelp() {
+          document.getElementById("helpModal").style.display = "flex";
+
+          // 為關閉按鈕添加事件監聽器
+          const closeBtn = document.querySelector("#helpModal .close-help");
+          if (closeBtn) {
+            closeBtn.onclick = () => this.closeHelp();
+          }
+
+          // 點擊模態框背景關閉
+          const modal = document.getElementById("helpModal");
+          modal.onclick = (e) => {
+            if (e.target === modal) {
+              this.closeHelp();
+            }
+          };
+
+          // ESC鍵關閉
+          const handleEsc = (e) => {
+            if (e.key === "Escape") {
+              this.closeHelp();
+              document.removeEventListener("keydown", handleEsc);
+            }
+          };
+          document.addEventListener("keydown", handleEsc);
+        }
+
+        closeHelp() {
+          document.getElementById("helpModal").style.display = "none";
+        }
+      }
+
+      // 初始化遊戲
+      window.addEventListener("load", () => {
+        new ComboStorm();
+      });
+    </script>
+  </body>
+</html>

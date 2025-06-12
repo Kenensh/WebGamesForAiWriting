@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>方向挑戰 - 網頁小遊戲</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        overflow: hidden;
+        user-select: none;
+      }
+
+      .game-container {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 2rem;
+        border-radius: 25px;
+        backdrop-filter: blur(15px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        max-width: 800px;
+        width: 90vw;
+        text-align: center;
+      }
+
+      .game-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 2rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .info-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.8rem;
+        border-radius: 10px;
+        min-width: 100px;
+      }
+
+      .info-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-bottom: 0.3rem;
+      }
+
+      .info-value {
+        font-size: 1.3rem;
+        font-weight: bold;
+      }
+
+      .game-area {
+        margin: 2rem 0;
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+      }
+
+      .status-text {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        min-height: 40px;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #8bc34a);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+        width: 0%;
+      }
+
+      .arrow-display {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 2rem 0;
+        min-height: 200px;
+      }
+
+      .main-arrow {
+        font-size: 8rem;
+        color: #ffd700;
+        text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+        transition: all 0.2s ease;
+        animation: pulse 0.5s ease-in-out;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(0.8);
+          opacity: 0;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      .confusion-arrows {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin: 1rem 0;
+      }
+
+      .confusion-arrow {
+        font-size: 2rem;
+        color: rgba(255, 255, 255, 0.4);
+        opacity: 0.6;
+      }
+
+      .timer-display {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #ff5722;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        margin: 1rem 0;
+      }
+
+      .input-area {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin: 2rem 0;
+      }
+
+      .direction-btn {
+        width: 80px;
+        height: 80px;
+        border: 3px solid rgba(255, 255, 255, 0.5);
+        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 2rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        backdrop-filter: blur(10px);
+      }
+
+      .direction-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .direction-btn:active {
+        transform: translateY(0);
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .direction-btn.correct {
+        background: rgba(76, 175, 80, 0.8);
+        border-color: #4caf50;
+        animation: correctPulse 0.5s ease;
+      }
+
+      .direction-btn.wrong {
+        background: rgba(244, 67, 54, 0.8);
+        border-color: #f44336;
+        animation: wrongShake 0.5s ease;
+      }
+
+      @keyframes correctPulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+      }
+
+      @keyframes wrongShake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-10px);
+        }
+        75% {
+          transform: translateX(10px);
+        }
+      }
+
+      .key-hint {
+        position: absolute;
+        bottom: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.8rem;
+        opacity: 0.7;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+
+      .reaction-stats {
+        display: flex;
+        justify-content: space-around;
+        margin: 1rem 0;
+        font-size: 0.9rem;
+      }
+
+      .reaction-stat {
+        text-align: center;
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-primary {
+        background: linear-gradient(45deg, #4caf50, #8bc34a);
+        color: white;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(45deg, #ff5722, #ff9800);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
+      }
+
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .difficulty-select {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        color: white;
+        padding: 8px 16px;
+        font-size: 1rem;
+      }
+
+      .feedback {
+        position: fixed;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 15px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .feedback.show {
+        opacity: 1;
+      }
+
+      .feedback.correct {
+        background: rgba(76, 175, 80, 0.9);
+      }
+
+      .feedback.wrong {
+        background: rgba(244, 67, 54, 0.9);
+      }
+
+      /* 模態框樣式 */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 5% auto;
+        padding: 2rem;
+        border-radius: 25px;
+        width: 90%;
+        max-width: 600px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        color: white;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .modal h2 {
+        margin-bottom: 1rem;
+        color: #ffd700;
+      }
+
+      .modal p,
+      .modal li {
+        margin-bottom: 0.8rem;
+        line-height: 1.6;
+      }
+
+      .modal ul {
+        margin-left: 1rem;
+      }
+
+      @media (max-width: 768px) {
+        .game-container {
+          padding: 1rem;
+          width: 95vw;
+        }
+
+        .game-title {
+          font-size: 2rem;
+        }
+
+        .main-arrow {
+          font-size: 6rem;
+        }
+
+        .direction-btn {
+          width: 60px;
+          height: 60px;
+          font-size: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1 class="game-title"><i class="fas fa-directions"></i> 方向挑戰</h1>
+
+      <div class="game-info">
+        <div class="info-item">
+          <div class="info-label">分數</div>
+          <div class="info-value" id="score">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">連擊</div>
+          <div class="info-value" id="streak">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">正確率</div>
+          <div class="info-value" id="accuracy">100%</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">平均反應</div>
+          <div class="info-value" id="avgReaction">0ms</div>
+        </div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <div class="game-area" id="gameArea">
+        <div class="status-text" id="statusText">準備開始挑戰</div>
+
+        <div class="timer-display" id="timerDisplay" style="display: none">
+          3.0s
+        </div>
+
+        <div class="arrow-display" id="arrowDisplay" style="display: none">
+          <div
+            class="confusion-arrows"
+            id="confusionArrows"
+            style="display: none"
+          >
+            <!-- 干擾箭頭會動態生成 -->
+          </div>
+          <div class="main-arrow" id="mainArrow">↑</div>
+        </div>
+
+        <div class="input-area" id="inputArea" style="display: none">
+          <div class="direction-btn" data-direction="up">
+            <i class="fas fa-arrow-up"></i>
+            <div class="key-hint">↑</div>
+          </div>
+          <div class="direction-btn" data-direction="down">
+            <i class="fas fa-arrow-down"></i>
+            <div class="key-hint">↓</div>
+          </div>
+          <div class="direction-btn" data-direction="left">
+            <i class="fas fa-arrow-left"></i>
+            <div class="key-hint">←</div>
+          </div>
+          <div class="direction-btn" data-direction="right">
+            <i class="fas fa-arrow-right"></i>
+            <div class="key-hint">→</div>
+          </div>
+        </div>
+
+        <div class="reaction-stats" id="reactionStats" style="display: none">
+          <div class="reaction-stat">
+            <div>最快: <span id="fastestReaction">0ms</span></div>
+          </div>
+          <div class="reaction-stat">
+            <div>最慢: <span id="slowestReaction">0ms</span></div>
+          </div>
+          <div class="reaction-stat">
+            <div>總計: <span id="totalRounds">0</span> 回合</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="startBtn">開始遊戲</button>
+        <button class="btn btn-secondary" id="resetBtn">重置</button>
+        <button class="btn" id="helpBtn">說明</button>
+        <select class="btn difficulty-select" id="difficultySelect">
+          <option value="easy">簡單</option>
+          <option value="medium">普通</option>
+          <option value="hard">困難</option>
+          <option value="extreme">極限</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <!-- 說明模態框 -->
+    <div class="modal" id="helpModal">
+      <div class="modal-content">
+        <h2><i class="fas fa-directions"></i> 方向挑戰說明</h2>
+        <p><strong>遊戲目標：</strong>根據箭頭方向快速做出正確反應</p>
+        <p><strong>操作方式：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li>觀察畫面中央顯示的箭頭方向</li>
+          <li>使用鍵盤方向鍵或點擊按鈕回應</li>
+          <li>反應速度越快分數越高</li>
+          <li>錯誤會重置連擊數</li>
+        </ul>
+        <p><strong>計分系統：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li>正確回應：基礎分數 + 速度獎勵</li>
+          <li>連擊獎勵：連擊數 × 10</li>
+          <li>速度獎勵：反應時間越短獎勵越高</li>
+          <li>完美反應(<500ms)：額外獎勵</li>
+        </ul>
+        <p><strong>難度等級：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li><strong>簡單</strong>：3秒反應時間，無干擾</li>
+          <li><strong>普通</strong>：2.5秒反應時間，少量干擾</li>
+          <li><strong>困難</strong>：2秒反應時間，中等干擾</li>
+          <li><strong>極限</strong>：1.5秒反應時間，大量干擾</li>
+        </ul>
+        <button class="btn btn-primary" onclick="closeModal('helpModal')">
+          了解了
+        </button>
+      </div>
+    </div>
+
+    <!-- 遊戲結束模態框 -->
+    <div class="modal" id="gameOverModal">
+      <div class="modal-content">
+        <h2><i class="fas fa-trophy"></i> 遊戲結束</h2>
+        <div id="finalStats"></div>
+        <button class="btn btn-primary" onclick="closeModal('gameOverModal')">
+          繼續
+        </button>
+        <button class="btn btn-secondary" onclick="resetGame()">
+          再玩一次
+        </button>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class DirectionChallengeGame {
+        constructor() {
+          this.score = 0;
+          this.streak = 0;
+          this.maxStreak = 0;
+          this.totalRounds = 0;
+          this.correctRounds = 0;
+          this.reactionTimes = [];
+          this.isPlaying = false;
+          this.currentDirection = "";
+          this.roundStartTime = 0;
+          this.timeLeft = 0;
+          this.timer = null;
+          this.currentDifficulty = "easy";
+
+          this.directions = ["up", "down", "left", "right"];
+          this.arrows = {
+            up: "↑",
+            down: "↓",
+            left: "←",
+            right: "→",
+          };
+
+          this.difficultySettings = {
+            easy: {
+              timeLimit: 3.0,
+              confusion: false,
+              name: "簡單",
+            },
+            medium: {
+              timeLimit: 2.5,
+              confusion: 2,
+              name: "普通",
+            },
+            hard: {
+              timeLimit: 2.0,
+              confusion: 4,
+              name: "困難",
+            },
+            extreme: {
+              timeLimit: 1.5,
+              confusion: 6,
+              name: "極限",
+            },
+          };
+
+          this.initializeGame();
+        }
+
+        initializeGame() {
+          this.bindEvents();
+          this.loadStats();
+          this.updateDisplay();
+        }
+
+        bindEvents() {
+          document
+            .getElementById("startBtn")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("resetBtn")
+            .addEventListener("click", () => this.resetGame());
+          document
+            .getElementById("helpBtn")
+            .addEventListener("click", () => this.showModal("helpModal"));
+          document
+            .getElementById("difficultySelect")
+            .addEventListener("change", (e) =>
+              this.changeDifficulty(e.target.value)
+            );
+
+          // 鍵盤事件
+          document.addEventListener("keydown", (e) => this.handleKeyPress(e));
+
+          // 按鈕點擊事件
+          document.querySelectorAll(".direction-btn").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              if (this.isPlaying) {
+                this.handleDirection(btn.dataset.direction);
+              }
+            });
+          });
+        }
+
+        handleKeyPress(e) {
+          if (!this.isPlaying) return;
+
+          const keyMap = {
+            ArrowUp: "up",
+            ArrowDown: "down",
+            ArrowLeft: "left",
+            ArrowRight: "right",
+          };
+
+          if (keyMap[e.code]) {
+            e.preventDefault();
+            this.handleDirection(keyMap[e.code]);
+          }
+        }
+
+        changeDifficulty(difficulty) {
+          this.currentDifficulty = difficulty;
+        }
+
+        startGame() {
+          this.isPlaying = true;
+          this.score = 0;
+          this.streak = 0;
+          this.totalRounds = 0;
+          this.correctRounds = 0;
+          this.reactionTimes = [];
+
+          document.getElementById("startBtn").textContent = "遊戲中...";
+          document.getElementById("startBtn").disabled = true;
+
+          this.showGameElements();
+          this.startRound();
+        }
+
+        showGameElements() {
+          document.getElementById("arrowDisplay").style.display = "block";
+          document.getElementById("inputArea").style.display = "flex";
+          document.getElementById("reactionStats").style.display = "flex";
+          document.getElementById("timerDisplay").style.display = "block";
+        }
+
+        startRound() {
+          if (!this.isPlaying) return;
+
+          this.totalRounds++;
+          this.currentDirection =
+            this.directions[Math.floor(Math.random() * this.directions.length)];
+
+          this.displayArrow();
+          this.startTimer();
+          this.roundStartTime = Date.now();
+
+          this.updateDisplay();
+        }
+
+        displayArrow() {
+          const mainArrow = document.getElementById("mainArrow");
+          const confusionArrows = document.getElementById("confusionArrows");
+          const settings = this.difficultySettings[this.currentDifficulty];
+
+          // 顯示主箭頭
+          mainArrow.textContent = this.arrows[this.currentDirection];
+          mainArrow.style.animation = "none";
+          setTimeout(
+            () => (mainArrow.style.animation = "pulse 0.5s ease-in-out"),
+            10
+          );
+
+          // 顯示干擾箭頭
+          if (settings.confusion) {
+            confusionArrows.style.display = "flex";
+            confusionArrows.innerHTML = "";
+
+            for (let i = 0; i < settings.confusion; i++) {
+              const confusionDir =
+                this.directions[
+                  Math.floor(Math.random() * this.directions.length)
+                ];
+              const arrow = document.createElement("div");
+              arrow.className = "confusion-arrow";
+              arrow.textContent = this.arrows[confusionDir];
+              confusionArrows.appendChild(arrow);
+            }
+          } else {
+            confusionArrows.style.display = "none";
+          }
+        }
+
+        startTimer() {
+          const settings = this.difficultySettings[this.currentDifficulty];
+          this.timeLeft = settings.timeLimit;
+
+          this.timer = setInterval(() => {
+            this.timeLeft -= 0.1;
+            document.getElementById("timerDisplay").textContent =
+              this.timeLeft.toFixed(1) + "s";
+
+            if (this.timeLeft <= 0) {
+              this.handleTimeout();
+            }
+          }, 100);
+        }
+
+        handleDirection(direction) {
+          if (!this.isPlaying) return;
+
+          clearInterval(this.timer);
+
+          const reactionTime = Date.now() - this.roundStartTime;
+          this.reactionTimes.push(reactionTime);
+
+          const btn = document.querySelector(`[data-direction="${direction}"]`);
+
+          if (direction === this.currentDirection) {
+            // 正確
+            btn.classList.add("correct");
+            this.correctRounds++;
+            this.streak++;
+            this.maxStreak = Math.max(this.maxStreak, this.streak);
+
+            // 計算分數
+            const baseScore = 100;
+            const speedBonus = Math.max(
+              0,
+              Math.floor((3000 - reactionTime) / 10)
+            );
+            const streakBonus = this.streak * 10;
+            const perfectBonus = reactionTime < 500 ? 50 : 0;
+
+            const totalScore =
+              baseScore + speedBonus + streakBonus + perfectBonus;
+            this.score += totalScore;
+
+            this.showFeedback(
+              `+${totalScore}分 (${reactionTime}ms)`,
+              "correct"
+            );
+
+            setTimeout(() => {
+              btn.classList.remove("correct");
+              this.startRound();
+            }, 800);
+          } else {
+            // 錯誤
+            btn.classList.add("wrong");
+            this.streak = 0;
+
+            this.showFeedback(`錯誤! (${reactionTime}ms)`, "wrong");
+
+            // 顯示正確答案
+            const correctBtn = document.querySelector(
+              `[data-direction="${this.currentDirection}"]`
+            );
+            correctBtn.classList.add("correct");
+
+            setTimeout(() => {
+              btn.classList.remove("wrong");
+              correctBtn.classList.remove("correct");
+
+              if (this.totalRounds >= 20) {
+                this.endGame();
+              } else {
+                this.startRound();
+              }
+            }, 1500);
+          }
+
+          this.updateDisplay();
+        }
+
+        handleTimeout() {
+          clearInterval(this.timer);
+          this.streak = 0;
+
+          this.showFeedback("時間到!", "wrong");
+
+          // 顯示正確答案
+          const correctBtn = document.querySelector(
+            `[data-direction="${this.currentDirection}"]`
+          );
+          correctBtn.classList.add("correct");
+
+          setTimeout(() => {
+            correctBtn.classList.remove("correct");
+
+            if (this.totalRounds >= 20) {
+              this.endGame();
+            } else {
+              this.startRound();
+            }
+          }, 1500);
+
+          this.updateDisplay();
+        }
+
+        showFeedback(message, type) {
+          const feedback = document.getElementById("feedback");
+          feedback.textContent = message;
+          feedback.className = `feedback show ${type}`;
+
+          setTimeout(() => {
+            feedback.classList.remove("show");
+          }, 800);
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("streak").textContent = this.streak;
+
+          const accuracy =
+            this.totalRounds > 0
+              ? Math.round((this.correctRounds / this.totalRounds) * 100)
+              : 100;
+          document.getElementById("accuracy").textContent = accuracy + "%";
+
+          const avgReaction =
+            this.reactionTimes.length > 0
+              ? Math.round(
+                  this.reactionTimes.reduce((a, b) => a + b, 0) /
+                    this.reactionTimes.length
+                )
+              : 0;
+          document.getElementById("avgReaction").textContent =
+            avgReaction + "ms";
+
+          if (this.reactionTimes.length > 0) {
+            document.getElementById("fastestReaction").textContent =
+              Math.min(...this.reactionTimes) + "ms";
+            document.getElementById("slowestReaction").textContent =
+              Math.max(...this.reactionTimes) + "ms";
+          }
+
+          document.getElementById("totalRounds").textContent = this.totalRounds;
+
+          // 更新進度條
+          const progress = (this.totalRounds / 20) * 100;
+          document.getElementById("progressFill").style.width = progress + "%";
+        }
+
+        endGame() {
+          this.isPlaying = false;
+          clearInterval(this.timer);
+
+          document.getElementById("startBtn").textContent = "開始遊戲";
+          document.getElementById("startBtn").disabled = false;
+          document.getElementById("statusText").textContent = "遊戲結束";
+
+          document.getElementById("arrowDisplay").style.display = "none";
+          document.getElementById("inputArea").style.display = "none";
+          document.getElementById("timerDisplay").style.display = "none";
+
+          this.saveStats();
+          this.showGameOverModal();
+        }
+
+        resetGame() {
+          this.isPlaying = false;
+          clearInterval(this.timer);
+
+          this.score = 0;
+          this.streak = 0;
+          this.totalRounds = 0;
+          this.correctRounds = 0;
+          this.reactionTimes = [];
+
+          document.getElementById("startBtn").textContent = "開始遊戲";
+          document.getElementById("startBtn").disabled = false;
+          document.getElementById("statusText").textContent = "準備開始挑戰";
+
+          document.getElementById("arrowDisplay").style.display = "none";
+          document.getElementById("inputArea").style.display = "none";
+          document.getElementById("reactionStats").style.display = "none";
+          document.getElementById("timerDisplay").style.display = "none";
+
+          this.updateDisplay();
+          this.closeModal("gameOverModal");
+        }
+
+        showGameOverModal() {
+          const stats = this.loadStats();
+          const isNewRecord = this.score > stats.bestScore;
+          const avgReaction =
+            this.reactionTimes.length > 0
+              ? Math.round(
+                  this.reactionTimes.reduce((a, b) => a + b, 0) /
+                    this.reactionTimes.length
+                )
+              : 0;
+          const accuracy = Math.round(
+            (this.correctRounds / this.totalRounds) * 100
+          );
+
+          document.getElementById("finalStats").innerHTML = `
+            <p>最終分數: <strong>${this.score.toLocaleString()}</strong></p>
+            <p>正確率: <strong>${accuracy}%</strong> (${this.correctRounds}/${
+            this.totalRounds
+          })</p>
+            <p>最高連擊: <strong>${this.maxStreak}</strong></p>
+            <p>平均反應: <strong>${avgReaction}ms</strong></p>
+            <p>最快反應: <strong>${Math.min(
+              ...this.reactionTimes
+            )}ms</strong></p>
+            <p>難度: <strong>${
+              this.difficultySettings[this.currentDifficulty].name
+            }</strong></p>
+            ${
+              isNewRecord
+                ? '<p style="color: #FFD700;"><i class="fas fa-crown"></i> 新紀錄！</p>'
+                : ""
+            }
+            <hr style="margin: 1rem 0; border: 1px solid rgba(255,255,255,0.3);">
+            <p>歷史最佳: <strong>${stats.bestScore.toLocaleString()}</strong></p>
+            <p>遊戲次數: <strong>${stats.gamesPlayed}</strong></p>
+            <p>最佳反應: <strong>${stats.bestReaction}ms</strong></p>
+          `;
+
+          this.showModal("gameOverModal");
+        }
+
+        saveStats() {
+          const stats = this.loadStats();
+          const avgReaction =
+            this.reactionTimes.length > 0
+              ? Math.round(
+                  this.reactionTimes.reduce((a, b) => a + b, 0) /
+                    this.reactionTimes.length
+                )
+              : Infinity;
+          const fastestReaction =
+            this.reactionTimes.length > 0
+              ? Math.min(...this.reactionTimes)
+              : Infinity;
+
+          stats.gamesPlayed++;
+          stats.totalScore += this.score;
+          stats.bestScore = Math.max(stats.bestScore, this.score);
+          stats.bestStreak = Math.max(stats.bestStreak, this.maxStreak);
+          stats.bestReaction = Math.min(stats.bestReaction, fastestReaction);
+          stats.totalReactions += this.reactionTimes.length;
+
+          localStorage.setItem(
+            "directionChallengeStats",
+            JSON.stringify(stats)
+          );
+        }
+
+        loadStats() {
+          const defaultStats = {
+            gamesPlayed: 0,
+            totalScore: 0,
+            bestScore: 0,
+            bestStreak: 0,
+            bestReaction: Infinity,
+            totalReactions: 0,
+          };
+
+          const saved = localStorage.getItem("directionChallengeStats");
+          return saved ? JSON.parse(saved) : defaultStats;
+        }
+
+        showModal(modalId) {
+          document.getElementById(modalId).style.display = "block";
+        }
+
+        closeModal(modalId) {
+          document.getElementById(modalId).style.display = "none";
+        }
+      }
+
+      // 全域函數
+      function closeModal(modalId) {
+        document.getElementById(modalId).style.display = "none";
+      }
+
+      function resetGame() {
+        if (window.game) {
+          window.game.resetGame();
+        }
+      }
+
+      // 初始化遊戲
+      window.addEventListener("DOMContentLoaded", () => {
+        window.game = new DirectionChallengeGame();
+      });
+    </script>
+  </body>
+</html>

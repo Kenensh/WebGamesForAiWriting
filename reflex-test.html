@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>反射測試 - 網頁小遊戲</title>
+    <link rel="stylesheet" href="game-styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      .test-area {
+        width: 500px;
+        height: 300px;
+        border: 3px solid #2c3e50;
+        border-radius: 15px;
+        margin: 20px auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .test-area.waiting {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+      }
+
+      .test-area.ready {
+        background: linear-gradient(135deg, #2ecc71, #27ae60);
+        color: white;
+        animation: pulse 0.5s infinite alternate;
+      }
+
+      .test-area.too-early {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+        color: white;
+      }
+
+      @keyframes pulse {
+        from {
+          transform: scale(1);
+        }
+        to {
+          transform: scale(1.05);
+        }
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        border: 2px solid #3498db;
+      }
+
+      .reaction-time {
+        font-size: 36px;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 10px 0;
+      }
+
+      .difficulty-selector {
+        margin: 20px 0;
+        text-align: center;
+      }
+
+      .difficulty-selector button {
+        margin: 0 10px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .difficulty-selector button.active {
+        background: #3498db;
+        color: white;
+      }
+
+      .difficulty-selector button:not(.active) {
+        background: #ecf0f1;
+        color: #2c3e50;
+      }
+
+      .results-history {
+        max-height: 200px;
+        overflow-y: auto;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 10px;
+        padding: 15px;
+        margin: 20px 0;
+      }
+
+      .result-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+      }
+
+      .result-item:last-child {
+        border-bottom: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <header class="game-header">
+        <div class="header-left">
+          <a href="index.html" class="back-button">
+            <i class="fas fa-arrow-left"></i> 返回
+          </a>
+        </div>
+        <h1 class="game-title"><i class="fas fa-stopwatch"></i> 反射測試</h1>
+        <div class="header-right">
+          <button id="helpButton" class="help-button">
+            <i class="fas fa-question-circle"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="game-content">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <i class="fas fa-clock"></i>
+            <div>當前反應時間</div>
+            <div class="reaction-time" id="currentTime">-</div>
+            <small>毫秒</small>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-star"></i>
+            <div>最佳紀錄</div>
+            <div class="reaction-time" id="bestTime">-</div>
+            <small>毫秒</small>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-chart-line"></i>
+            <div>平均時間</div>
+            <div class="reaction-time" id="averageTime">-</div>
+            <small>毫秒</small>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-trophy"></i>
+            <div>測試次數</div>
+            <div class="reaction-time" id="testCount">0</div>
+            <small>次</small>
+          </div>
+        </div>
+
+        <div class="difficulty-selector">
+          <h3>選擇難度模式:</h3>
+          <button id="easyMode" class="active">簡單 (2-5秒)</button>
+          <button id="normalMode">普通 (1-4秒)</button>
+          <button id="hardMode">困難 (0.5-3秒)</button>
+        </div>
+
+        <div id="testArea" class="test-area waiting">
+          <div id="testMessage">
+            <i class="fas fa-hand-pointer"></i><br />
+            點擊開始測試反應時間
+          </div>
+        </div>
+
+        <div class="game-controls">
+          <button id="startButton" class="control-button start">
+            <i class="fas fa-play"></i> 開始測試
+          </button>
+          <button id="resetButton" class="control-button reset">
+            <i class="fas fa-redo"></i> 重置紀錄
+          </button>
+        </div>
+
+        <div class="results-history">
+          <h3><i class="fas fa-history"></i> 測試記錄</h3>
+          <div id="resultsContainer">
+            <div style="text-align: center; color: #666">尚無測試記錄</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 說明模態框 -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-stopwatch"></i> 反射測試說明</h2>
+          <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+          <h3>測試目標</h3>
+          <p>測試你的視覺反應速度，看看你能多快對視覺刺激做出反應！</p>
+
+          <h3>操作方式</h3>
+          <ul>
+            <li>點擊 <strong>開始測試</strong> 按鈕</li>
+            <li>等待紅色區域變成 <span style="color: #2ecc71">綠色</span></li>
+            <li>一看到綠色立即點擊</li>
+            <li>系統會顯示你的反應時間</li>
+          </ul>
+
+          <h3>難度模式</h3>
+          <ul>
+            <li><strong>簡單</strong> - 等待時間 2-5 秒</li>
+            <li><strong>普通</strong> - 等待時間 1-4 秒</li>
+            <li><strong>困難</strong> - 等待時間 0.5-3 秒</li>
+          </ul>
+
+          <h3>反應時間評級</h3>
+          <ul>
+            <li><strong>優秀</strong> - 少於 200ms</li>
+            <li><strong>良好</strong> - 200-300ms</li>
+            <li><strong>普通</strong> - 300-400ms</li>
+            <li><strong>需改進</strong> - 多於 400ms</li>
+          </ul>
+
+          <h3>注意事項</h3>
+          <ul>
+            <li>不要提前點擊，會被判定為失敗</li>
+            <li>保持專注，準備好立即反應</li>
+            <li>平均反應時間比單次結果更重要</li>
+            <li>練習可以提升反應速度</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class ReflexTestGame {
+        constructor() {
+          this.testArea = document.getElementById("testArea");
+          this.testMessage = document.getElementById("testMessage");
+
+          this.isWaiting = false;
+          this.isReady = false;
+          this.testStartTime = 0;
+          this.waitTime = 0;
+          this.waitTimer = null;
+
+          this.results = [];
+          this.difficulty = "easy";
+          this.difficultySettings = {
+            easy: { min: 2000, max: 5000 },
+            normal: { min: 1000, max: 4000 },
+            hard: { min: 500, max: 3000 },
+          };
+
+          this.init();
+        }
+
+        init() {
+          this.loadResults();
+          this.bindEvents();
+          this.updateStats();
+        }
+
+        bindEvents() {
+          // 測試區域點擊
+          this.testArea.addEventListener("click", () => this.handleClick());
+
+          // 按鈕事件
+          document
+            .getElementById("startButton")
+            .addEventListener("click", () => this.startTest());
+          document
+            .getElementById("resetButton")
+            .addEventListener("click", () => this.resetResults());
+
+          // 難度選擇
+          document
+            .getElementById("easyMode")
+            .addEventListener("click", () => this.setDifficulty("easy"));
+          document
+            .getElementById("normalMode")
+            .addEventListener("click", () => this.setDifficulty("normal"));
+          document
+            .getElementById("hardMode")
+            .addEventListener("click", () => this.setDifficulty("hard"));
+
+          // 鍵盤事件
+          document.addEventListener("keydown", (e) => {
+            if (e.code === "Space") {
+              e.preventDefault();
+              if (this.isReady) {
+                this.handleClick();
+              } else if (!this.isWaiting) {
+                this.startTest();
+              }
+            }
+          });
+        }
+
+        setDifficulty(difficulty) {
+          this.difficulty = difficulty;
+
+          // 更新按鈕樣式
+          document
+            .querySelectorAll(".difficulty-selector button")
+            .forEach((btn) => {
+              btn.classList.remove("active");
+            });
+          document.getElementById(difficulty + "Mode").classList.add("active");
+
+          // 重置測試狀態
+          this.resetTest();
+        }
+
+        startTest() {
+          if (this.isWaiting || this.isReady) return;
+
+          this.resetTest();
+          this.isWaiting = true;
+
+          // 設定等待時間
+          const settings = this.difficultySettings[this.difficulty];
+          this.waitTime =
+            Math.random() * (settings.max - settings.min) + settings.min;
+
+          // 顯示等待狀態
+          this.testArea.className = "test-area waiting";
+          this.testMessage.innerHTML =
+            '<i class="fas fa-hourglass-half"></i><br>等待綠色出現...';
+
+          // 設定計時器
+          this.waitTimer = setTimeout(() => {
+            this.showReadyState();
+          }, this.waitTime);
+        }
+
+        showReadyState() {
+          this.isWaiting = false;
+          this.isReady = true;
+          this.testStartTime = performance.now();
+
+          this.testArea.className = "test-area ready";
+          this.testMessage.innerHTML =
+            '<i class="fas fa-mouse-pointer"></i><br>立即點擊！';
+        }
+
+        handleClick() {
+          if (this.isWaiting) {
+            // 太早點擊
+            this.showTooEarly();
+          } else if (this.isReady) {
+            // 正確點擊
+            this.recordReaction();
+          } else {
+            // 開始測試
+            this.startTest();
+          }
+        }
+
+        showTooEarly() {
+          clearTimeout(this.waitTimer);
+          this.isWaiting = false;
+          this.isReady = false;
+
+          this.testArea.className = "test-area too-early";
+          this.testMessage.innerHTML =
+            '<i class="fas fa-exclamation-triangle"></i><br>太早了！請重新開始';
+
+          setTimeout(() => {
+            this.resetTest();
+          }, 2000);
+        }
+
+        recordReaction() {
+          const reactionTime = Math.round(
+            performance.now() - this.testStartTime
+          );
+          this.results.push({
+            time: reactionTime,
+            difficulty: this.difficulty,
+            date: new Date(),
+          });
+
+          this.isReady = false;
+          this.saveResults();
+          this.updateStats();
+          this.showResult(reactionTime);
+          this.addToHistory(reactionTime);
+        }
+
+        showResult(reactionTime) {
+          const rating = this.getRating(reactionTime);
+          this.testArea.className = "test-area waiting";
+          this.testMessage.innerHTML = `
+                    <i class="fas fa-trophy"></i><br>
+                    ${reactionTime}ms<br>
+                    <small>${rating}</small>
+                `;
+
+          // 3秒後重置
+          setTimeout(() => {
+            this.resetTest();
+          }, 3000);
+        }
+
+        getRating(time) {
+          if (time < 200) return "優秀！";
+          if (time < 300) return "良好";
+          if (time < 400) return "普通";
+          return "需改進";
+        }
+
+        resetTest() {
+          clearTimeout(this.waitTimer);
+          this.isWaiting = false;
+          this.isReady = false;
+
+          this.testArea.className = "test-area waiting";
+          this.testMessage.innerHTML =
+            '<i class="fas fa-hand-pointer"></i><br>點擊開始測試反應時間';
+        }
+
+        updateStats() {
+          if (this.results.length === 0) {
+            document.getElementById("currentTime").textContent = "-";
+            document.getElementById("bestTime").textContent = "-";
+            document.getElementById("averageTime").textContent = "-";
+            document.getElementById("testCount").textContent = "0";
+            return;
+          }
+
+          const latest = this.results[this.results.length - 1];
+          const best = Math.min(...this.results.map((r) => r.time));
+          const average = Math.round(
+            this.results.reduce((sum, r) => sum + r.time, 0) /
+              this.results.length
+          );
+
+          document.getElementById("currentTime").textContent = latest.time;
+          document.getElementById("bestTime").textContent = best;
+          document.getElementById("averageTime").textContent = average;
+          document.getElementById("testCount").textContent =
+            this.results.length;
+        }
+
+        addToHistory(reactionTime) {
+          const container = document.getElementById("resultsContainer");
+          const rating = this.getRating(reactionTime);
+
+          if (
+            container.firstElementChild?.textContent.includes("尚無測試記錄")
+          ) {
+            container.innerHTML = "";
+          }
+
+          const resultItem = document.createElement("div");
+          resultItem.className = "result-item";
+          resultItem.innerHTML = `
+                    <span>#${this.results.length}</span>
+                    <span>${reactionTime}ms</span>
+                    <span>${rating}</span>
+                `;
+
+          container.insertBefore(resultItem, container.firstChild);
+
+          // 只保留最近20次記錄
+          while (container.children.length > 20) {
+            container.removeChild(container.lastChild);
+          }
+        }
+
+        resetResults() {
+          if (confirm("確定要重置所有測試記錄嗎？")) {
+            this.results = [];
+            this.saveResults();
+            this.updateStats();
+
+            const container = document.getElementById("resultsContainer");
+            container.innerHTML =
+              '<div style="text-align: center; color: #666;">尚無測試記錄</div>';
+
+            this.resetTest();
+          }
+        }
+
+        saveResults() {
+          localStorage.setItem(
+            "reflexTestResults",
+            JSON.stringify(this.results)
+          );
+        }
+
+        loadResults() {
+          const saved = localStorage.getItem("reflexTestResults");
+          if (saved) {
+            this.results = JSON.parse(saved);
+            // 重建歷史記錄顯示
+            this.rebuildHistory();
+          }
+        }
+
+        rebuildHistory() {
+          const container = document.getElementById("resultsContainer");
+          container.innerHTML = "";
+
+          if (this.results.length === 0) {
+            container.innerHTML =
+              '<div style="text-align: center; color: #666;">尚無測試記錄</div>';
+            return;
+          }
+
+          // 顯示最近20次記錄
+          const recentResults = this.results.slice(-20).reverse();
+          recentResults.forEach((result, index) => {
+            const resultNumber = this.results.length - index;
+            const rating = this.getRating(result.time);
+
+            const resultItem = document.createElement("div");
+            resultItem.className = "result-item";
+            resultItem.innerHTML = `
+                        <span>#${resultNumber}</span>
+                        <span>${result.time}ms</span>
+                        <span>${rating}</span>
+                    `;
+            container.appendChild(resultItem);
+          });
+        }
+      }
+
+      // 初始化遊戲
+      let game;
+
+      document.addEventListener("DOMContentLoaded", function () {
+        game = new ReflexTestGame();
+
+        // 初始化遊戲工具
+        if (typeof GameUtils !== "undefined") {
+          GameUtils.initializeGame("reflexTest");
+        }
+      });
+    </script>
+  </body>
+</html>

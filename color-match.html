@@ -1084,11 +1084,14 @@
           btn.addEventListener("click", () => {
             switchMode(btn.dataset.mode);
           });
-        });
-
-        // 設置遊戲控制器
+        }); // 設置遊戲控制器
         gameController.setRestartHandler(() => {
           initGame();
+        });
+
+        // 設置幫助按鈕事件監聽器
+        document.getElementById("helpButton").addEventListener("click", () => {
+          helpModal.show();
         });
 
         // 初始化滑桿顏色

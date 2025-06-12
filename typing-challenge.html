@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>打字挑戰 - 網頁小遊戲</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        overflow: hidden;
+        user-select: none;
+      }
+
+      .game-container {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 2rem;
+        border-radius: 25px;
+        backdrop-filter: blur(15px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        max-width: 900px;
+        width: 90vw;
+        text-align: center;
+      }
+
+      .game-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 2rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .info-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.8rem;
+        border-radius: 10px;
+        min-width: 100px;
+      }
+
+      .info-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-bottom: 0.3rem;
+      }
+
+      .info-value {
+        font-size: 1.3rem;
+        font-weight: bold;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        margin: 1rem 0;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #8bc34a);
+        border-radius: 4px;
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      .game-area {
+        margin: 2rem 0;
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+      }
+
+      .status-text {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+        min-height: 40px;
+      }
+
+      .text-area {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 2rem;
+        max-width: 800px;
+        width: 100%;
+        margin: 1rem 0;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .sample-text {
+        font-size: 1.2rem;
+        line-height: 1.8;
+        letter-spacing: 0.05rem;
+        margin-bottom: 1rem;
+        text-align: left;
+        font-family: "Courier New", monospace;
+      }
+
+      .char {
+        position: relative;
+        padding: 2px;
+      }
+
+      .char.correct {
+        background-color: rgba(76, 175, 80, 0.3);
+        color: #4caf50;
+      }
+
+      .char.incorrect {
+        background-color: rgba(244, 67, 54, 0.3);
+        color: #f44336;
+      }
+
+      .char.current {
+        background-color: rgba(255, 235, 59, 0.3);
+        border-bottom: 2px solid #ffd700;
+        animation: blink 1s infinite;
+      }
+
+      @keyframes blink {
+        0%,
+        50% {
+          opacity: 1;
+        }
+        51%,
+        100% {
+          opacity: 0.5;
+        }
+      }
+
+      .typing-input {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.2rem;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-family: "Courier New", monospace;
+        letter-spacing: 0.05rem;
+        outline: none;
+      }
+
+      .typing-input:focus {
+        border-color: #ffd700;
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+      }
+
+      .typing-input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .stats-display {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+        max-width: 600px;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: 10px;
+        text-align: center;
+      }
+
+      .stat-label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #ffd700;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 10px;
+        color: white;
+        font-size: 1rem;
+        padding: 12px 24px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        min-width: 120px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(45deg, #4caf50, #8bc34a);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(45deg, #ff9800, #ff5722);
+      }
+
+      .btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .difficulty-select {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        color: white;
+        padding: 8px 16px;
+        font-size: 1rem;
+      }
+
+      .feedback {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        z-index: 1000;
+        transition: all 0.3s ease;
+      }
+
+      .feedback.show {
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      .feedback.correct {
+        background: linear-gradient(45deg, #4caf50, #8bc34a);
+      }
+
+      .feedback.wrong {
+        background: linear-gradient(45deg, #f44336, #e91e63);
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 5% auto;
+        padding: 2rem;
+        border-radius: 25px;
+        width: 90%;
+        max-width: 600px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        color: white;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .modal h2 {
+        margin-bottom: 1rem;
+        color: #ffd700;
+      }
+
+      .modal p,
+      .modal li {
+        margin-bottom: 0.8rem;
+        line-height: 1.6;
+      }
+
+      .modal ul {
+        margin-left: 1rem;
+      }
+
+      @media (max-width: 768px) {
+        .game-container {
+          padding: 1rem;
+          width: 95vw;
+        }
+
+        .game-title {
+          font-size: 2rem;
+        }
+
+        .sample-text {
+          font-size: 1rem;
+        }
+
+        .typing-input {
+          font-size: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1 class="game-title"><i class="fas fa-keyboard"></i> 打字挑戰</h1>
+
+      <div class="game-info">
+        <div class="info-item">
+          <div class="info-label">WPM</div>
+          <div class="info-value" id="wpm">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">準確率</div>
+          <div class="info-value" id="accuracy">100%</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">時間</div>
+          <div class="info-value" id="timeLeft">60</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">字符數</div>
+          <div class="info-value" id="charCount">0</div>
+        </div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <div class="game-area" id="gameArea">
+        <div class="status-text" id="statusText">選擇難度開始挑戰</div>
+
+        <div class="text-area" id="textArea" style="display: none">
+          <div class="sample-text" id="sampleText"></div>
+          <input
+            type="text"
+            class="typing-input"
+            id="typingInput"
+            placeholder="在此處輸入文字..."
+            disabled
+          />
+        </div>
+
+        <div class="stats-display" id="statsDisplay" style="display: none">
+          <div class="stat-item">
+            <div class="stat-label">正確字符</div>
+            <div class="stat-value" id="correctChars">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">錯誤字符</div>
+            <div class="stat-value" id="incorrectChars">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">總字符</div>
+            <div class="stat-value" id="totalChars">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">平均WPM</div>
+            <div class="stat-value" id="avgWpm">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn btn-primary" id="startBtn">開始遊戲</button>
+        <button class="btn btn-secondary" id="resetBtn">重置</button>
+        <button class="btn" id="helpBtn">說明</button>
+        <select class="btn difficulty-select" id="difficultySelect">
+          <option value="easy">簡單</option>
+          <option value="medium">普通</option>
+          <option value="hard">困難</option>
+          <option value="expert">專家</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+
+    <!-- 說明模態框 -->
+    <div class="modal" id="helpModal">
+      <div class="modal-content">
+        <h2><i class="fas fa-keyboard"></i> 打字挑戰說明</h2>
+        <p><strong>遊戲目標：</strong>在限定時間內準確快速地輸入顯示的文字</p>
+        <p><strong>操作方式：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li>觀察上方顯示的範例文字</li>
+          <li>在下方輸入框中準確輸入</li>
+          <li>綠色表示正確，紅色表示錯誤</li>
+          <li>黃色游標顯示當前位置</li>
+        </ul>
+        <p><strong>計分系統：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li>WPM：每分鐘字詞數</li>
+          <li>準確率：正確字符比例</li>
+          <li>速度獎勵：高WPM可獲得額外分數</li>
+          <li>準確率獎勵：高準確率可獲得分數加成</li>
+        </ul>
+        <p><strong>難度等級：</strong></p>
+        <ul style="text-align: left; margin: 1rem 0">
+          <li><strong>簡單</strong>：60秒時間，簡單詞彙</li>
+          <li><strong>普通</strong>：45秒時間，常見詞彙</li>
+          <li><strong>困難</strong>：30秒時間，複雜詞彙</li>
+          <li><strong>專家</strong>：20秒時間，專業術語</li>
+        </ul>
+        <button class="btn btn-primary" onclick="closeModal('helpModal')">
+          了解了
+        </button>
+      </div>
+    </div>
+
+    <!-- 遊戲結束模態框 -->
+    <div class="modal" id="gameOverModal">
+      <div class="modal-content">
+        <h2><i class="fas fa-trophy"></i> 遊戲結束</h2>
+        <div id="finalStats"></div>
+        <button class="btn btn-primary" onclick="closeModal('gameOverModal')">
+          繼續
+        </button>
+        <button class="btn btn-secondary" onclick="resetGame()">
+          再玩一次
+        </button>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class TypingChallengeGame {
+        constructor() {
+          this.isPlaying = false;
+          this.timeLeft = 60;
+          this.timer = null;
+          this.currentDifficulty = "easy";
+          this.currentTextIndex = 0;
+          this.typedText = "";
+          this.correctChars = 0;
+          this.incorrectChars = 0;
+          this.totalChars = 0;
+          this.startTime = 0;
+          this.wpmHistory = [];
+
+          this.difficultySettings = {
+            easy: {
+              timeLimit: 60,
+              textType: "simple",
+              name: "簡單",
+            },
+            medium: {
+              timeLimit: 45,
+              textType: "common",
+              name: "普通",
+            },
+            hard: {
+              timeLimit: 30,
+              textType: "complex",
+              name: "困難",
+            },
+            expert: {
+              timeLimit: 20,
+              textType: "professional",
+              name: "專家",
+            },
+          };
+
+          this.sampleTexts = {
+            simple: [
+              "這是一個簡單的打字練習。請仔細輸入每一個字符。",
+              "今天天氣很好，適合出去散步。我們一起去公園玩吧。",
+              "學習是一個持續的過程。每天進步一點點就是成功。",
+              "電腦是現代生活的重要工具。我們要學會正確使用它。",
+            ],
+            common: [
+              "科技發展日新月異，人工智能正在改變我們的生活方式。",
+              "環境保護是每個人的責任，我們應該從小事做起愛護地球。",
+              "良好的時間管理能力是成功的關鍵因素之一。",
+              "閱讀不僅能增長知識，還能提高我們的思維能力和語言表達能力。",
+            ],
+            complex: [
+              "量子計算機利用量子疊加和量子糾纏的原理，能夠在特定問題上展現出指數級的計算優勢。",
+              "生物多樣性的喪失是當今世界面臨的最嚴重環境問題之一，需要國際社會共同努力應對。",
+              "機器學習算法通過分析大量數據來識別模式，從而做出預測或決策。",
+              "區塊鏈技術基於分散式帳本的概念，提供了一種安全、透明且不可篡改的數據存儲方式。",
+            ],
+            professional: [
+              "遞歸神經網路（RNN）在處理序列數據方面具有獨特優勢，特別適用於自然語言處理和時間序列預測。",
+              "分子動力學模擬通過計算原子間相互作用力來預測分子系統的動態行為和熱力學性質。",
+              "量化金融模型運用隨機微積分和偏微分方程來描述金融市場的價格波動和風險評估。",
+              "基因表達調控網路的拓撲結構決定了細胞對外界刺激的響應機制和適應性行為。",
+            ],
+          };
+
+          this.initializeGame();
+        }
+
+        initializeGame() {
+          this.bindEvents();
+          this.loadStats();
+          this.updateDisplay();
+        }
+
+        bindEvents() {
+          document
+            .getElementById("startBtn")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("resetBtn")
+            .addEventListener("click", () => this.resetGame());
+          document
+            .getElementById("helpBtn")
+            .addEventListener("click", () => this.showModal("helpModal"));
+          document
+            .getElementById("difficultySelect")
+            .addEventListener("change", (e) =>
+              this.changeDifficulty(e.target.value)
+            );
+
+          const typingInput = document.getElementById("typingInput");
+          typingInput.addEventListener("input", (e) => this.handleInput(e));
+          typingInput.addEventListener("keydown", (e) => this.handleKeyDown(e));
+        }
+
+        changeDifficulty(difficulty) {
+          this.currentDifficulty = difficulty;
+        }
+
+        startGame() {
+          const settings = this.difficultySettings[this.currentDifficulty];
+
+          this.isPlaying = true;
+          this.timeLeft = settings.timeLimit;
+          this.startTime = Date.now();
+          this.currentTextIndex = 0;
+          this.typedText = "";
+          this.correctChars = 0;
+          this.incorrectChars = 0;
+          this.totalChars = 0;
+          this.wpmHistory = [];
+
+          document.getElementById("startBtn").textContent = "遊戲中...";
+          document.getElementById("startBtn").disabled = true;
+          document.getElementById(
+            "statusText"
+          ).textContent = `${settings.name}模式 - 開始打字！`;
+          document.getElementById("typingInput").disabled = false;
+          document.getElementById("typingInput").focus();
+
+          this.showGameElements();
+          this.loadSampleText();
+          this.startTimer();
+          this.updateDisplay();
+        }
+
+        showGameElements() {
+          document.getElementById("textArea").style.display = "block";
+          document.getElementById("statsDisplay").style.display = "grid";
+        }
+
+        loadSampleText() {
+          const settings = this.difficultySettings[this.currentDifficulty];
+          const texts = this.sampleTexts[settings.textType];
+          const randomText = texts[Math.floor(Math.random() * texts.length)];
+
+          const sampleTextDiv = document.getElementById("sampleText");
+          sampleTextDiv.innerHTML = "";
+
+          for (let i = 0; i < randomText.length; i++) {
+            const char = document.createElement("span");
+            char.className = "char";
+            char.textContent = randomText[i];
+            char.setAttribute("data-index", i);
+            sampleTextDiv.appendChild(char);
+          }
+
+          // 設置第一個字符為當前
+          if (sampleTextDiv.children[0]) {
+            sampleTextDiv.children[0].classList.add("current");
+          }
+        }
+
+        handleInput(e) {
+          if (!this.isPlaying) return;
+
+          this.typedText = e.target.value;
+          this.checkTyping();
+          this.updateDisplay();
+        }
+
+        handleKeyDown(e) {
+          if (!this.isPlaying) return;
+
+          // 防止退格鍵超出範圍
+          if (e.key === "Backspace" && this.typedText.length === 0) {
+            e.preventDefault();
+          }
+        }
+
+        checkTyping() {
+          const sampleText = document.getElementById("sampleText");
+          const chars = sampleText.children;
+
+          this.correctChars = 0;
+          this.incorrectChars = 0;
+          this.totalChars = this.typedText.length;
+
+          // 重置所有字符樣式
+          for (let i = 0; i < chars.length; i++) {
+            chars[i].className = "char";
+          }
+
+          // 檢查每個已輸入的字符
+          for (let i = 0; i < this.typedText.length; i++) {
+            if (i < chars.length) {
+              const expectedChar = chars[i].textContent;
+              const typedChar = this.typedText[i];
+
+              if (typedChar === expectedChar) {
+                chars[i].classList.add("correct");
+                this.correctChars++;
+              } else {
+                chars[i].classList.add("incorrect");
+                this.incorrectChars++;
+              }
+            }
+          }
+
+          // 設置當前字符
+          if (this.typedText.length < chars.length) {
+            chars[this.typedText.length].classList.add("current");
+          }
+
+          // 檢查是否完成
+          if (this.typedText.length === chars.length) {
+            this.completeText();
+          }
+        }
+
+        completeText() {
+          this.showFeedback("完成！載入新文字...", "correct");
+
+          setTimeout(() => {
+            document.getElementById("typingInput").value = "";
+            this.typedText = "";
+            this.loadSampleText();
+          }, 1000);
+        }
+
+        startTimer() {
+          this.timer = setInterval(() => {
+            this.timeLeft--;
+            this.updateDisplay();
+
+            if (this.timeLeft <= 0) {
+              this.endGame();
+            }
+          }, 1000);
+        }
+
+        calculateWPM() {
+          const timeElapsed = (Date.now() - this.startTime) / 1000 / 60; // 分鐘
+          const wordsTyped = this.correctChars / 5; // 假設平均每個單詞5個字符
+          return timeElapsed > 0 ? Math.round(wordsTyped / timeElapsed) : 0;
+        }
+
+        calculateAccuracy() {
+          return this.totalChars > 0
+            ? Math.round((this.correctChars / this.totalChars) * 100)
+            : 100;
+        }
+
+        updateDisplay() {
+          const wpm = this.calculateWPM();
+          const accuracy = this.calculateAccuracy();
+
+          document.getElementById("wpm").textContent = wpm;
+          document.getElementById("accuracy").textContent = accuracy + "%";
+          document.getElementById("timeLeft").textContent = this.timeLeft;
+          document.getElementById("charCount").textContent = this.totalChars;
+
+          document.getElementById("correctChars").textContent =
+            this.correctChars;
+          document.getElementById("incorrectChars").textContent =
+            this.incorrectChars;
+          document.getElementById("totalChars").textContent = this.totalChars;
+
+          // 計算平均WPM
+          if (this.isPlaying) {
+            this.wpmHistory.push(wpm);
+            const avgWpm =
+              this.wpmHistory.length > 0
+                ? Math.round(
+                    this.wpmHistory.reduce((a, b) => a + b, 0) /
+                      this.wpmHistory.length
+                  )
+                : 0;
+            document.getElementById("avgWpm").textContent = avgWpm;
+          }
+
+          // 更新進度條
+          const settings = this.difficultySettings[this.currentDifficulty];
+          const progress =
+            ((settings.timeLimit - this.timeLeft) / settings.timeLimit) * 100;
+          document.getElementById("progressFill").style.width = progress + "%";
+        }
+
+        showFeedback(message, type) {
+          const feedback = document.getElementById("feedback");
+          feedback.textContent = message;
+          feedback.className = `feedback show ${type}`;
+
+          setTimeout(() => {
+            feedback.classList.remove("show");
+          }, 1000);
+        }
+
+        endGame() {
+          this.isPlaying = false;
+          clearInterval(this.timer);
+
+          document.getElementById("startBtn").textContent = "開始遊戲";
+          document.getElementById("startBtn").disabled = false;
+          document.getElementById("statusText").textContent = "遊戲結束";
+          document.getElementById("typingInput").disabled = true;
+
+          this.saveStats();
+          this.showGameOverModal();
+        }
+
+        resetGame() {
+          this.isPlaying = false;
+          clearInterval(this.timer);
+
+          const settings = this.difficultySettings[this.currentDifficulty];
+          this.timeLeft = settings.timeLimit;
+          this.typedText = "";
+          this.correctChars = 0;
+          this.incorrectChars = 0;
+          this.totalChars = 0;
+          this.wpmHistory = [];
+
+          document.getElementById("startBtn").textContent = "開始遊戲";
+          document.getElementById("startBtn").disabled = false;
+          document.getElementById("statusText").textContent =
+            "選擇難度開始挑戰";
+          document.getElementById("typingInput").disabled = true;
+          document.getElementById("typingInput").value = "";
+
+          document.getElementById("textArea").style.display = "none";
+          document.getElementById("statsDisplay").style.display = "none";
+
+          this.updateDisplay();
+          this.closeModal("gameOverModal");
+        }
+
+        showModal(modalId) {
+          document.getElementById(modalId).style.display = "block";
+        }
+
+        closeModal(modalId) {
+          document.getElementById(modalId).style.display = "none";
+        }
+
+        showGameOverModal() {
+          const stats = this.loadStats();
+          const finalWpm = this.calculateWPM();
+          const finalAccuracy = this.calculateAccuracy();
+          const isNewRecord = finalWpm > stats.bestWpm;
+          const settings = this.difficultySettings[this.currentDifficulty];
+
+          document.getElementById("finalStats").innerHTML = `
+            <p>打字速度: <strong>${finalWpm} WPM</strong></p>
+            <p>準確率: <strong>${finalAccuracy}%</strong></p>
+            <p>正確字符: <strong>${this.correctChars}</strong></p>
+            <p>錯誤字符: <strong>${this.incorrectChars}</strong></p>
+            <p>總字符數: <strong>${this.totalChars}</strong></p>
+            <p>難度: <strong>${settings.name}</strong></p>
+            ${
+              isNewRecord
+                ? '<p style="color: #FFD700;"><i class="fas fa-crown"></i> 新紀錄！</p>'
+                : ""
+            }
+            <hr style="margin: 1rem 0; border: 1px solid rgba(255,255,255,0.3);">
+            <p>歷史最佳: <strong>${stats.bestWpm} WPM</strong></p>
+            <p>遊戲次數: <strong>${stats.gamesPlayed}</strong></p>
+            <p>總字符數: <strong>${stats.totalChars.toLocaleString()}</strong></p>
+          `;
+
+          this.showModal("gameOverModal");
+        }
+
+        saveStats() {
+          const stats = this.loadStats();
+          const finalWpm = this.calculateWPM();
+          const finalAccuracy = this.calculateAccuracy();
+
+          stats.gamesPlayed++;
+          stats.totalChars += this.totalChars;
+
+          if (finalWpm > stats.bestWpm) {
+            stats.bestWpm = finalWpm;
+          }
+
+          if (finalAccuracy > stats.bestAccuracy) {
+            stats.bestAccuracy = finalAccuracy;
+          }
+
+          localStorage.setItem("typingChallengeStats", JSON.stringify(stats));
+        }
+
+        loadStats() {
+          const defaultStats = {
+            gamesPlayed: 0,
+            totalChars: 0,
+            bestWpm: 0,
+            bestAccuracy: 0,
+          };
+
+          const saved = localStorage.getItem("typingChallengeStats");
+          return saved ? JSON.parse(saved) : defaultStats;
+        }
+      }
+
+      // 全局函數
+      function startGame() {
+        if (window.game) {
+          window.game.startGame();
+        }
+      }
+
+      function resetGame() {
+        if (window.game) {
+          window.game.resetGame();
+        }
+      }
+
+      function showHelp() {
+        if (window.game) {
+          window.game.showModal("helpModal");
+        }
+      }
+
+      function closeModal(modalId) {
+        if (window.game) {
+          window.game.closeModal(modalId);
+        }
+      }
+
+      // 初始化遊戲
+      window.addEventListener("DOMContentLoaded", () => {
+        window.game = new TypingChallengeGame();
+      });
+    </script>
+  </body>
+</html>

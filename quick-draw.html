@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>快槍手決鬥 - Quick Draw</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        background: linear-gradient(135deg, #8b4513 0%, #deb887 100%);
+        min-height: 100vh;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .western-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+            circle at 20% 30%,
+            rgba(255, 140, 0, 0.3) 10%,
+            transparent 20%
+          ),
+          radial-gradient(
+            circle at 80% 40%,
+            rgba(255, 69, 0, 0.2) 8%,
+            transparent 16%
+          ),
+          linear-gradient(to bottom, #87ceeb 0%, #f0e68c 30%, #deb887 100%);
+        z-index: -1;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .title {
+        font-size: 2.5rem;
+        color: #8b4513;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      .subtitle {
+        font-size: 1.2rem;
+        color: #654321;
+        margin-bottom: 20px;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .score-info {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .score-item {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px 16px;
+        border-radius: 25px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .score-label {
+        font-size: 0.9rem;
+        color: #8b4513;
+        font-weight: 500;
+      }
+
+      .score-value {
+        font-size: 1.1rem;
+        color: #654321;
+        font-weight: 700;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #ff6b35, #f7931e);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.2);
+        color: #8b4513;
+        border: 1px solid rgba(139, 69, 19, 0.3);
+        backdrop-filter: blur(10px);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-area {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .duel-scene {
+        height: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+      }
+
+      .character {
+        width: 120px;
+        height: 200px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .character-body {
+        width: 80px;
+        height: 120px;
+        background: #8b4513;
+        border-radius: 10px;
+        position: relative;
+        margin-bottom: 10px;
+        transition: all 0.3s ease;
+      }
+
+      .character-head {
+        width: 40px;
+        height: 40px;
+        background: #fdbcb4;
+        border-radius: 50%;
+        position: absolute;
+        top: -20px;
+        left: 20px;
+      }
+
+      .character-hat {
+        width: 50px;
+        height: 20px;
+        background: #654321;
+        border-radius: 25px 25px 5px 5px;
+        position: absolute;
+        top: -35px;
+        left: 15px;
+      }
+
+      .character-gun {
+        width: 30px;
+        height: 8px;
+        background: #2f4f4f;
+        position: absolute;
+        right: -15px;
+        top: 40px;
+        border-radius: 4px;
+        transform-origin: left center;
+        transition: all 0.2s ease;
+      }
+
+      .player {
+        margin-left: 50px;
+      }
+
+      .opponent {
+        margin-right: 50px;
+        transform: scaleX(-1);
+      }
+
+      .character.drawing .character-gun {
+        transform: rotate(-45deg);
+      }
+
+      .center-display {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        font-size: 3rem;
+        font-weight: 700;
+        color: #8b4513;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        z-index: 10;
+      }
+
+      .countdown {
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.1);
+        }
+      }
+
+      .draw-text {
+        color: #ff4500;
+        animation: flash 0.5s infinite;
+      }
+
+      @keyframes flash {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .win-text {
+        color: #32cd32;
+      }
+
+      .lose-text {
+        color: #dc143c;
+      }
+
+      .reaction-time {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255, 255, 255, 0.9);
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        color: #8b4513;
+      }
+
+      .instructions {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        border-radius: 10px;
+        max-width: 300px;
+        font-size: 0.9rem;
+        color: #8b4513;
+      }
+
+      .gun-smoke {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 50%;
+        animation: smoke 0.8s ease-out forwards;
+        pointer-events: none;
+      }
+
+      @keyframes smoke {
+        0% {
+          opacity: 1;
+          transform: scale(0.5);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(2) translateY(-30px);
+        }
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        animation: fadeIn 0.3s ease;
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #f9f9f9, #e9e9e9);
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        position: relative;
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .close:hover {
+        color: #8b4513;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .title {
+          font-size: 2rem;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .character {
+          width: 80px;
+          height: 150px;
+        }
+
+        .character-body {
+          width: 60px;
+          height: 90px;
+        }
+
+        .center-display {
+          font-size: 2rem;
+        }
+
+        .instructions {
+          position: static;
+          margin-top: 20px;
+          width: 100%;
+          max-width: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="western-bg"></div>
+
+    <div class="container">
+      <div class="header">
+        <h1 class="title">🤠 快槍手決鬥</h1>
+        <p class="subtitle">測試你的反應速度，成為最快的槍手！</p>
+      </div>
+
+      <div class="controls">
+        <div class="score-info">
+          <div class="score-item">
+            <div class="score-label">得分</div>
+            <div class="score-value" id="score">0</div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">最佳時間</div>
+            <div class="score-value" id="bestTime">-</div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">回合</div>
+            <div class="score-value" id="round">1</div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-secondary" onclick="showInstructions()">
+            <i class="fas fa-question-circle"></i> 說明
+          </button>
+          <button class="btn btn-primary" onclick="startGame()">
+            <i class="fas fa-play"></i> 開始決鬥
+          </button>
+          <a href="index.html" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 返回
+          </a>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <div class="duel-scene">
+          <div class="character player">
+            <div class="character-body">
+              <div class="character-head"></div>
+              <div class="character-hat"></div>
+              <div class="character-gun"></div>
+            </div>
+          </div>
+
+          <div class="character opponent">
+            <div class="character-body">
+              <div class="character-head"></div>
+              <div class="character-hat"></div>
+              <div class="character-gun"></div>
+            </div>
+          </div>
+
+          <div class="center-display" id="centerDisplay">點擊開始決鬥</div>
+        </div>
+
+        <div
+          class="reaction-time"
+          id="reactionTime"
+          style="display: none"
+        ></div>
+
+        <div class="instructions">
+          <strong>操作說明：</strong><br />
+          • 等待「DRAW!」出現<br />
+          • 立即點擊任意位置或按空格鍵<br />
+          • 反應越快得分越高<br />
+          • 太早開槍會被判定失誤
+        </div>
+      </div>
+    </div>
+
+    <!-- 說明模態框 -->
+    <div id="instructionModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>🤠 快槍手決鬥 - 遊戲說明</h2>
+        <br />
+        <h3>🎯 遊戲目標</h3>
+        <p>測試你的反應速度，在西部決鬥中成為最快的槍手！</p>
+        <br />
+        <h3>🎮 操作方式</h3>
+        <ul>
+          <li><strong>等待信號：</strong>遊戲開始後耐心等待</li>
+          <li><strong>準備決鬥：</strong>螢幕會顯示倒數計時</li>
+          <li><strong>快速開槍：</strong>看到「DRAW!」後立即點擊或按空格鍵</li>
+          <li><strong>重新挑戰：</strong>每回合結束後可繼續下一輪</li>
+        </ul>
+        <br />
+        <h3>🏆 計分方式</h3>
+        <ul>
+          <li><strong>完美反應：</strong>200毫秒內 - 100分</li>
+          <li><strong>優秀反應：</strong>200-400毫秒 - 75分</li>
+          <li><strong>良好反應：</strong>400-600毫秒 - 50分</li>
+          <li><strong>普通反應：</strong>600毫秒以上 - 25分</li>
+          <li><strong>提前開槍：</strong>扣10分</li>
+        </ul>
+        <br />
+        <h3>🎖️ 特殊效果</h3>
+        <ul>
+          <li>反應時間越短，人物動作越快</li>
+          <li>開槍會有煙霧特效</li>
+          <li>記錄個人最佳反應時間</li>
+          <li>連續良好表現可獲得額外分數</li>
+        </ul>
+        <br />
+        <p><strong>準備好成為傳奇槍手了嗎？🤠</strong></p>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class QuickDrawGame {
+        constructor() {
+          this.score = 0;
+          this.round = 1;
+          this.bestTime = null;
+          this.gameState = "waiting"; // waiting, countdown, ready, draw, finished
+          this.drawTime = 0;
+          this.reactionStartTime = 0;
+          this.countdownTimeout = null;
+          this.drawTimeout = null;
+          this.canShoot = false;
+          this.shotFired = false;
+
+          this.bindEvents();
+          this.updateDisplay();
+        }
+
+        bindEvents() {
+          // 點擊事件
+          document.addEventListener("click", (e) => {
+            if (this.gameState === "draw" && this.canShoot && !this.shotFired) {
+              this.shoot();
+            }
+          });
+
+          // 鍵盤事件
+          document.addEventListener("keydown", (e) => {
+            if (
+              e.code === "Space" &&
+              this.gameState === "draw" &&
+              this.canShoot &&
+              !this.shotFired
+            ) {
+              e.preventDefault();
+              this.shoot();
+            }
+          });
+
+          // 說明模態框
+          const modal = document.getElementById("instructionModal");
+          const closeBtn = modal.querySelector(".close");
+
+          closeBtn.onclick = () => (modal.style.display = "none");
+          window.onclick = (e) => {
+            if (e.target === modal) modal.style.display = "none";
+          };
+        }
+
+        startGame() {
+          if (this.gameState !== "waiting") return;
+
+          this.gameState = "countdown";
+          this.canShoot = false;
+          this.shotFired = false;
+          this.drawTime = Math.random() * 3000 + 2000; // 2-5秒隨機延遲
+
+          const centerDisplay = document.getElementById("centerDisplay");
+          let countdown = 3;
+
+          const countdownInterval = setInterval(() => {
+            if (countdown > 0) {
+              centerDisplay.textContent = countdown;
+              centerDisplay.className = "center-display countdown";
+              countdown--;
+            } else {
+              clearInterval(countdownInterval);
+              this.startDrawPhase();
+            }
+          }, 1000);
+        }
+
+        startDrawPhase() {
+          const centerDisplay = document.getElementById("centerDisplay");
+          centerDisplay.textContent = "準備...";
+          centerDisplay.className = "center-display";
+
+          this.gameState = "ready";
+
+          this.drawTimeout = setTimeout(() => {
+            this.showDrawSignal();
+          }, this.drawTime);
+
+          // 檢查提前開槍
+          document.addEventListener("click", this.checkEarlyShot.bind(this));
+          document.addEventListener("keydown", this.checkEarlyShot.bind(this));
+        }
+
+        checkEarlyShot(e) {
+          if (this.gameState === "ready" && !this.shotFired) {
+            if (e.type === "click" || e.code === "Space") {
+              this.shotFired = true;
+              clearTimeout(this.drawTimeout);
+              this.handleEarlyShot();
+            }
+          }
+        }
+
+        handleEarlyShot() {
+          const centerDisplay = document.getElementById("centerDisplay");
+          centerDisplay.textContent = "太早開槍！";
+          centerDisplay.className = "center-display lose-text";
+
+          this.score = Math.max(0, this.score - 10);
+          this.updateDisplay();
+
+          this.createGunSmoke(document.querySelector(".player .character-gun"));
+
+          setTimeout(() => {
+            this.endRound();
+          }, 2000);
+        }
+
+        showDrawSignal() {
+          if (this.shotFired) return;
+
+          const centerDisplay = document.getElementById("centerDisplay");
+          centerDisplay.textContent = "DRAW!";
+          centerDisplay.className = "center-display draw-text";
+
+          this.gameState = "draw";
+          this.canShoot = true;
+          this.reactionStartTime = Date.now();
+
+          // 對手AI反應時間 (300-800ms)
+          const opponentReactionTime = Math.random() * 500 + 300;
+          setTimeout(() => {
+            if (!this.shotFired) {
+              this.opponentShoot();
+            }
+          }, opponentReactionTime);
+        }
+
+        shoot() {
+          this.shotFired = true;
+          const reactionTime = Date.now() - this.reactionStartTime;
+
+          // 更新最佳時間
+          if (!this.bestTime || reactionTime < this.bestTime) {
+            this.bestTime = reactionTime;
+          }
+
+          // 計分
+          let points = this.calculatePoints(reactionTime);
+          this.score += points;
+
+          // 顯示結果
+          const centerDisplay = document.getElementById("centerDisplay");
+          centerDisplay.textContent = `你獲勝！${reactionTime}ms`;
+          centerDisplay.className = "center-display win-text";
+
+          // 顯示反應時間
+          const reactionTimeDisplay = document.getElementById("reactionTime");
+          reactionTimeDisplay.textContent = `反應時間: ${reactionTime}ms (+${points}分)`;
+          reactionTimeDisplay.style.display = "block";
+
+          // 動畫效果
+          document.querySelector(".player").classList.add("drawing");
+          this.createGunSmoke(document.querySelector(".player .character-gun"));
+
+          this.updateDisplay();
+
+          setTimeout(() => {
+            this.endRound();
+          }, 3000);
+        }
+
+        opponentShoot() {
+          if (this.shotFired) return;
+
+          this.shotFired = true;
+          const centerDisplay = document.getElementById("centerDisplay");
+          centerDisplay.textContent = "對手更快！";
+          centerDisplay.className = "center-display lose-text";
+
+          // 動畫效果
+          document.querySelector(".opponent").classList.add("drawing");
+          this.createGunSmoke(
+            document.querySelector(".opponent .character-gun")
+          );
+
+          setTimeout(() => {
+            this.endRound();
+          }, 2000);
+        }
+
+        calculatePoints(reactionTime) {
+          if (reactionTime <= 200) return 100;
+          if (reactionTime <= 400) return 75;
+          if (reactionTime <= 600) return 50;
+          return 25;
+        }
+
+        createGunSmoke(gunElement) {
+          const smoke = document.createElement("div");
+          smoke.className = "gun-smoke";
+
+          const rect = gunElement.getBoundingClientRect();
+          const gameArea = document
+            .querySelector(".game-area")
+            .getBoundingClientRect();
+
+          smoke.style.left = rect.right - gameArea.left + "px";
+          smoke.style.top = rect.top - gameArea.top + rect.height / 2 + "px";
+
+          document.querySelector(".game-area").appendChild(smoke);
+
+          setTimeout(() => {
+            smoke.remove();
+          }, 800);
+        }
+
+        endRound() {
+          this.gameState = "waiting";
+          this.round++;
+
+          // 重置動畫
+          document.querySelector(".player").classList.remove("drawing");
+          document.querySelector(".opponent").classList.remove("drawing");
+
+          // 隱藏反應時間
+          document.getElementById("reactionTime").style.display = "none";
+
+          // 重置顯示
+          setTimeout(() => {
+            const centerDisplay = document.getElementById("centerDisplay");
+            centerDisplay.textContent = "準備下一輪";
+            centerDisplay.className = "center-display";
+
+            setTimeout(() => {
+              centerDisplay.textContent = "點擊開始決鬥";
+            }, 1500);
+          }, 1000);
+
+          this.updateDisplay();
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("round").textContent = this.round;
+          document.getElementById("bestTime").textContent = this.bestTime
+            ? this.bestTime + "ms"
+            : "-";
+        }
+      }
+
+      // 初始化遊戲
+      let game;
+
+      function initGame() {
+        game = new QuickDrawGame();
+      }
+
+      function startGame() {
+        if (game) {
+          game.startGame();
+        }
+      }
+
+      function showInstructions() {
+        document.getElementById("instructionModal").style.display = "block";
+      }
+
+      // 當頁面載入完成時初始化遊戲
+      window.addEventListener("load", initGame);
+
+      // 遊戲工具函數
+      if (typeof initializeGameUtils === "function") {
+        initializeGameUtils("quick-draw");
+      }
+    </script>
+  </body>
+</html>

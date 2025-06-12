@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>色彩序列記憶 - 網頁小遊戲</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #6c5ce7;
+        --secondary-color: #00cec9;
+        --accent-color: #fdcb6e;
+        --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --text-light: #ffffff;
+        --text-dark: #333333;
+        --border-radius: 12px;
+        --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        --glass-bg: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        background: var(--background);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .header {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--glass-border);
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-light);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: var(--border-radius);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--glass-bg);
+        color: var(--text-light);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .btn-primary {
+        background: var(--primary-color);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #5f3dc4;
+      }
+
+      .stats {
+        display: flex;
+        gap: 2rem;
+        font-size: 1rem;
+        color: var(--text-light);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        gap: 2rem;
+      }
+
+      .sequence-display {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--text-light);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        min-height: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .color-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        max-width: 400px;
+        width: 100%;
+      }
+
+      .color-button {
+        width: 80px;
+        height: 80px;
+        border: 3px solid #fff;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        box-shadow: var(--shadow);
+      }
+
+      .color-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+      }
+
+      .color-button:active {
+        transform: scale(0.95);
+      }
+
+      .color-button.flash {
+        animation: flashColor 0.5s ease-in-out;
+      }
+
+      .color-button.correct {
+        animation: correctColor 0.5s ease-in-out;
+      }
+
+      .color-button.wrong {
+        animation: wrongColor 0.5s ease-in-out;
+      }
+
+      @keyframes flashColor {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: var(--shadow);
+        }
+        50% {
+          transform: scale(1.2);
+          box-shadow: 0 0 30px rgba(255, 255, 255, 0.8);
+        }
+      }
+
+      @keyframes correctColor {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+          box-shadow: 0 0 20px #00e676;
+        }
+      }
+
+      @keyframes wrongColor {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        25% {
+          transform: scale(1.1) translateX(-5px);
+          box-shadow: 0 0 20px #ff1744;
+        }
+        75% {
+          transform: scale(1.1) translateX(5px);
+          box-shadow: 0 0 20px #ff1744;
+        }
+      }
+
+      .red {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+      }
+      .blue {
+        background: linear-gradient(135deg, #4ecdc4, #45b7aa);
+      }
+      .green {
+        background: linear-gradient(135deg, #55efc4, #00b894);
+      }
+      .yellow {
+        background: linear-gradient(135deg, #fdcb6e, #f39c12);
+      }
+      .purple {
+        background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+      }
+      .orange {
+        background: linear-gradient(135deg, #fd79a8, #e84393);
+      }
+      .cyan {
+        background: linear-gradient(135deg, #74b9ff, #0984e3);
+      }
+      .lime {
+        background: linear-gradient(135deg, #00cec9, #00b894);
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 1rem 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--secondary-color),
+          var(--accent-color)
+        );
+        transition: width 0.3s ease;
+        border-radius: 4px;
+      }
+
+      .status-message {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: var(--text-light);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        min-height: 2rem;
+        text-align: center;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+        color: var(--text-light);
+      }
+
+      .modal h2 {
+        margin-bottom: 1rem;
+        color: var(--accent-color);
+      }
+
+      .game-over-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--glass-border);
+      }
+
+      .difficulty-selector {
+        display: flex;
+        gap: 0.5rem;
+        margin: 1rem 0;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .difficulty-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--glass-border);
+        background: var(--glass-bg);
+        color: var(--text-light);
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+      }
+
+      .difficulty-btn.active {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .help-list {
+        text-align: left;
+        margin: 1rem 0;
+      }
+
+      .help-list li {
+        margin: 0.5rem 0;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      @media (max-width: 768px) {
+        .header {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .controls {
+          order: -1;
+        }
+
+        .stats {
+          gap: 1rem;
+          font-size: 0.9rem;
+        }
+
+        .color-grid {
+          grid-template-columns: repeat(3, 1fr);
+          max-width: 300px;
+        }
+
+        .color-button {
+          width: 60px;
+          height: 60px;
+        }
+
+        .sequence-display {
+          font-size: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1 class="title">🌈 色彩序列記憶</h1>
+      <div class="controls">
+        <button id="startBtn" class="btn btn-primary">
+          <i class="fas fa-play"></i> 開始
+        </button>
+        <button id="helpBtn" class="btn">
+          <i class="fas fa-question-circle"></i> 說明
+        </button>
+        <a href="index.html" class="btn"> <i class="fas fa-home"></i> 首頁 </a>
+      </div>
+      <div class="stats">
+        <div>關卡: <span id="level">1</span></div>
+        <div>分數: <span id="score">0</span></div>
+        <div>生命: <span id="lives">3</span></div>
+        <div>難度: <span id="currentDifficulty">簡單</span></div>
+      </div>
+    </div>
+
+    <div class="game-container">
+      <div class="sequence-display" id="sequenceDisplay">準備開始...</div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+
+      <div class="color-grid" id="colorGrid">
+        <div class="color-button red" data-color="red"></div>
+        <div class="color-button blue" data-color="blue"></div>
+        <div class="color-button green" data-color="green"></div>
+        <div class="color-button yellow" data-color="yellow"></div>
+        <div class="color-button purple" data-color="purple"></div>
+        <div class="color-button orange" data-color="orange"></div>
+        <div class="color-button cyan" data-color="cyan"></div>
+        <div class="color-button lime" data-color="lime"></div>
+      </div>
+
+      <div class="status-message" id="statusMessage">點擊開始按鈕開始遊戲</div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <h2><i class="fas fa-question-circle"></i> 遊戲說明</h2>
+        <ul class="help-list">
+          <li><strong>目標：</strong>記住並重複色彩序列</li>
+          <li><strong>操作：</strong>觀看序列後按相同順序點擊顏色</li>
+          <li><strong>關卡：</strong>每關序列會變長</li>
+          <li><strong>生命：</strong>答錯會扣生命，用完遊戲結束</li>
+          <li><strong>分數：</strong>根據關卡和難度計算</li>
+          <li><strong>難度：</strong>影響顯示速度和顏色數量</li>
+        </ul>
+        <div class="difficulty-selector">
+          <button class="difficulty-btn active" data-difficulty="easy">
+            簡單 (4色)
+          </button>
+          <button class="difficulty-btn" data-difficulty="medium">
+            中等 (6色)
+          </button>
+          <button class="difficulty-btn" data-difficulty="hard">
+            困難 (8色)
+          </button>
+          <button class="difficulty-btn" data-difficulty="expert">
+            專家 (8色快速)
+          </button>
+        </div>
+        <button id="closeHelp" class="btn btn-primary">開始遊戲</button>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="modal">
+      <div class="modal-content">
+        <h2><i class="fas fa-trophy"></i> 遊戲結束</h2>
+        <div class="game-over-stats">
+          <div class="stat-item">
+            <div>最終分數</div>
+            <div id="finalScore">0</div>
+          </div>
+          <div class="stat-item">
+            <div>最高關卡</div>
+            <div id="maxLevel">1</div>
+          </div>
+          <div class="stat-item">
+            <div>最長序列</div>
+            <div id="longestSequence">0</div>
+          </div>
+          <div class="stat-item">
+            <div>準確率</div>
+            <div id="accuracy">0%</div>
+          </div>
+        </div>
+        <div style="margin-top: 1rem">
+          <button id="restartBtn" class="btn btn-primary">
+            <i class="fas fa-redo"></i> 再玩一次
+          </button>
+          <button id="backToMenuBtn" class="btn">
+            <i class="fas fa-home"></i> 返回主選單
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class ColorSequenceGame {
+        constructor() {
+          this.level = 1;
+          this.score = 0;
+          this.lives = 3;
+          this.sequence = [];
+          this.playerSequence = [];
+          this.gameActive = false;
+          this.showingSequence = false;
+          this.difficulty = "easy";
+          this.totalAttempts = 0;
+          this.correctAttempts = 0;
+          this.maxLevel = 1;
+
+          this.difficulties = {
+            easy: {
+              colors: ["red", "blue", "green", "yellow"],
+              displaySpeed: 800,
+              pauseBetween: 200,
+            },
+            medium: {
+              colors: ["red", "blue", "green", "yellow", "purple", "orange"],
+              displaySpeed: 600,
+              pauseBetween: 150,
+            },
+            hard: {
+              colors: [
+                "red",
+                "blue",
+                "green",
+                "yellow",
+                "purple",
+                "orange",
+                "cyan",
+                "lime",
+              ],
+              displaySpeed: 500,
+              pauseBetween: 100,
+            },
+            expert: {
+              colors: [
+                "red",
+                "blue",
+                "green",
+                "yellow",
+                "purple",
+                "orange",
+                "cyan",
+                "lime",
+              ],
+              displaySpeed: 300,
+              pauseBetween: 50,
+            },
+          };
+
+          this.colorNames = {
+            red: "紅",
+            blue: "藍",
+            green: "綠",
+            yellow: "黃",
+            purple: "紫",
+            orange: "橙",
+            cyan: "青",
+            lime: "萊姆",
+          };
+
+          this.initializeGame();
+          this.bindEvents();
+          this.loadStats();
+        }
+
+        initializeGame() {
+          this.updateDisplay();
+          this.updateColorGrid();
+          this.showHelp();
+        }
+
+        bindEvents() {
+          document
+            .getElementById("startBtn")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("helpBtn")
+            .addEventListener("click", () => this.showHelp());
+          document
+            .getElementById("closeHelp")
+            .addEventListener("click", () => this.closeHelp());
+          document
+            .getElementById("restartBtn")
+            .addEventListener("click", () => this.restartGame());
+          document
+            .getElementById("backToMenuBtn")
+            .addEventListener("click", () => this.backToMenu());
+
+          // Difficulty selection
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              document
+                .querySelectorAll(".difficulty-btn")
+                .forEach((b) => b.classList.remove("active"));
+              e.target.classList.add("active");
+              this.difficulty = e.target.dataset.difficulty;
+              this.updateColorGrid();
+              this.updateDisplay();
+            });
+          });
+
+          // Color button clicks
+          document.querySelectorAll(".color-button").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              if (this.gameActive && !this.showingSequence) {
+                this.handleColorClick(e.target.dataset.color);
+              }
+            });
+          });
+        }
+
+        updateColorGrid() {
+          const availableColors = this.difficulties[this.difficulty].colors;
+          document.querySelectorAll(".color-button").forEach((btn) => {
+            if (availableColors.includes(btn.dataset.color)) {
+              btn.style.display = "block";
+            } else {
+              btn.style.display = "none";
+            }
+          });
+        }
+
+        startGame() {
+          this.gameActive = true;
+          this.level = 1;
+          this.score = 0;
+          this.lives = 3;
+          this.totalAttempts = 0;
+          this.correctAttempts = 0;
+          this.maxLevel = 1;
+
+          this.updateDisplay();
+          this.startLevel();
+        }
+
+        startLevel() {
+          this.sequence = [];
+          this.playerSequence = [];
+
+          // Generate sequence
+          const availableColors = this.difficulties[this.difficulty].colors;
+          const sequenceLength = 2 + this.level;
+
+          for (let i = 0; i < sequenceLength; i++) {
+            const randomColor =
+              availableColors[
+                Math.floor(Math.random() * availableColors.length)
+              ];
+            this.sequence.push(randomColor);
+          }
+
+          this.showSequence();
+        }
+
+        async showSequence() {
+          this.showingSequence = true;
+          this.updateStatus("觀看序列...");
+
+          const { displaySpeed, pauseBetween } =
+            this.difficulties[this.difficulty];
+
+          // Show sequence text
+          const sequenceText = this.sequence
+            .map((color) => this.colorNames[color])
+            .join(" → ");
+          document.getElementById("sequenceDisplay").textContent = sequenceText;
+
+          // Flash each color
+          for (let i = 0; i < this.sequence.length; i++) {
+            const color = this.sequence[i];
+            const button = document.querySelector(`[data-color="${color}"]`);
+
+            if (button) {
+              button.classList.add("flash");
+              await this.delay(displaySpeed);
+              button.classList.remove("flash");
+
+              if (i < this.sequence.length - 1) {
+                await this.delay(pauseBetween);
+              }
+            }
+          }
+
+          this.showingSequence = false;
+          this.updateStatus("重複序列...");
+          document.getElementById("sequenceDisplay").textContent = "你的回合";
+          this.updateProgress(0);
+        }
+
+        handleColorClick(color) {
+          this.playerSequence.push(color);
+          this.totalAttempts++;
+
+          const button = document.querySelector(`[data-color="${color}"]`);
+          const currentIndex = this.playerSequence.length - 1;
+
+          if (this.sequence[currentIndex] === color) {
+            // Correct
+            this.correctAttempts++;
+            button.classList.add("correct");
+            setTimeout(() => button.classList.remove("correct"), 500);
+
+            this.updateProgress(
+              (this.playerSequence.length / this.sequence.length) * 100
+            );
+
+            if (this.playerSequence.length === this.sequence.length) {
+              // Level complete
+              this.completeLevel();
+            }
+          } else {
+            // Wrong
+            button.classList.add("wrong");
+            setTimeout(() => button.classList.remove("wrong"), 500);
+
+            this.lives--;
+            this.updateDisplay();
+
+            if (this.lives <= 0) {
+              this.endGame();
+            } else {
+              this.updateStatus("錯誤！再試一次...");
+              setTimeout(() => {
+                this.startLevel();
+              }, 1500);
+            }
+          }
+        }
+
+        completeLevel() {
+          this.score +=
+            this.level *
+            100 *
+            (this.difficulty === "expert"
+              ? 2
+              : this.difficulty === "hard"
+              ? 1.5
+              : 1);
+          this.level++;
+          this.maxLevel = Math.max(this.maxLevel, this.level);
+
+          this.updateDisplay();
+          this.updateStatus("關卡完成！");
+
+          setTimeout(() => {
+            this.startLevel();
+          }, 1500);
+        }
+
+        endGame() {
+          this.gameActive = false;
+          this.saveStats();
+          this.showGameOver();
+        }
+
+        showGameOver() {
+          document.getElementById("finalScore").textContent = this.score;
+          document.getElementById("maxLevel").textContent = this.maxLevel;
+          document.getElementById("longestSequence").textContent =
+            this.sequence.length;
+
+          const accuracy =
+            this.totalAttempts > 0
+              ? Math.round((this.correctAttempts / this.totalAttempts) * 100)
+              : 0;
+          document.getElementById("accuracy").textContent = accuracy + "%";
+
+          document.getElementById("gameOverModal").style.display = "flex";
+        }
+
+        restartGame() {
+          document.getElementById("gameOverModal").style.display = "none";
+          this.startGame();
+        }
+
+        backToMenu() {
+          window.location.href = "index.html";
+        }
+
+        showHelp() {
+          document.getElementById("helpModal").style.display = "flex";
+        }
+
+        closeHelp() {
+          document.getElementById("helpModal").style.display = "none";
+          if (!this.gameActive) {
+            this.startGame();
+          }
+        }
+
+        updateDisplay() {
+          document.getElementById("level").textContent = this.level;
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("lives").textContent = this.lives;
+
+          const difficultyNames = {
+            easy: "簡單",
+            medium: "中等",
+            hard: "困難",
+            expert: "專家",
+          };
+          document.getElementById("currentDifficulty").textContent =
+            difficultyNames[this.difficulty];
+        }
+
+        updateProgress(percentage) {
+          document.getElementById("progressFill").style.width =
+            percentage + "%";
+        }
+
+        updateStatus(message) {
+          document.getElementById("statusMessage").textContent = message;
+        }
+
+        delay(ms) {
+          return new Promise((resolve) => setTimeout(resolve, ms));
+        }
+
+        saveStats() {
+          if (typeof saveGameStats === "function") {
+            const stats = {
+              score: this.score,
+              maxLevel: this.maxLevel,
+              longestSequence: this.sequence.length,
+              accuracy:
+                this.totalAttempts > 0
+                  ? Math.round(
+                      (this.correctAttempts / this.totalAttempts) * 100
+                    )
+                  : 0,
+              difficulty: this.difficulty,
+              timestamp: Date.now(),
+            };
+            saveGameStats("color-sequence-memory", stats);
+          }
+        }
+
+        loadStats() {
+          if (typeof loadGameStats === "function") {
+            const stats = loadGameStats("color-sequence-memory");
+            if (stats && stats.score) {
+              // Could display best score or other stats
+            }
+          }
+        }
+      }
+
+      // Initialize game when page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        new ColorSequenceGame();
+      });
+    </script>
+  </body>
+</html>

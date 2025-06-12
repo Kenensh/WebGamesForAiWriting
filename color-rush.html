@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>彩色衝刺 - Color Rush</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        background: linear-gradient(
+          45deg,
+          #ff6b6b,
+          #4ecdc4,
+          #45b7d1,
+          #96ceb4,
+          #feca57,
+          #ff9ff3
+        );
+        background-size: 400% 400%;
+        animation: gradientShift 8s ease infinite;
+        min-height: 100vh;
+        overflow: hidden;
+        position: relative;
+      }
+
+      @keyframes gradientShift {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .rainbow-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+            circle at 20% 30%,
+            rgba(255, 0, 150, 0.2) 10%,
+            transparent 20%
+          ),
+          radial-gradient(
+            circle at 80% 70%,
+            rgba(0, 255, 150, 0.2) 10%,
+            transparent 20%
+          ),
+          radial-gradient(
+            circle at 40% 80%,
+            rgba(150, 0, 255, 0.2) 10%,
+            transparent 20%
+          );
+        z-index: -1;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        z-index: 1;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .title {
+        font-size: 2.5rem;
+        background: linear-gradient(45deg, #ff0080, #00ff80, #8000ff, #ff8000);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        margin-bottom: 10px;
+        font-weight: 700;
+        animation: rainbowText 3s ease-in-out infinite;
+      }
+
+      @keyframes rainbowText {
+        0%,
+        100% {
+          filter: hue-rotate(0deg);
+        }
+        25% {
+          filter: hue-rotate(90deg);
+        }
+        50% {
+          filter: hue-rotate(180deg);
+        }
+        75% {
+          filter: hue-rotate(270deg);
+        }
+      }
+
+      .subtitle {
+        font-size: 1.2rem;
+        color: #ffffff;
+        margin-bottom: 20px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .score-info {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+      }
+
+      .score-item {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px 16px;
+        border-radius: 25px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .score-label {
+        font-size: 0.9rem;
+        color: #ffffff;
+        font-weight: 500;
+      }
+
+      .score-value {
+        font-size: 1.1rem;
+        color: #ffffff;
+        font-weight: 700;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 10px;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #ff0080, #8000ff);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 0, 128, 0.3);
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-area {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .game-display {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+
+      .target-color {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        margin-bottom: 30px;
+        border: 8px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+        position: relative;
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+      }
+
+      .target-label {
+        font-size: 1.5rem;
+        color: #ffffff;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        font-weight: 600;
+        text-align: center;
+      }
+
+      .color-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 15px;
+        max-width: 400px;
+        width: 100%;
+      }
+
+      .color-button {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .color-button:hover {
+        transform: scale(1.1);
+        border-color: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      }
+
+      .color-button.correct {
+        animation: correctAnswer 0.5s ease;
+      }
+
+      .color-button.wrong {
+        animation: wrongAnswer 0.5s ease;
+      }
+
+      @keyframes correctAnswer {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+          border-color: #00ff00;
+          box-shadow: 0 0 30px #00ff00;
+        }
+      }
+
+      @keyframes wrongAnswer {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        25%,
+        75% {
+          transform: scale(0.9) rotate(-5deg);
+        }
+        50% {
+          transform: scale(0.9) rotate(5deg);
+          border-color: #ff0000;
+        }
+      }
+
+      .time-bar {
+        width: 100%;
+        height: 20px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        margin-top: 30px;
+        overflow: hidden;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .time-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #00ff00, #ffff00, #ff8000, #ff0000);
+        transition: width 0.1s linear;
+        border-radius: 8px;
+      }
+
+      .streak-display {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 215, 0, 0.2);
+        padding: 10px 15px;
+        border-radius: 15px;
+        border: 2px solid rgba(255, 215, 0, 0.5);
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 1.1rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      .level-display {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(138, 43, 226, 0.2);
+        padding: 10px 15px;
+        border-radius: 15px;
+        border: 2px solid rgba(138, 43, 226, 0.5);
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 1.1rem;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      .game-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: #ffffff;
+        font-size: 2.5rem;
+        font-weight: 700;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        z-index: 10;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 30px;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+      }
+
+      .instructions {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        padding: 15px 20px;
+        border-radius: 10px;
+        max-width: 400px;
+        font-size: 0.9rem;
+        color: #ffffff;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        animation: fadeIn 0.3s ease;
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        position: relative;
+        color: #ffffff;
+      }
+
+      .close {
+        color: #ffffff;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .close:hover {
+        color: #ff6b6b;
+        text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .title {
+          font-size: 2rem;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .target-color {
+          width: 150px;
+          height: 150px;
+        }
+
+        .color-button {
+          width: 60px;
+          height: 60px;
+        }
+
+        .color-options {
+          grid-template-columns: repeat(3, 1fr);
+          max-width: 250px;
+        }
+
+        .instructions {
+          position: static;
+          margin-top: 20px;
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="rainbow-overlay"></div>
+
+    <div class="container">
+      <div class="header">
+        <h1 class="title">🌈 彩色衝刺</h1>
+        <p class="subtitle">快速辨識顏色，挑戰你的反應極限！</p>
+      </div>
+
+      <div class="controls">
+        <div class="score-info">
+          <div class="score-item">
+            <div class="score-label">得分</div>
+            <div class="score-value" id="score">0</div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">最高分</div>
+            <div class="score-value" id="highScore">0</div>
+          </div>
+          <div class="score-item">
+            <div class="score-label">正確率</div>
+            <div class="score-value" id="accuracy">100%</div>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn btn-secondary" onclick="showInstructions()">
+            <i class="fas fa-question-circle"></i> 說明
+          </button>
+          <button class="btn btn-primary" onclick="startGame()">
+            <i class="fas fa-play"></i> 開始遊戲
+          </button>
+          <button class="btn btn-secondary" onclick="pauseGame()">
+            <i class="fas fa-pause"></i> 暫停
+          </button>
+          <a href="index.html" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> 返回
+          </a>
+        </div>
+      </div>
+
+      <div class="game-area">
+        <div class="level-display" id="levelDisplay">等級 1</div>
+        <div class="streak-display" id="streakDisplay">連擊 0</div>
+
+        <div class="game-display" id="gameDisplay">
+          <div class="target-label" id="targetLabel">點擊開始遊戲</div>
+          <div class="target-color" id="targetColor"></div>
+          <div class="color-options" id="colorOptions"></div>
+          <div class="time-bar">
+            <div class="time-fill" id="timeFill" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <div class="game-overlay" id="gameOverlay" style="display: none">
+          <div id="overlayText">準備開始...</div>
+        </div>
+
+        <div class="instructions">
+          <strong>操作說明：</strong>
+          快速點擊與目標顏色相同的選項 • 時間有限，速度越快分數越高
+        </div>
+      </div>
+    </div>
+
+    <!-- 說明模態框 -->
+    <div id="instructionModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>🌈 彩色衝刺 - 遊戲說明</h2>
+        <br />
+        <h3>🎯 遊戲目標</h3>
+        <p>
+          在時間限制內，快速辨識並點擊與目標顏色相同的選項，挑戰你的視覺反應速度！
+        </p>
+        <br />
+        <h3>🎮 操作方式</h3>
+        <ul>
+          <li><strong>觀察目標：</strong>注意畫面中央的目標顏色</li>
+          <li><strong>快速選擇：</strong>點擊下方與目標相同的顏色按鈕</li>
+          <li><strong>時間競賽：</strong>在時間條歸零前完成選擇</li>
+          <li><strong>連續挑戰：</strong>正確答案後立即進入下一題</li>
+        </ul>
+        <br />
+        <h3>🏆 計分方式</h3>
+        <ul>
+          <li><strong>基礎分數：</strong>正確選擇獲得 10 分</li>
+          <li><strong>速度加成：</strong>剩餘時間越多，加分越多</li>
+          <li><strong>連擊獎勵：</strong>連續正確可獲得額外加成</li>
+          <li><strong>等級提升：</strong>每10題正確後等級提升，分數倍增</li>
+        </ul>
+        <br />
+        <h3>🎨 遊戲特色</h3>
+        <ul>
+          <li>漸進式難度：隨等級提升顏色相似度增加</li>
+          <li>多種顏色：包含基本色彩和複雜混合色</li>
+          <li>視覺效果：豐富的動畫和粒子特效</li>
+          <li>統計追蹤：記錄最高分和正確率</li>
+        </ul>
+        <br />
+        <h3>⚡ 挑戰模式</h3>
+        <ul>
+          <li><strong>等級1-2：</strong>4個選項，基本顏色</li>
+          <li><strong>等級3-4：</strong>6個選項，相似顏色</li>
+          <li><strong>等級5+：</strong>8個選項，極難辨識</li>
+        </ul>
+        <br />
+        <p><strong>準備好迎接彩色風暴了嗎？🌈</strong></p>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class ColorRushGame {
+        constructor() {
+          this.gameState = "waiting"; // waiting, playing, paused, gameOver
+          this.score = 0;
+          this.highScore = parseInt(
+            localStorage.getItem("colorRush-highScore") || "0"
+          );
+          this.level = 1;
+          this.streak = 0;
+          this.totalAnswers = 0;
+          this.correctAnswers = 0;
+          this.timeLeft = 5000; // 5秒
+          this.maxTime = 5000;
+
+          this.currentTargetColor = null;
+          this.colorOptions = [];
+          this.gameTimer = null;
+          this.countdownTimer = null;
+
+          // 顏色定義
+          this.colors = {
+            basic: [
+              { name: "紅色", hex: "#FF0000" },
+              { name: "藍色", hex: "#0000FF" },
+              { name: "綠色", hex: "#00FF00" },
+              { name: "黃色", hex: "#FFFF00" },
+              { name: "紫色", hex: "#800080" },
+              { name: "橙色", hex: "#FFA500" },
+              { name: "粉色", hex: "#FF69B4" },
+              { name: "青色", hex: "#00FFFF" },
+            ],
+            intermediate: [
+              { name: "深紅", hex: "#8B0000" },
+              { name: "深藍", hex: "#000080" },
+              { name: "深綠", hex: "#006400" },
+              { name: "金色", hex: "#FFD700" },
+              { name: "紫羅蘭", hex: "#8A2BE2" },
+              { name: "深橙", hex: "#FF8C00" },
+              { name: "玫瑰", hex: "#FF1493" },
+              { name: "天藍", hex: "#87CEEB" },
+              { name: "石灰", hex: "#32CD32" },
+              { name: "珊瑚", hex: "#FF7F50" },
+            ],
+            advanced: [
+              { name: "暗紅", hex: "#A52A2A" },
+              { name: "皇藍", hex: "#4169E1" },
+              { name: "森綠", hex: "#228B22" },
+              { name: "檸檬", hex: "#FFFACD" },
+              { name: "梅色", hex: "#DDA0DD" },
+              { name: "橘紅", hex: "#FF4500" },
+              { name: "蘭花", hex: "#DA70D6" },
+              { name: "鋼藍", hex: "#4682B4" },
+              { name: "橄欖", hex: "#808000" },
+              { name: "茶色", hex: "#D2691E" },
+              { name: "靛色", hex: "#4B0082" },
+              { name: "栗色", hex: "#800000" },
+            ],
+          };
+
+          this.bindEvents();
+          this.updateDisplay();
+        }
+
+        bindEvents() {
+          // 鍵盤事件
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+              this.pauseGame();
+            }
+          });
+
+          // 說明模態框
+          const modal = document.getElementById("instructionModal");
+          const closeBtn = modal.querySelector(".close");
+
+          closeBtn.onclick = () => (modal.style.display = "none");
+          window.onclick = (e) => {
+            if (e.target === modal) modal.style.display = "none";
+          };
+        }
+
+        startGame() {
+          if (this.gameState === "waiting" || this.gameState === "gameOver") {
+            this.resetGame();
+          }
+
+          this.gameState = "playing";
+          document.getElementById("gameOverlay").style.display = "none";
+          this.generateRound();
+        }
+
+        pauseGame() {
+          if (this.gameState === "playing") {
+            this.gameState = "paused";
+            this.stopTimers();
+            document.getElementById("gameOverlay").style.display = "block";
+            document.getElementById("overlayText").textContent = "遊戲暫停";
+          } else if (this.gameState === "paused") {
+            this.gameState = "playing";
+            document.getElementById("gameOverlay").style.display = "none";
+            this.startRoundTimer();
+          }
+        }
+
+        resetGame() {
+          this.score = 0;
+          this.level = 1;
+          this.streak = 0;
+          this.totalAnswers = 0;
+          this.correctAnswers = 0;
+          this.timeLeft = this.maxTime;
+          this.stopTimers();
+          this.updateDisplay();
+        }
+
+        generateRound() {
+          // 根據等級選擇顏色池
+          let colorPool = this.colors.basic;
+          let optionCount = 4;
+
+          if (this.level >= 5) {
+            colorPool = this.colors.advanced;
+            optionCount = 8;
+          } else if (this.level >= 3) {
+            colorPool = this.colors.intermediate;
+            optionCount = 6;
+          }
+
+          // 選擇目標顏色
+          this.currentTargetColor =
+            colorPool[Math.floor(Math.random() * colorPool.length)];
+
+          // 生成選項（包含正確答案）
+          this.colorOptions = [this.currentTargetColor];
+
+          // 添加干擾選項
+          while (this.colorOptions.length < optionCount) {
+            const randomColor =
+              colorPool[Math.floor(Math.random() * colorPool.length)];
+            if (!this.colorOptions.find((c) => c.hex === randomColor.hex)) {
+              this.colorOptions.push(randomColor);
+            }
+          }
+
+          // 隨機排列選項
+          this.colorOptions = this.shuffleArray(this.colorOptions);
+
+          // 更新UI
+          this.updateGameDisplay();
+
+          // 重置並開始計時
+          this.timeLeft = this.maxTime - (this.level - 1) * 200; // 隨等級減少時間
+          this.timeLeft = Math.max(2000, this.timeLeft); // 最少2秒
+          this.startRoundTimer();
+        }
+
+        updateGameDisplay() {
+          // 更新目標顏色顯示
+          const targetColor = document.getElementById("targetColor");
+          const targetLabel = document.getElementById("targetLabel");
+
+          targetColor.style.background = this.currentTargetColor.hex;
+          targetLabel.textContent = `找出這個顏色：${this.currentTargetColor.name}`;
+
+          // 更新選項按鈕
+          const colorOptions = document.getElementById("colorOptions");
+          colorOptions.innerHTML = "";
+
+          this.colorOptions.forEach((color, index) => {
+            const button = document.createElement("div");
+            button.className = "color-button";
+            button.style.background = color.hex;
+            button.onclick = () => this.selectColor(color, button);
+            colorOptions.appendChild(button);
+          });
+        }
+
+        selectColor(selectedColor, buttonElement) {
+          if (this.gameState !== "playing") return;
+
+          this.stopTimers();
+          this.totalAnswers++;
+
+          if (selectedColor.hex === this.currentTargetColor.hex) {
+            // 正確答案
+            this.correctAnswers++;
+            this.streak++;
+
+            // 計算分數
+            let points = 10;
+            points += Math.floor(this.timeLeft / 100); // 時間加成
+            points += this.streak * 2; // 連擊加成
+            points *= this.level; // 等級倍數
+
+            this.score += points;
+
+            // 視覺效果
+            buttonElement.classList.add("correct");
+            this.createColorParticles(buttonElement, selectedColor.hex);
+
+            // 檢查升級
+            if (this.correctAnswers % 10 === 0) {
+              this.level++;
+              this.showLevelUp();
+            }
+
+            // 下一輪
+            setTimeout(() => {
+              if (this.gameState === "playing") {
+                this.generateRound();
+              }
+            }, 800);
+          } else {
+            // 錯誤答案
+            this.streak = 0;
+            buttonElement.classList.add("wrong");
+
+            // 顯示正確答案
+            const buttons = document.querySelectorAll(".color-button");
+            buttons.forEach((btn) => {
+              if (btn.style.background === this.currentTargetColor.hex) {
+                btn.classList.add("correct");
+              }
+            });
+
+            setTimeout(() => {
+              this.gameOver();
+            }, 1500);
+          }
+
+          this.updateDisplay();
+        }
+
+        startRoundTimer() {
+          this.gameTimer = setInterval(() => {
+            this.timeLeft -= 50;
+            this.updateTimeBar();
+
+            if (this.timeLeft <= 0) {
+              this.timeUp();
+            }
+          }, 50);
+        }
+
+        stopTimers() {
+          if (this.gameTimer) {
+            clearInterval(this.gameTimer);
+            this.gameTimer = null;
+          }
+          if (this.countdownTimer) {
+            clearTimeout(this.countdownTimer);
+            this.countdownTimer = null;
+          }
+        }
+
+        updateTimeBar() {
+          const timeFill = document.getElementById("timeFill");
+          const percentage =
+            (this.timeLeft / (this.maxTime - (this.level - 1) * 200)) * 100;
+          timeFill.style.width = Math.max(0, percentage) + "%";
+        }
+
+        timeUp() {
+          this.stopTimers();
+          this.totalAnswers++;
+          this.streak = 0;
+          this.gameOver();
+        }
+
+        showLevelUp() {
+          const overlay = document.getElementById("gameOverlay");
+          const overlayText = document.getElementById("overlayText");
+
+          overlay.style.display = "block";
+          overlayText.innerHTML = `🎉<br>等級提升！<br>等級 ${this.level}`;
+
+          setTimeout(() => {
+            overlay.style.display = "none";
+          }, 2000);
+        }
+
+        gameOver() {
+          this.gameState = "gameOver";
+          this.stopTimers();
+
+          // 更新最高分
+          if (this.score > this.highScore) {
+            this.highScore = this.score;
+            localStorage.setItem(
+              "colorRush-highScore",
+              this.highScore.toString()
+            );
+          }
+
+          // 顯示結果
+          const overlay = document.getElementById("gameOverlay");
+          const overlayText = document.getElementById("overlayText");
+
+          overlay.style.display = "block";
+          overlayText.innerHTML = `
+                    遊戲結束！<br>
+                    <span style="font-size: 1.5rem;">得分: ${this.score}</span><br>
+                    等級: ${this.level} | 連擊: ${this.streak}<br>
+                    <span style="font-size: 1rem; margin-top: 10px; display: block;">點擊重新開始</span>
+                `;
+
+          // 保存遊戲數據
+          if (typeof saveGameData === "function") {
+            saveGameData("color-rush", { score: this.score });
+          }
+
+          this.updateDisplay();
+        }
+
+        createColorParticles(element, color) {
+          const rect = element.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+
+          for (let i = 0; i < 8; i++) {
+            const particle = document.createElement("div");
+            particle.style.position = "fixed";
+            particle.style.left = centerX + "px";
+            particle.style.top = centerY + "px";
+            particle.style.width = "8px";
+            particle.style.height = "8px";
+            particle.style.background = color;
+            particle.style.borderRadius = "50%";
+            particle.style.pointerEvents = "none";
+            particle.style.zIndex = "1000";
+
+            const angle = (i / 8) * Math.PI * 2;
+            const velocity = 3;
+            const vx = Math.cos(angle) * velocity;
+            const vy = Math.sin(angle) * velocity;
+
+            document.body.appendChild(particle);
+
+            let x = 0,
+              y = 0,
+              opacity = 1;
+            const animate = () => {
+              x += vx;
+              y += vy;
+              opacity -= 0.02;
+
+              particle.style.transform = `translate(${x}px, ${y}px)`;
+              particle.style.opacity = opacity;
+
+              if (opacity > 0) {
+                requestAnimationFrame(animate);
+              } else {
+                particle.remove();
+              }
+            };
+
+            requestAnimationFrame(animate);
+          }
+        }
+
+        shuffleArray(array) {
+          const newArray = [...array];
+          for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+          }
+          return newArray;
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("highScore").textContent = this.highScore;
+          document.getElementById(
+            "levelDisplay"
+          ).textContent = `等級 ${this.level}`;
+          document.getElementById(
+            "streakDisplay"
+          ).textContent = `連擊 ${this.streak}`;
+
+          const accuracy =
+            this.totalAnswers > 0
+              ? Math.round((this.correctAnswers / this.totalAnswers) * 100)
+              : 100;
+          document.getElementById("accuracy").textContent = accuracy + "%";
+        }
+      }
+
+      // 初始化遊戲
+      let game;
+
+      function initGame() {
+        game = new ColorRushGame();
+      }
+
+      function startGame() {
+        if (game) {
+          game.startGame();
+        }
+      }
+
+      function pauseGame() {
+        if (game) {
+          game.pauseGame();
+        }
+      }
+
+      function showInstructions() {
+        document.getElementById("instructionModal").style.display = "block";
+      }
+
+      // 當頁面載入完成時初始化遊戲
+      window.addEventListener("load", initGame);
+
+      // 遊戲工具函數
+      if (typeof initializeGameUtils === "function") {
+        initializeGameUtils("color-rush");
+      }
+    </script>
+  </body>
+</html>

@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
-  <head>
+<html lang="zh-TW">  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>網頁小遊戲合集</title>
+    <title data-translate="site.title">網頁小遊戲合集</title>
     <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Inter:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -17,25 +16,31 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
     />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#667eea" />
     <meta
       name="description"
+      data-translate="site.description"
       content="多款經典網頁小遊戲，包含終極密碼、貪食蛇、瑪利歐、打磚塊、打飛機以及塔防遊戲"
     />
   </head>
-  <body>
-    <header class="site-header">
+  <body>    <header class="site-header">
       <div class="container">
-        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <a href="index.html" class="site-title" data-translate="site.title">網頁小遊戲</a>
         <nav class="site-nav">
           <ul>
-            <li><a href="#games">遊戲列表</a></li>
-            <li><a href="#about">關於</a></li>
-            <li><a href="profile.html">個人檔案</a></li>
+            <li><a href="#games" data-translate="nav.games">遊戲列表</a></li>
+            <li><a href="#about" data-translate="nav.about">關於</a></li>
+            <li><a href="profile.html" data-translate="nav.profile">個人檔案</a></li>
             <li>
               <button id="theme-toggle" aria-label="切換主題">
                 <span class="theme-icon light-icon">☀️</span>
                 <span class="theme-icon dark-icon">🌙</span>
+              </button>
+            </li>
+            <li>
+              <button id="language-toggle" aria-label="切換語言">
+                <span class="lang-icon lang-zh active">中</span>
+                <span class="lang-icon lang-en">EN</span>
               </button>
             </li>
           </ul>
@@ -369,19 +374,949 @@
               <a href="coloring-game.html" class="game-card-button">開始遊戲</a>
             </div>
           </div>
-          <!-- 數獨遊戲 -->
+          <!-- 記憶配對 -->
           <div class="game-card">
             <div class="game-card-image">
               <div class="game-icon">
-                <i class="fas fa-table fa-5x"></i>
+                <i class="fas fa-brain fa-5x"></i>
               </div>
             </div>
             <div class="game-card-content">
-              <h3 class="game-card-title">數獨遊戲</h3>
+              <h3 class="game-card-title">記憶配對</h3>
               <p class="game-card-description">
-                經典的數字邏輯遊戲！在9×9的網格中填入數字1-9，使每行、每列和每個3×3區塊都包含1-9且不重複。提供三種難度，可使用筆記功能輔助思考，挑戰你的邏輯推理能力！
+                考驗記憶力的翻牌遊戲！翻開兩張卡片，尋找配對的圖案。提供三種難度級別，影響卡片數量和遊戲時間。成功配對所有卡片才能獲勝，越快完成分數越高。挑戰你的空間記憶能力！
               </p>
-              <a href="sudoku-game.html" class="game-card-button">開始遊戲</a>
+              <a href="memory-match.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 貪吃蛇 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-dragon fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">貪吃蛇</h3>
+              <p class="game-card-description">
+                經典的貪吃蛇遊戲！使用方向鍵或WASD控制蛇的移動方向，吃到食物時蛇會變長並得分。撞到牆壁或自己的身體時遊戲結束。提供三種難度級別，控制蛇的移動速度。看看你能不能創造新的最高分！
+              </p>
+              <a href="snake-game.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 數學挑戰 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-calculator fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">數學挑戰</h3>
+              <p class="game-card-description">
+                測試你的心算能力和速度！在限定時間內解答盡可能多的數學題目。題目難度隨遊戲進行而增加，連續答對可獲得額外的時間獎勵。提供三種難度級別，挑戰不同的運算類型和難度。看看你能答對多少題！
+              </p>
+              <a href="math-challenge.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+
+          <!-- 詞語猜猜看 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-spell-check fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">詞語猜猜看</h3>
+              <p class="game-card-description">
+                挑戰你的詞彙量和推理能力！猜出五個字母的神秘單詞，每次猜測後會得到提示。綠色表示字母正確且位置正確，黃色表示字母正確但位置錯誤，灰色表示字母不在單詞中。提供三種難度和提示功能，體驗單詞猜謎的樂趣！
+              </p>
+              <a href="word-guess.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 俄羅斯方塊 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-shapes fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">俄羅斯方塊</h3>
+              <p class="game-card-description">
+                經典的俄羅斯方塊遊戲！透過旋轉和移動不同形狀的方塊，讓它們填滿一整行來獲得分數。使用方向鍵控制方塊移動和旋轉，空格鍵直接落到底部，C鍵保存當前方塊。消除的行數越多，獲得的分數越高。隨著分數增加，難度也會逐漸提升！
+              </p>
+              <a href="tetris-game.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 迷宮探險 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-map-signs fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">迷宮探險</h3>
+              <p class="game-card-description">
+                刺激的迷宮探險遊戲！在隨機生成的迷宮中尋找出口，同時收集金幣增加分數。提供三種難度，難度越高迷宮越複雜。遊戲有五個關卡，每關難度遞增，考驗你的解謎能力和反應速度！
+              </p>
+              <a href="maze-game.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 拼圖推盤 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-puzzle-piece fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">拼圖推盤</h3>
+              <p class="game-card-description">
+                經典的拼圖推盤遊戲！點擊方塊將其移動到空白處，重新排列數字拼圖直到正確順序。有三種難度級別：簡單(3×3)、中等(4×4)和困難(5×5)，移動次數越少、完成時間越快獲得的分數越高。
+              </p>
+              <a href="sliding-puzzle.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+          <!-- 彈跳球 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-basketball-ball fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">彈跳球</h3>
+              <p class="game-card-description">
+                有趣的物理彈跳球遊戲！點擊並拖曳設定發射角度和力度，嘗試將球射入籃框得分。選擇不同顏色的球具有不同特性，連續進球可獲得連擊加成。隨著關卡進展，籃框位置逐漸變得更具挑戰性。
+              </p>
+              <a href="bouncing-ball.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 音樂記憶 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-music fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">音樂記憶</h3>
+              <p class="game-card-description">
+                考驗聽覺記憶的音樂遊戲！記住並重複電腦播放的音符序列，每答對一輪難度增加。提供三種難度級別：簡單(4個音符)、中等(6個音符)和困難(8個音符)。挑戰你的聽覺記憶能力，看看你能到達哪一級！
+              </p>
+              <a href="music-memory.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 色彩反應速度遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-palette fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">色彩反應速度遊戲</h3>
+              <p class="game-card-description">
+                測試你的色彩識別與反應速度！根據指示點擊正確的顏色按鈕，錯誤會扣分。提供簡單(4色)、中等(6色)、困難(8色)三種難度，連擊可獲得加成。時間越短、準確度越高分數越高！
+              </p>
+              <a href="color-reaction.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+
+          <!-- 閃光記憶挑戰 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-bolt fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">閃光記憶挑戰</h3>
+              <p class="game-card-description">
+                測試短期記憶能力的閃光序列遊戲！觀察閃光的位置順序，然後按照相同順序點擊。隨著關卡進展，序列長度和難度逐漸增加。挑戰你的記憶極限，看看你能記住多長的序列！
+              </p>
+              <a href="flash-memory.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 目標追蹤挑戰 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-crosshairs fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">目標追蹤挑戰</h3>
+              <p class="game-card-description">
+                測試手眼協調的目標追蹤遊戲！點擊移動的目標來得分，不同類型的目標有不同的分數和特性。提供簡單、中等、困難三種難度，隨機出現特殊目標和加分項目，挑戰你的反應速度和準確性！
+              </p>
+              <a href="target-tracking.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+
+          <!-- 節奏遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-drum fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">節奏遊戲</h3>
+              <p class="game-card-description">
+                音樂節奏遊戲！使用D、F、J、K鍵按照音樂節拍點擊下落的音符。完美擊中獲得最高分，連擊可獲得加成。提供簡單(2道)、中等(3道)、困難(4道)三種難度，挑戰你的節奏感！
+              </p>
+              <a href="rhythm-game.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 密室逃脫 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-door-open fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">密室逃脫</h3>
+              <p class="game-card-description">
+                沉浸式密室逃脫遊戲！在三個不同場景(辦公室、實驗室、森林)中尋找線索、收集道具、解決謎題。每個場景都有獨特的謎題和故事背景，在時間限制內找到逃脫的方法！
+              </p>
+              <a href="escape-room.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 數獨挑戰 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-grid-3x3 fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">數獨挑戰</h3>
+              <p class="game-card-description">
+                經典數獨益智遊戲！在9×9網格中填入1-9的數字，使每行、每列、每個3×3小格都不重複。提供簡單、中等、困難三種難度，含提示功能和錯誤檢查，挑戰你的邏輯思維！
+              </p>
+              <a href="sudoku-challenge.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+
+          <!-- 鋼琴塊 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-piano fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">鋼琴塊</h3>
+              <p class="game-card-description">
+                音樂節奏遊戲！點擊下降的黑色方塊，不要點擊白色區域。隨著遊戲進行速度會加快，測試你的反應速度和手眼協調能力。連續準確點擊可獲得高分！
+              </p>
+              <a href="piano-tiles.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 點擊速度測試 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-mouse-pointer fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">點擊速度測試</h3>
+              <p class="game-card-description">
+                測試你的點擊速度！在限定時間內盡可能多地點擊按鈕或目標。挑戰自己的手速極限，看看你能在10秒內點擊多少次。適合練習滑鼠操作和反應速度！
+              </p>
+              <a href="click-speed.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 卡牌記憶 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-clone fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">卡牌記憶</h3>
+              <p class="game-card-description">
+                經典的卡牌記憶遊戲！翻開兩張卡片，尋找相同的圖案進行配對。所有卡片都配對成功即可獲勝。提供不同難度級別，考驗你的記憶力和專注力！
+              </p>
+              <a href="card-memory.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 拼圖遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-puzzle-piece fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">拼圖遊戲</h3>
+              <p class="game-card-description">
+                經典的拼圖挑戰！將打散的拼圖塊拖拽到正確位置，重組完整的圖像。提供多種圖片和難度選擇，從簡單的9塊到困難的100塊拼圖，考驗你的觀察力和耐心！
+              </p>
+              <a href="jigsaw-puzzle.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 跳繩遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-running fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">跳繩遊戲</h3>
+              <p class="game-card-description">
+                節奏感十足的跳繩遊戲！按空格鍵或點擊螢幕讓角色跳過繩子，隨著遊戲進行繩子速度會越來越快。連續成功跳繩可獲得高分，測試你的節奏感和反應能力！
+              </p>
+              <a href="jump-rope.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 打字速度測試 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-keyboard fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">打字速度測試</h3>
+              <p class="game-card-description">
+                測試並提升你的打字速度！在限定時間內正確輸入顯示的文字，系統會計算你的每分鐘字數(WPM)和準確率。提供不同難度的文章，幫助你提升打字技能！
+              </p>
+              <a href="typing-speed.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 井字遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-hashtag fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">井字遊戲</h3>
+              <p class="game-card-description">
+                經典的井字遊戲(圈叉遊戲)！與電腦或朋友對戰，在3×3的格子中先連成一線的玩家獲勝。提供不同難度的AI對手，考驗你的策略思維和預判能力！
+              </p>
+              <a href="tic-tac-toe.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 文字冒險 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-book fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">文字冒險</h3>
+              <p class="game-card-description">
+                沉浸式文字冒險遊戲！通過閱讀故事和做出選擇來推進劇情，每個決定都會影響故事的發展方向。探索不同的故事線，體驗多種結局的樂趣！
+              </p>
+              <a href="text-adventure.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+
+          <!-- 單字重組 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-random fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">單字重組</h3>
+              <p class="game-card-description">
+                挑戰詞彙遊戲！將打亂的字母重新排列組成正確的單字。提供提示功能和不同難度級別，從簡單的3字母單字到複雜的長單字，考驗你的詞彙量和拼字能力！
+              </p>
+              <a href="word-scramble.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 找字遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-search fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">找字遊戲</h3>
+              <p class="game-card-description">
+                在字母網格中尋找隱藏的單字！單字可能以水平、垂直或對角線方向出現。提供不同主題的單字列表和多種難度級別，訓練你的觀察力和專注力！
+              </p>
+              <a href="word-search.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 顏色配對 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-palette fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">顏色配對</h3>
+              <p class="game-card-description">
+                快速顏色配對遊戲！根據指示選擇正確的顏色組合，或者找出相同顏色的配對。隨著遊戲進行速度會加快，考驗你的色彩識別能力和反應速度！
+              </p>
+              <a href="color-match.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 接球遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-baseball-ball fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">接球遊戲</h3>
+              <p class="game-card-description">
+                快節奏的反應遊戲！控制板子接住從天空落下的球，避免球掉到地面。收集特殊球獲得高分和能力提升，隨著等級提高難度逐漸增加！
+              </p>
+              <a href="ball-catch.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 反射測試 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-stopwatch fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">反射測試</h3>
+              <p class="game-card-description">
+                測試你的視覺反應速度！等待紅色區域變成綠色後立即點擊，挑戰你的反應極限。提供三種難度模式，記錄你的最佳反應時間！
+              </p>
+              <a href="reflex-test.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 躲避球遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-running fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">躲避球遊戲</h3>
+              <p class="game-card-description">
+                刺激的動作遊戲！控制藍色球體躲避紅色障礙物，收集金色能量球獲得特殊能力。考驗你的手眼協調和反應速度，挑戰生存極限！
+              </p>
+              <a href="dodge-ball.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 快速射擊 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-crosshairs fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">快速射擊</h3>
+              <p class="game-card-description">
+                西部牛仔風格的反應速度測試！等待"DRAW!"信號出現後儘快開槍，測試你的反應時間。反應越快得分越高，100毫秒內射擊可獲得滿分！挑戰你的神經反射極限！
+              </p>
+              <a href="quick-draw.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 雷射防禦 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-rocket fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">雷射防禦</h3>
+              <p class="game-card-description">
+                太空防禦射擊遊戲！使用滑鼠瞄準射擊入侵的外星人，保護地球免受侵略。多種敵人類型，隨關卡進展難度遞增。連擊可獲得加成，還有機會獲得強力道具！
+              </p>
+              <a href="laser-defense.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 色彩衝刺 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-tachometer-alt fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">色彩衝刺</h3>
+              <p class="game-card-description">
+                快速色彩識別遊戲！在時間壓力下快速點擊正確的顏色。隨著關卡進展，顏色數量增加且時間限制縮短。連續答對可獲得連擊加成，挑戰你的色彩識別速度！
+              </p>
+              <a href="color-rush.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 忍者切片 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-cut fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">忍者切片</h3>
+              <p class="game-card-description">
+                水果忍者風格的切割遊戲！用滑鼠或觸控切割飛向空中的水果，不同水果有不同分值。小心避開炸彈，錯過水果會失去生命！連續切割可獲得連擊加成和華麗特效！
+              </p>
+              <a href="ninja-slice.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 反應時間測試 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-stopwatch fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">反應時間測試</h3>
+              <p class="game-card-description">
+                科學的反應速度測試！等待紅色變為綠色後立即點擊，測量你的反應時間精確度。系統會記錄你的平均反應時間和最佳成績，並提供專業的速度評級！
+              </p>
+              <a href="reaction-time.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 精準瞄準 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-bullseye fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">精準瞄準</h3>
+              <p class="game-card-description">
+                高級瞄準訓練遊戲！用滑鼠準星瞄準各種類型的目標，包括普通、獎勵、快速和迷你目標。多種難度設定，連擊系統和準確度統計，訓練你的精準瞄準技巧！
+              </p>
+              <a href="precision-aim.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 手眼協調 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-hand-point-up fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">手眼協調</h3>
+              <p class="game-card-description">
+                多目標追蹤協調遊戲！同時追蹤多個以不同模式移動的目標(直線、曲線、隨機、螺旋)。十個等級漸進式難度，連擊系統和滑鼠軌跡效果，全面提升手眼協調能力！
+              </p>
+              <a href="hand-eye-coordination.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+          <!-- 多任務挑戰 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-tasks fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">多任務挑戰</h3>
+              <p class="game-card-description">
+                終極協調挑戰遊戲！同時處理三個任務：點擊移動的點、解決數學問題、記憶序列模式。測試你的多任務處理能力和專注力，挑戰認知極限的綜合訓練！
+              </p>
+              <a href="multitask-challenge.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+
+          <!-- 接球遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-baseball-ball fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">接球遊戲</h3>
+              <p class="game-card-description">
+                經典的接球反應遊戲！控制接球板接住從天而降的各種球類，不同顏色的球有不同分值。隨著時間推進，球的速度和數量會逐漸增加，考驗你的反應速度和預測能力！
+              </p>
+              <a href="ball-catch.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 反射測試 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-lightning-bolt fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">反射測試</h3>
+              <p class="game-card-description">
+                專業級反射神經測試！隨機位置出現目標，測試你的視覺反應和點擊速度。多種測試模式包括簡單反應、選擇反應和連續反應，提供科學的反應時間分析和評級！
+              </p>
+              <a href="reflex-test.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 躲避球遊戲 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-running fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">躲避球遊戲</h3>
+              <p class="game-card-description">
+                刺激的躲避挑戰！控制角色在遊戲區域內移動，躲避從四面八方飛來的球類。球的速度和數量隨時間增加，生存時間越長得分越高，測試你的移動技巧和反應能力！
+              </p>
+              <a href="dodge-ball.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 極速打字挑戰 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-keyboard fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">極速打字挑戰</h3>
+              <p class="game-card-description">
+                測試打字速度和準確度的終極挑戰！在限定時間內盡可能快速且準確地打字。提供多種難度和文本類型，實時顯示WPM(每分鐘字數)和準確率，提升你的打字技能！
+              </p>
+              <a href="speed-typing.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 泡泡消除 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-circle fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">泡泡消除</h3>
+              <p class="game-card-description">
+                快節奏泡泡消除遊戲！點擊畫面中的彩色泡泡來消除它們，不同顏色泡泡有不同分數。連續消除可獲得連擊獎勵和粒子特效，多種難度等級挑戰你的反應速度！
+              </p>
+              <a href="bubble-pop.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 記憶西蒙 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-brain fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">記憶西蒙</h3>
+              <p class="game-card-description">
+                經典西蒙記憶遊戲！觀察四個彩色按鈕的閃爍順序，然後按照相同順序點擊重現。隨著關卡進行序列會越來越長，考驗你的記憶力和反應能力！
+              </p>
+              <a href="memory-simon.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 節拍點擊 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-music fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">節拍點擊</h3>
+              <p class="game-card-description">
+                音樂節拍遊戲！使用D、F、J、K鍵在正確時機點擊下落的音符。完美、很好、一般、失誤四種判定，連擊可獲得分數加成。多種難度挑戰你的節拍感！
+              </p>
+              <a href="rhythm-tap.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 序列點擊 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-list-ol fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">序列點擊</h3>
+              <p class="game-card-description">
+                記憶與反應遊戲！觀察數字序列的顯示，然後按照相同順序點擊數字按鈕重現序列。隨著回合進展序列變長，多種難度挑戰你的短期記憶能力！
+              </p>
+              <a href="tap-sequence.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 圖案匹配挑戰 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-shapes fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">圖案匹配挑戰</h3>
+              <p class="game-card-description">
+                快速圖案識別遊戲！觀察目標圖案，從四個選項中選擇正確的匹配項。隨著關卡進展圖案複雜度增加，時間壓力挑戰你的視覺識別能力和反應速度！
+              </p>
+              <a href="pattern-match.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 極速點擊 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-mouse-pointer fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">極速點擊</h3>
+              <p class="game-card-description">
+                點擊速度挑戰遊戲！四種模式考驗不同能力：標準模式測試基礎速度，極速模式考驗爆發力，挑戰模式多目標協調，耐力模式持久性。追求最高CPS記錄！
+              </p>
+              <a href="speed-clicker.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+          <!-- 方向挑戰 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-directions fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">方向挑戰</h3>
+              <p class="game-card-description">
+                箭頭方向反應遊戲！觀察中央箭頭方向，快速使用鍵盤或滑鼠做出正確反應。多種難度包含混亂箭頭干擾，挑戰你的注意力和反應時間！
+              </p>
+              <a href="direction-challenge.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+
+          <!-- 氣球爆破挑戰 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-birthday-cake fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">氣球爆破挑戰</h3>
+              <p class="game-card-description">
+                刺激的氣球爆破遊戲！點擊浮動的彩色氣球來獲得分數，黃金氣球有特殊獎勵。不同顏色氣球分值不同，連續爆破可獲得組合加成。四種難度挑戰你的反應速度和準確性！
+              </p>
+              <a href="balloon-pop-challenge.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+
+          <!-- 色彩序列記憶 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-rainbow fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">色彩序列記憶</h3>
+              <p class="game-card-description">
+                記憶色彩序列的挑戰遊戲！觀察電腦顯示的顏色順序，然後按照相同順序點擊顏色按鈕。隨著關卡進展序列變長，四種難度影響顏色數量和顯示速度，考驗你的視覺記憶！
+              </p>
+              <a href="color-sequence-memory.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+
+          <!-- 視覺追蹤挑戰 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-eye fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">視覺追蹤挑戰</h3>
+              <p class="game-card-description">
+                精準射擊追蹤遊戲！用十字準星瞄準移動的目標，不同類型目標有不同分值。紅色主要目標、藍色次要目標、金色獎勵目標、紫色危險目標，四種難度挑戰你的瞄準技巧！
+              </p>
+              <a href="visual-tracking-challenge.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+          <!-- 手指狂熱 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-hand-paper fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">手指狂熱</h3>
+              <p class="game-card-description">
+                多指協調挑戰遊戲！同時點擊多個亮起的區域，需要多根手指或滑鼠協調操作。支援觸控螢幕，四種難度從2指到5指同時操作，挑戰你的手指協調能力和反應速度！
+              </p>
+              <a href="finger-frenzy.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 速度打字挑戰 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-keyboard fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">速度打字挑戰</h3>
+              <p class="game-card-description">
+                專業的中文打字速度測試！提供多個中文文本樣本，即時顯示WPM、準確率和字符狀態。四種難度時間限制，字符級別的正確/錯誤/遺漏反饋，挑戰你的打字速度和準確性！
+              </p>
+              <a href="speed-typing-challenge.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+          <!-- 多目標協調 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-bullseye fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">多目標協調</h3>
+              <p class="game-card-description">
+                複雜的多目標追蹤挑戰！同時追蹤並點擊2-5個移動目標，目標具有線性、圓周、之字形、螺旋四種移動模式。回合制進展，組合加成系統，全面的反應時間分析！
+              </p>
+              <a href="multi-target-coordination.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+
+          <!-- 聲音西蒙 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-volume-up fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">聲音西蒙</h3>
+              <p class="game-card-description">
+                音頻記憶挑戰遊戲！每個按鈕發出獨特音調，觀察並聆聽音符序列，然後按相同順序重現。隨關卡進展序列變長，音量控制、連擊系統，全面訓練聽覺記憶能力！
+              </p>
+              <a href="sound-simon.html" class="game-card-button">開始遊戲</a>
+            </div>
+          </div>
+
+          <!-- 精準繪圖 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-pencil-alt fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">精準繪圖</h3>
+              <p class="game-card-description">
+                繪圖精度挑戰遊戲！五種挑戰類型：直線、圓形、曲線、形狀和複雜路徑。支援滑鼠、觸控、手寫筆操作，即時精度計算，四種難度容錯設定，訓練手部精準控制能力！
+              </p>
+              <a href="precision-draw.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+
+          <!-- 快問快答 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-question-circle fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">快問快答</h3>
+              <p class="game-card-description">
+                知識反應速度測試！六大類別：常識、科學、歷史、體育、電影和混合題型。每題10秒限時，連答獎勵、速度加成，豐富題庫挑戰你的知識面和反應速度！
+              </p>
+              <a href="rapid-fire-quiz.html" class="game-card-button"
+                >開始遊戲</a
+              >
+            </div>
+          </div>
+
+          <!-- 游標追逐 -->
+          <div class="game-card">
+            <div class="game-card-image">
+              <div class="game-icon">
+                <i class="fas fa-mouse-pointer fa-5x"></i>
+              </div>
+            </div>
+            <div class="game-card-content">
+              <h3 class="game-card-title">游標追逐</h3>
+              <p class="game-card-description">
+                進階滑鼠追蹤挑戰！四種目標類型：普通、快速、獎勵、危險，自定義游標軌跡效果。移動目標物理碰撞系統，連擊獎勵機制，四種難度60秒極限挑戰！
+              </p>
+              <a href="cursor-chase.html" class="game-card-button">開始遊戲</a>
             </div>
           </div>
         </div>
@@ -430,9 +1365,8 @@
           <p>&copy; 2025 網頁小遊戲合集 | 使用純 JavaScript 開發</p>
         </div>
       </div>
-    </footer>
-
-    <script src="gameUtils.js"></script>
+    </footer>    <script src="gameUtils.js"></script>
+    <script src="languageManager.js"></script>
     <script src="themeManager.js"></script>
     <script src="achievements.js"></script>
     <script src="gameStats.js"></script>

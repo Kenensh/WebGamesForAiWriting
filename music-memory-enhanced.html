@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>音樂記憶 - 網頁小遊戲</title>
+    <meta name="game-id" content="music-memory" />
+    <meta name="game-name" content="音樂記憶" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      .music-memory-container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .game-stats {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 20px;
+      }
+
+      .stat-box {
+        background-color: var(--card-bg, #f5f5f5);
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-align: center;
+        width: 150px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: var(--text-color-light, #666);
+        margin-bottom: 5px;
+      }
+
+      .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--text-color-dark, #333);
+      }
+
+      .difficulty-selector {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      .difficulty-btn {
+        background-color: var(--card-bg, #f5f5f5);
+        border: 2px solid transparent;
+        border-radius: 5px;
+        padding: 8px 15px;
+        margin: 0 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .difficulty-btn:hover {
+        background-color: var(--hover-bg, #e0e0e0);
+      }
+
+      .difficulty-btn.active {
+        border-color: var(--primary-color, #2196f3);
+        background-color: var(--primary-light, #e6f0ff);
+        font-weight: bold;
+      }
+
+      .tone-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        grid-gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      @media (min-width: 768px) {
+        .tone-buttons {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+
+      .tone-button {
+        position: relative;
+        height: 120px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        color: #fff;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+      }
+
+      .tone-button:active {
+        transform: scale(0.95);
+      }
+
+      .tone-button:nth-child(1) {
+        background-color: #ff5252; /* 紅色 */
+      }
+
+      .tone-button:nth-child(2) {
+        background-color: #4caf50; /* 綠色 */
+      }
+
+      .tone-button:nth-child(3) {
+        background-color: #2196f3; /* 藍色 */
+      }
+
+      .tone-button:nth-child(4) {
+        background-color: #ffeb3b; /* 黃色 */
+      }
+
+      .tone-button:nth-child(5) {
+        background-color: #9c27b0; /* 紫色 */
+      }
+
+      .tone-button:nth-child(6) {
+        background-color: #ff9800; /* 橙色 */
+      }
+
+      .tone-button:nth-child(7) {
+        background-color: #00bcd4; /* 青色 */
+      }
+
+      .tone-button:nth-child(8) {
+        background-color: #795548; /* 棕色 */
+      }
+
+      .tone-button.flash {
+        animation: flash 0.3s;
+      }
+
+      @keyframes flash {
+        0% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.7;
+          transform: scale(0.98);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .tone-button.correct-flash {
+        animation: correct-flash 0.5s;
+      }
+
+      @keyframes correct-flash {
+        0% {
+          box-shadow: 0 0 0px rgba(46, 204, 113, 0);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(46, 204, 113, 1);
+        }
+        100% {
+          box-shadow: 0 0 0px rgba(46, 204, 113, 0);
+        }
+      }
+
+      .tone-button.wrong-flash {
+        animation: wrong-flash 0.5s;
+      }
+
+      @keyframes wrong-flash {
+        0% {
+          box-shadow: 0 0 0px rgba(231, 76, 60, 0);
+        }
+        50% {
+          box-shadow: 0 0 20px rgba(231, 76, 60, 1);
+        }
+        100% {
+          box-shadow: 0 0 0px rgba(231, 76, 60, 0);
+        }
+      }
+
+      .game-message {
+        margin: 20px 0;
+        padding: 15px;
+        text-align: center;
+        font-size: 18px;
+        border-radius: 5px;
+        background-color: var(--card-bg, #f5f5f5);
+      }
+
+      .level-progress {
+        margin: 20px 0;
+        height: 10px;
+        background-color: var(--card-bg, #f5f5f5);
+        border-radius: 5px;
+        overflow: hidden;
+      }
+
+      .level-progress-bar {
+        height: 100%;
+        background-color: var(--primary-color, #2196f3);
+        width: 0;
+        transition: width 0.3s ease;
+      }
+
+      .game-controls {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .primary-button {
+        background-color: var(--primary-color, #2196f3);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .primary-button:hover {
+        background-color: var(--primary-dark, #1976d2);
+      }
+
+      .primary-button:disabled {
+        background-color: var(--disabled, #bdbdbd);
+        cursor: not-allowed;
+      }
+
+      .secondary-button {
+        background-color: var(--secondary-color, #757575);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .secondary-button:hover {
+        background-color: var(--secondary-dark, #616161);
+      }
+
+      /* 音量設定區塊 */
+      .sound-settings {
+        display: flex;
+        align-items: center;
+        margin: 15px 0;
+        padding: 10px;
+        background-color: var(--card-bg, #f5f5f5);
+        border-radius: 5px;
+      }
+
+      .sound-control {
+        display: flex;
+        align-items: center;
+        margin-right: 20px;
+      }
+
+      .sound-icon {
+        margin-right: 8px;
+        color: var(--text-color-light, #666);
+      }
+
+      .sound-slider {
+        -webkit-appearance: none;
+        width: 100px;
+        height: 6px;
+        border-radius: 5px;
+        background: #d3d3d3;
+        outline: none;
+        margin: 0 10px;
+      }
+
+      .sound-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--primary-color, #2196f3);
+        cursor: pointer;
+      }
+
+      .sound-slider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--primary-color, #2196f3);
+        cursor: pointer;
+      }
+
+      .mute-toggle {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .mute-toggle i {
+        margin-right: 5px;
+      }
+
+      /* Animation */
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .pulse {
+        animation: pulse 0.5s;
+      }
+
+      @keyframes celebrate {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      .celebrate {
+        animation: celebrate 0.5s;
+      }
+
+      /* Modal Styles */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+
+      .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        border-radius: 10px;
+        width: 80%;
+        max-width: 500px;
+        position: relative;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+      }
+
+      .modal h2 {
+        margin-top: 0;
+        color: #333;
+      }
+
+      .modal p {
+        line-height: 1.6;
+        color: #666;
+      }
+
+      .modal ul {
+        padding-left: 20px;
+      }
+
+      .modal li {
+        margin-bottom: 8px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html">返回首頁</a></li>
+            <li><a href="dashboard.html">遊戲儀表板</a></li>
+            <li><a href="settings.html">設定</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container game-container">
+      <h1>音樂記憶</h1>
+      <div class="score-display">分數: <span id="scoreValue">0</span></div>
+
+      <div class="music-memory-container">
+        <div class="game-stats">
+          <div class="stat-box">
+            <div class="stat-label">關卡</div>
+            <div id="levelDisplay" class="stat-value">1</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">序列長度</div>
+            <div id="sequenceLength" class="stat-value">3</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">剩餘嘗試次數</div>
+            <div id="attemptsLeft" class="stat-value">3</div>
+          </div>
+        </div>
+
+        <div class="difficulty-selector">
+          <div id="easyBtn" class="difficulty-btn active">簡單 (4 鍵)</div>
+          <div id="mediumBtn" class="difficulty-btn">中等 (6 鍵)</div>
+          <div id="hardBtn" class="difficulty-btn">困難 (8 鍵)</div>
+        </div>
+
+        <div class="sound-settings">
+          <div class="sound-control">
+            <span class="sound-icon"><i class="fas fa-volume-up"></i></span>
+            <input
+              type="range"
+              id="volumeSlider"
+              class="sound-slider"
+              min="0"
+              max="100"
+              value="70"
+            />
+            <span id="volumeValue">70%</span>
+          </div>
+          <div class="mute-toggle">
+            <i id="muteIcon" class="fas fa-volume-mute"></i>
+            <span id="muteText">靜音</span>
+          </div>
+        </div>
+
+        <div class="level-progress">
+          <div id="levelProgressBar" class="level-progress-bar"></div>
+        </div>
+
+        <div id="gameMessage" class="game-message">
+          點擊「開始遊戲」按鈕開始遊戲
+        </div>
+
+        <div id="toneButtons" class="tone-buttons">
+          <!-- 音符按鈕會由 JavaScript 動態生成 -->
+        </div>
+
+        <div class="game-controls">
+          <button id="startButton" class="primary-button">開始遊戲</button>
+          <button id="pauseButton" class="primary-button" disabled>暫停</button>
+          <button id="restartButton" class="primary-button" disabled>
+            重新開始
+          </button>
+          <button id="helpButton" class="secondary-button">遊戲說明</button>
+          <button id="homeButton" class="secondary-button">返回首頁</button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>&copy; 2025 網頁小遊戲合集 | 使用純 JavaScript 開發</p>
+      </div>
+    </footer>
+
+    <script src="gameUtils.js"></script>
+    <script src="soundManager.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // 獲取 DOM 元素
+        const toneButtonsContainer = document.getElementById("toneButtons");
+        const levelDisplay = document.getElementById("levelDisplay");
+        const sequenceLength = document.getElementById("sequenceLength");
+        const attemptsLeft = document.getElementById("attemptsLeft");
+        const gameMessage = document.getElementById("gameMessage");
+        const levelProgressBar = document.getElementById("levelProgressBar");
+        const easyBtn = document.getElementById("easyBtn");
+        const mediumBtn = document.getElementById("mediumBtn");
+        const hardBtn = document.getElementById("hardBtn");
+        const startButton = document.getElementById("startButton");
+        const pauseButton = document.getElementById("pauseButton");
+        const restartButton = document.getElementById("restartButton");
+        const helpButton = document.getElementById("helpButton");
+        const homeButton = document.getElementById("homeButton");
+        const volumeSlider = document.getElementById("volumeSlider");
+        const volumeValue = document.getElementById("volumeValue");
+        const muteToggle = document.querySelector(".mute-toggle");
+        const muteIcon = document.getElementById("muteIcon");
+        const muteText = document.getElementById("muteText");
+
+        // 創建遊戲控制器
+        const gameController = new GameUtils.GameController();
+
+        // 創建分數管理器
+        const scoreManager = new GameUtils.ScoreManager("scoreValue");
+
+        // 創建說明模態框
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "音樂記憶 - 遊戲說明",
+          `
+            <h3>遊戲規則：</h3>
+            <p>音樂記憶是一款考驗你聽力和記憶力的遊戲。遊戲會播放一連串的音符，你需要按照相同的順序重複這些音符。</p>
+            
+            <h3>遊戲玩法：</h3>
+            <ul>
+              <li>遊戲開始時，系統會亮起並播放一系列的音符</li>
+              <li>仔細聽並記住這些音符的順序</li>
+              <li>播放完畢後，按照相同順序點擊對應的按鈕</li>
+              <li>每回合正確完成後，下一回合會增加一個音符</li>
+              <li>如果記錯順序，將失去一次嘗試機會</li>
+              <li>失去所有嘗試機會後遊戲結束</li>
+            </ul>
+            
+            <h3>難度設定：</h3>
+            <ul>
+              <li>簡單：4 個音符按鈕</li>
+              <li>中等：6 個音符按鈕</li>
+              <li>困難：8 個音符按鈕</li>
+            </ul>
+            
+            <h3>計分方式：</h3>
+            <ul>
+              <li>記憶正確一個音符序列：+10 分</li>
+              <li>關卡分數獎勵：關卡數 × 10 分</li>
+              <li>難度獎勵：簡單 ×1，中等 ×1.5，困難 ×2</li>
+            </ul>
+          `
+        );
+
+        // 音符設定
+        const tones = [
+          {
+            note: "C4",
+            frequency: 261.63,
+            color: "#FF5252",
+            icon: "fas fa-music",
+          }, // 紅色
+          {
+            note: "E4",
+            frequency: 329.63,
+            color: "#4CAF50",
+            icon: "fas fa-music",
+          }, // 綠色
+          {
+            note: "G4",
+            frequency: 392.0,
+            color: "#2196F3",
+            icon: "fas fa-music",
+          }, // 藍色
+          {
+            note: "B4",
+            frequency: 493.88,
+            color: "#FFEB3B",
+            icon: "fas fa-music",
+          }, // 黃色
+          {
+            note: "D5",
+            frequency: 587.33,
+            color: "#9C27B0",
+            icon: "fas fa-music",
+          }, // 紫色
+          {
+            note: "F5",
+            frequency: 698.46,
+            color: "#FF9800",
+            icon: "fas fa-music",
+          }, // 橙色
+          {
+            note: "A5",
+            frequency: 880.0,
+            color: "#00BCD4",
+            icon: "fas fa-music",
+          }, // 青色
+          {
+            note: "C6",
+            frequency: 1046.5,
+            color: "#795548",
+            icon: "fas fa-music",
+          }, // 棕色
+        ];
+
+        // 遊戲參數設定
+        const gameSettings = {
+          easy: {
+            buttonCount: 4,
+            startSequenceLength: 3,
+            maxLevel: 10,
+            scoreMultiplier: 1,
+          },
+          medium: {
+            buttonCount: 6,
+            startSequenceLength: 3,
+            maxLevel: 15,
+            scoreMultiplier: 1.5,
+          },
+          hard: {
+            buttonCount: 8,
+            startSequenceLength: 4,
+            maxLevel: 20,
+            scoreMultiplier: 2,
+          },
+        };
+
+        // 遊戲狀態
+        let gameState = {
+          isPlaying: false,
+          isPaused: false,
+          difficulty: "easy",
+          level: 1,
+          currentSequence: [],
+          playerSequence: [],
+          sequenceIndex: 0,
+          attempts: 3,
+          toneButtons: [],
+          playbackSpeed: 800,
+          isPlayingSequence: false,
+          canInput: false,
+        };
+
+        // 初始化遊戲
+        function initGame() {
+          // 重置遊戲狀態
+          gameState.isPlaying = false;
+          gameState.isPaused = false;
+          gameState.level = 1;
+          gameState.currentSequence = [];
+          gameState.playerSequence = [];
+          gameState.sequenceIndex = 0;
+          gameState.attempts = 3;
+          gameState.isPlayingSequence = false;
+          gameState.canInput = false;
+
+          // 更新難度設定
+          const settings = gameSettings[gameState.difficulty];
+
+          // 重置分數
+          scoreManager.reset();
+
+          // 更新顯示
+          levelDisplay.textContent = gameState.level;
+          sequenceLength.textContent = settings.startSequenceLength;
+          attemptsLeft.textContent = gameState.attempts;
+          levelProgressBar.style.width = "0%";
+          gameMessage.textContent = "點擊「開始遊戲」按鈕開始遊戲";
+
+          // 創建音符按鈕
+          createToneButtons(settings.buttonCount);
+
+          // 更新按鈕狀態
+          startButton.disabled = false;
+          pauseButton.disabled = true;
+          restartButton.disabled = true;
+
+          // 設置遊戲循環
+          gameController.setGameLoop(() => {
+            if (!gameState.isPlaying || gameState.isPaused) return;
+            // 遊戲循環邏輯主要基於事件
+          });
+        }
+
+        // 創建音符按鈕
+        function createToneButtons(count) {
+          // 清空容器
+          toneButtonsContainer.innerHTML = "";
+          gameState.toneButtons = [];
+
+          // 創建按鈕
+          for (let i = 0; i < count; i++) {
+            const toneButton = document.createElement("div");
+            toneButton.className = "tone-button";
+            toneButton.dataset.index = i;
+            toneButton.innerHTML = `<i class="${tones[i].icon}"></i>`;
+
+            // 添加點擊事件
+            toneButton.addEventListener("click", () => onToneButtonClick(i));
+
+            // 添加到容器
+            toneButtonsContainer.appendChild(toneButton);
+            gameState.toneButtons.push(toneButton);
+          }
+        }
+
+        // 開始遊戲
+        function startGame() {
+          // 設置遊戲狀態
+          gameState.isPlaying = true;
+          gameState.isPaused = false;
+
+          // 更新按鈕狀態
+          startButton.disabled = true;
+          pauseButton.disabled = false;
+          restartButton.disabled = false;
+
+          // 顯示遊戲訊息
+          gameMessage.textContent = "記住音符順序！";
+
+          // 播放開始音效
+          soundManager.playSound("sounds/start.mp3");
+
+          // 啟動遊戲循環
+          gameController.startGameLoop();
+
+          // 生成第一個序列
+          generateSequence();
+        }
+
+        // 暫停/繼續遊戲
+        function togglePause() {
+          if (!gameState.isPlaying) return;
+
+          gameState.isPaused = !gameState.isPaused;
+
+          if (gameState.isPaused) {
+            pauseButton.textContent = "繼續";
+            gameMessage.textContent = "遊戲已暫停";
+          } else {
+            pauseButton.textContent = "暫停";
+            gameMessage.textContent = gameState.canInput
+              ? "輪到你了！重複剛才的序列"
+              : "記住音符順序！";
+
+            // 如果正在播放序列時被暫停，重新開始播放
+            if (gameState.isPlayingSequence) {
+              setTimeout(() => {
+                playSequence();
+              }, 500);
+            }
+          }
+        }
+
+        // 重新開始遊戲
+        function restartGame() {
+          initGame();
+          startGame();
+        }
+
+        // 產生新的音符序列
+        function generateSequence() {
+          const settings = gameSettings[gameState.difficulty];
+          const sequenceCount =
+            settings.startSequenceLength + (gameState.level - 1);
+
+          // 創建新序列
+          gameState.currentSequence = [];
+          for (let i = 0; i < sequenceCount; i++) {
+            const randomIndex = Math.floor(
+              Math.random() * settings.buttonCount
+            );
+            gameState.currentSequence.push(randomIndex);
+          }
+
+          // 重置玩家序列
+          gameState.playerSequence = [];
+          gameState.sequenceIndex = 0;
+
+          // 更新顯示
+          sequenceLength.textContent = sequenceCount;
+          levelProgressBar.style.width = `${
+            (gameState.level / settings.maxLevel) * 100
+          }%`;
+
+          // 播放序列
+          setTimeout(() => {
+            playSequence();
+          }, 1000);
+        }
+
+        // 播放音符序列
+        function playSequence() {
+          if (gameState.isPaused) return;
+
+          gameState.isPlayingSequence = true;
+          gameState.canInput = false;
+          gameMessage.textContent = "記住音符順序！";
+
+          let i = 0;
+          const interval = setInterval(() => {
+            if (gameState.isPaused) {
+              clearInterval(interval);
+              gameState.isPlayingSequence = false;
+              return;
+            }
+
+            const buttonIndex = gameState.currentSequence[i];
+            flashButton(buttonIndex);
+            playTone(buttonIndex);
+
+            i++;
+            if (i >= gameState.currentSequence.length) {
+              clearInterval(interval);
+              setTimeout(() => {
+                gameState.isPlayingSequence = false;
+                gameState.canInput = true;
+                gameMessage.textContent = "輪到你了！重複剛才的序列";
+
+                // 播放提示音效
+                soundManager.playSound("sounds/click.mp3");
+              }, gameState.playbackSpeed);
+            }
+          }, gameState.playbackSpeed);
+        }
+
+        // 閃爍按鈕
+        function flashButton(index) {
+          const button = gameState.toneButtons[index];
+          button.classList.add("flash");
+          setTimeout(() => {
+            button.classList.remove("flash");
+          }, gameState.playbackSpeed / 2);
+        }
+
+        // 播放音符
+        function playTone(index) {
+          // 使用 soundManager 播放音調
+          soundManager.generateTone(tones[index].frequency, 500, {
+            type: "sine",
+            volume: soundManager.getSoundVolume(),
+          });
+        }
+
+        // 音符按鈕點擊事件
+        function onToneButtonClick(index) {
+          if (
+            !gameState.isPlaying ||
+            gameState.isPaused ||
+            !gameState.canInput ||
+            gameState.isPlayingSequence
+          )
+            return;
+
+          // 播放音符
+          playTone(index);
+          flashButton(index);
+
+          // 添加到玩家序列
+          gameState.playerSequence.push(index);
+
+          // 檢查是否正確
+          const currentIndex = gameState.playerSequence.length - 1;
+          if (gameState.currentSequence[currentIndex] === index) {
+            // 正確 - 顯示正確動畫
+            gameState.toneButtons[index].classList.add("correct-flash");
+            setTimeout(() => {
+              gameState.toneButtons[index].classList.remove("correct-flash");
+            }, 300);
+
+            // 檢查是否完成當前序列
+            if (
+              gameState.playerSequence.length ===
+              gameState.currentSequence.length
+            ) {
+              handleCorrectSequence();
+            }
+          } else {
+            // 錯誤 - 顯示錯誤動畫
+            gameState.toneButtons[index].classList.add("wrong-flash");
+            setTimeout(() => {
+              gameState.toneButtons[index].classList.remove("wrong-flash");
+            }, 300);
+
+            // 播放錯誤音效
+            soundManager.playSound("sounds/error.mp3");
+
+            handleWrongInput();
+          }
+        }
+
+        // 處理正確序列
+        function handleCorrectSequence() {
+          gameState.canInput = false;
+
+          // 計算得分
+          const settings = gameSettings[gameState.difficulty];
+          const baseScore = 10;
+          const levelBonus = gameState.level * 10;
+          const difficultyMultiplier = settings.scoreMultiplier;
+
+          const totalScore = Math.round(
+            (baseScore + levelBonus) * difficultyMultiplier
+          );
+          scoreManager.add(totalScore);
+
+          // 顯示成功訊息
+          gameMessage.textContent = `太棒了！+${totalScore} 分`;
+
+          // 播放成功音效
+          soundManager.playSound("sounds/success.mp3");
+
+          // 慶祝動畫
+          toneButtonsContainer.classList.add("celebrate");
+          setTimeout(() => {
+            toneButtonsContainer.classList.remove("celebrate");
+          }, 500);
+
+          // 檢查是否達到最高關卡
+          if (gameState.level >= settings.maxLevel) {
+            // 遊戲勝利
+            setTimeout(() => {
+              soundManager.playSound("sounds/achievement.mp3");
+              gameController.endGame(
+                scoreManager.getCurrentScore(),
+                "恭喜你完成了所有關卡！"
+              );
+            }, 1500);
+            return;
+          }
+
+          // 進入下一關
+          setTimeout(() => {
+            gameState.level++;
+            levelDisplay.textContent = gameState.level;
+            generateSequence();
+          }, 1500);
+        }
+
+        // 處理錯誤輸入
+        function handleWrongInput() {
+          gameState.canInput = false;
+          gameState.attempts--;
+          attemptsLeft.textContent = gameState.attempts;
+
+          // 顯示錯誤訊息
+          gameMessage.textContent = "順序錯誤！請再試一次";
+
+          // 檢查是否遊戲結束
+          if (gameState.attempts <= 0) {
+            setTimeout(() => {
+              soundManager.playSound("sounds/gameover.mp3");
+              gameController.endGame(
+                scoreManager.getCurrentScore(),
+                "遊戲結束！"
+              );
+            }, 1500);
+            return;
+          }
+
+          // 重新播放序列
+          gameState.playerSequence = [];
+          setTimeout(() => {
+            gameMessage.textContent = "請仔細聽，我們再來一次";
+            setTimeout(() => {
+              playSequence();
+            }, 500);
+          }, 1500);
+        }
+
+        // 設置難度
+        function setDifficulty(difficulty) {
+          if (gameState.isPlaying && !gameState.isPaused) return;
+
+          gameState.difficulty = difficulty;
+
+          // 更新按鈕樣式
+          easyBtn.classList.toggle("active", difficulty === "easy");
+          mediumBtn.classList.toggle("active", difficulty === "medium");
+          hardBtn.classList.toggle("active", difficulty === "hard");
+
+          // 播放點擊音效
+          soundManager.playSound("sounds/click.mp3");
+
+          // 重新初始化遊戲
+          initGame();
+        }
+
+        // 初始化音量設定
+        function initSoundSettings() {
+          // 設置初始音量
+          volumeSlider.value = soundManager.getSoundVolume() * 100;
+          volumeValue.textContent = `${volumeSlider.value}%`;
+
+          // 設置初始靜音狀態
+          updateMuteDisplay(soundManager.isMuted());
+
+          // 音量滑塊事件
+          volumeSlider.addEventListener("input", () => {
+            const volume = volumeSlider.value / 100;
+            soundManager.setSoundVolume(volume);
+            volumeValue.textContent = `${volumeSlider.value}%`;
+
+            // 如果調整音量，取消靜音
+            if (soundManager.isMuted() && volume > 0) {
+              soundManager.setMuted(false);
+              updateMuteDisplay(false);
+            }
+
+            // 如果音量為0，設為靜音
+            if (volume === 0 && !soundManager.isMuted()) {
+              soundManager.setMuted(true);
+              updateMuteDisplay(true);
+            }
+          });
+
+          // 靜音按鈕事件
+          muteToggle.addEventListener("click", () => {
+            const newMuteState = !soundManager.isMuted();
+            soundManager.setMuted(newMuteState);
+            updateMuteDisplay(newMuteState);
+
+            // 播放測試音效（如果不是靜音）
+            if (!newMuteState) {
+              soundManager.playSound("sounds/click.mp3");
+            }
+          });
+        }
+
+        // 更新靜音顯示
+        function updateMuteDisplay(isMuted) {
+          if (isMuted) {
+            muteIcon.className = "fas fa-volume-mute";
+            muteText.textContent = "取消靜音";
+          } else {
+            muteIcon.className = "fas fa-volume-up";
+            muteText.textContent = "靜音";
+          }
+        }
+
+        // 設置按鈕事件
+        function setupEventListeners() {
+          // 難度按鈕
+          easyBtn.addEventListener("click", () => setDifficulty("easy"));
+          mediumBtn.addEventListener("click", () => setDifficulty("medium"));
+          hardBtn.addEventListener("click", () => setDifficulty("hard"));
+
+          // 遊戲控制按鈕
+          startButton.addEventListener("click", startGame);
+          pauseButton.addEventListener("click", togglePause);
+          restartButton.addEventListener("click", restartGame);
+          helpButton.addEventListener("click", () => {
+            soundManager.playSound("sounds/click.mp3");
+            helpModal.show();
+          });
+          homeButton.addEventListener("click", () => {
+            soundManager.playSound("sounds/click.mp3");
+            window.location.href = "index.html";
+          });
+        }
+
+        // 設置重啟處理器
+        gameController.setRestartHandler(() => {
+          initGame();
+        });
+
+        // 初始化音量設定
+        initSoundSettings();
+
+        // 設置事件監聽器
+        setupEventListeners();
+
+        // 初始化遊戲
+        initGame();
+
+        // 顯示開始動畫
+        gameController.showStartAnimation();
+
+        // 記錄遊戲統計
+        const gameId =
+          document.querySelector('meta[name="game-id"]')?.content ||
+          "music-memory";
+        const gameName =
+          document.querySelector('meta[name="game-name"]')?.content ||
+          "音樂記憶";
+
+        // 更新遊戲統計
+        if (window.updateGameStat) {
+          window.updateGameStat(gameId, "lastPlayed", Date.now());
+          window.updateGameStat(gameId, "name", gameName);
+          window.updateGameStat(gameId, "timesPlayed", 1, true);
+        }
+      });
+    </script>
+  </body>
+</html>

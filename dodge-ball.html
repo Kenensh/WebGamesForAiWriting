@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>躲避球遊戲 - 網頁小遊戲</title>
+    <link rel="stylesheet" href="game-styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      #gameCanvas {
+        border: 3px solid #2c3e50;
+        border-radius: 10px;
+        background: linear-gradient(45deg, #1e3c72, #2a5298);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .player {
+        background: radial-gradient(circle at 30% 30%, #3498db, #2980b9);
+        border-radius: 50%;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+      }
+
+      .obstacle {
+        background: radial-gradient(circle at 30% 30%, #e74c3c, #c0392b);
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+      }
+
+      .power-up {
+        background: radial-gradient(circle at 30% 30%, #f1c40f, #f39c12);
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(241, 196, 15, 0.6);
+        animation: glow 1s ease-in-out infinite alternate;
+      }
+
+      @keyframes glow {
+        from {
+          box-shadow: 0 2px 8px rgba(241, 196, 15, 0.6);
+        }
+        to {
+          box-shadow: 0 4px 16px rgba(241, 196, 15, 0.8);
+        }
+      }
+
+      .controls-info {
+        margin: 10px 0;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        font-size: 14px;
+      }
+
+      .difficulty-indicator {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <header class="game-header">
+        <div class="header-left">
+          <a href="index.html" class="back-button">
+            <i class="fas fa-arrow-left"></i> 返回
+          </a>
+        </div>
+        <h1 class="game-title"><i class="fas fa-running"></i> 躲避球遊戲</h1>
+        <div class="header-right">
+          <button id="helpButton" class="help-button">
+            <i class="fas fa-question-circle"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="game-content">
+        <div class="game-info">
+          <div class="info-item">
+            <i class="fas fa-star"></i>
+            <span>分數: <span id="score">0</span></span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-heart"></i>
+            <span>生命: <span id="lives">3</span></span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-clock"></i>
+            <span>時間: <span id="time">0</span>s</span>
+          </div>
+          <div class="info-item">
+            <i class="fas fa-trophy"></i>
+            <span>最高分: <span id="highScore">0</span></span>
+          </div>
+        </div>
+
+        <div class="controls-info">
+          <i class="fas fa-gamepad"></i>
+          <strong>操作方式:</strong> 使用 WASD
+          或方向鍵移動藍色球體，避開紅色障礙物，收集金色能量球！
+          <br />
+          <span style="color: #3498db">●</span> 玩家 |
+          <span style="color: #e74c3c">●</span> 障礙物 (碰到扣生命) |
+          <span style="color: #f1c40f">●</span> 能量球 (+50分，特殊效果)
+        </div>
+
+        <div class="game-area" style="position: relative">
+          <canvas id="gameCanvas" width="600" height="400"></canvas>
+          <div id="difficultyIndicator" class="difficulty-indicator">
+            難度: 簡單
+          </div>
+        </div>
+
+        <div class="game-controls">
+          <button id="startButton" class="control-button start">
+            <i class="fas fa-play"></i> 開始遊戲
+          </button>
+          <button id="pauseButton" class="control-button pause" disabled>
+            <i class="fas fa-pause"></i> 暫停
+          </button>
+          <button id="resetButton" class="control-button reset">
+            <i class="fas fa-redo"></i> 重新開始
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 說明模態框 -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-running"></i> 躲避球遊戲說明</h2>
+          <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+          <h3>遊戲目標</h3>
+          <p>
+            控制藍色球體在場地中移動，避開紅色障礙物，收集金色能量球獲得高分！
+          </p>
+
+          <h3>操作方式</h3>
+          <ul>
+            <li>
+              使用 <strong>WASD</strong> 或 <strong>方向鍵</strong> 控制移動
+            </li>
+            <li><strong>W/↑</strong> - 向上移動</li>
+            <li><strong>S/↓</strong> - 向下移動</li>
+            <li><strong>A/←</strong> - 向左移動</li>
+            <li><strong>D/→</strong> - 向右移動</li>
+          </ul>
+
+          <h3>遊戲元素</h3>
+          <ul>
+            <li>
+              <span style="color: #3498db">● 藍色球體</span> - 你控制的角色
+            </li>
+            <li>
+              <span style="color: #e74c3c">● 紅色障礙物</span> -
+              避開它們，碰到會失去生命
+            </li>
+            <li>
+              <span style="color: #f1c40f">● 金色能量球</span> - 收集獲得 50
+              分和特殊效果
+            </li>
+          </ul>
+
+          <h3>能量球效果</h3>
+          <ul>
+            <li><strong>無敵模式</strong> - 短時間內免疫障礙物傷害</li>
+            <li><strong>慢動作</strong> - 障礙物移動速度變慢</li>
+            <li><strong>生命恢復</strong> - 恢復 1 點生命值</li>
+            <li><strong>分數加倍</strong> - 短時間內分數獲得翻倍</li>
+          </ul>
+
+          <h3>遊戲機制</h3>
+          <ul>
+            <li>開始時有 3 條生命</li>
+            <li>每秒存活獲得 1 分</li>
+            <li>收集能量球獲得 50 分</li>
+            <li>隨著時間推移，障礙物數量和速度會增加</li>
+            <li>生命歸零時遊戲結束</li>
+          </ul>
+
+          <h3>生存技巧</h3>
+          <ul>
+            <li>保持移動，不要停留在一個位置</li>
+            <li>優先收集能量球，獲得有利效果</li>
+            <li>利用場地邊緣躲避障礙物</li>
+            <li>觀察障礙物的移動模式</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 遊戲結束模態框 -->
+    <div id="gameOverModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2><i class="fas fa-trophy"></i> 遊戲結束</h2>
+        </div>
+        <div class="modal-body">
+          <div class="game-over-stats">
+            <div class="stat-item">
+              <i class="fas fa-star"></i>
+              <span>最終分數</span>
+              <span id="finalScore">0</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-clock"></i>
+              <span>生存時間</span>
+              <span id="survivalTime">0</span>
+            </div>
+            <div class="stat-item">
+              <i class="fas fa-gem"></i>
+              <span>收集能量球</span>
+              <span id="powerUpsCollected">0</span>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button id="playAgainButton" class="control-button start">
+              <i class="fas fa-play"></i> 再玩一次
+            </button>
+            <button id="backToMenuButton" class="control-button">
+              <i class="fas fa-home"></i> 回到選單
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class DodgeBallGame {
+        constructor() {
+          this.canvas = document.getElementById("gameCanvas");
+          this.ctx = this.canvas.getContext("2d");
+          this.gameRunning = false;
+          this.gamePaused = false;
+
+          // 遊戲狀態
+          this.score = 0;
+          this.lives = 3;
+          this.time = 0;
+          this.powerUpsCollected = 0;
+
+          // 玩家
+          this.player = {
+            x: 300,
+            y: 200,
+            radius: 15,
+            speed: 5,
+            invulnerable: false,
+            invulnerableTime: 0,
+          };
+
+          // 遊戲物件
+          this.obstacles = [];
+          this.powerUps = [];
+
+          // 遊戲設定
+          this.obstacleSpawnRate = 0.02;
+          this.powerUpSpawnRate = 0.005;
+          this.difficulty = 1;
+
+          // 特效
+          this.effects = {
+            slowMotion: false,
+            slowMotionTime: 0,
+            doubleScore: false,
+            doubleScoreTime: 0,
+          };
+
+          // 按鍵狀態
+          this.keys = {};
+
+          // 時間相關
+          this.lastTime = 0;
+          this.timeAccumulator = 0;
+
+          this.init();
+        }
+
+        init() {
+          this.loadHighScore();
+          this.bindEvents();
+          this.updateDisplay();
+        }
+
+        bindEvents() {
+          // 按鈕事件
+          document
+            .getElementById("startButton")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("pauseButton")
+            .addEventListener("click", () => this.togglePause());
+          document
+            .getElementById("resetButton")
+            .addEventListener("click", () => this.resetGame());
+
+          // 鍵盤事件
+          document.addEventListener("keydown", (e) => {
+            this.keys[e.key] = true;
+            if (e.key === " ") {
+              e.preventDefault();
+              if (this.gameRunning) {
+                this.togglePause();
+              } else {
+                this.startGame();
+              }
+            }
+          });
+
+          document.addEventListener("keyup", (e) => {
+            this.keys[e.key] = false;
+          });
+
+          // 模態框事件
+          document
+            .getElementById("playAgainButton")
+            .addEventListener("click", () => {
+              document.getElementById("gameOverModal").style.display = "none";
+              this.resetGame();
+              this.startGame();
+            });
+
+          document
+            .getElementById("backToMenuButton")
+            .addEventListener("click", () => {
+              window.location.href = "index.html";
+            });
+        }
+
+        startGame() {
+          this.gameRunning = true;
+          this.gamePaused = false;
+          this.lastTime = performance.now();
+          document.getElementById("startButton").disabled = true;
+          document.getElementById("pauseButton").disabled = false;
+          this.gameLoop();
+        }
+
+        togglePause() {
+          this.gamePaused = !this.gamePaused;
+          const pauseButton = document.getElementById("pauseButton");
+          if (this.gamePaused) {
+            pauseButton.innerHTML = '<i class="fas fa-play"></i> 繼續';
+          } else {
+            pauseButton.innerHTML = '<i class="fas fa-pause"></i> 暫停';
+            this.lastTime = performance.now();
+            this.gameLoop();
+          }
+        }
+
+        resetGame() {
+          this.gameRunning = false;
+          this.gamePaused = false;
+          this.score = 0;
+          this.lives = 3;
+          this.time = 0;
+          this.powerUpsCollected = 0;
+          this.difficulty = 1;
+
+          this.player.x = 300;
+          this.player.y = 200;
+          this.player.invulnerable = false;
+          this.player.invulnerableTime = 0;
+
+          this.obstacles = [];
+          this.powerUps = [];
+
+          this.effects.slowMotion = false;
+          this.effects.slowMotionTime = 0;
+          this.effects.doubleScore = false;
+          this.effects.doubleScoreTime = 0;
+
+          document.getElementById("startButton").disabled = false;
+          document.getElementById("pauseButton").disabled = true;
+          document.getElementById("pauseButton").innerHTML =
+            '<i class="fas fa-pause"></i> 暫停';
+
+          this.updateDisplay();
+          this.draw();
+        }
+
+        update(deltaTime) {
+          if (!this.gameRunning || this.gamePaused) return;
+
+          // 更新時間
+          this.timeAccumulator += deltaTime;
+          if (this.timeAccumulator >= 1000) {
+            this.time++;
+            this.score += this.effects.doubleScore ? 2 : 1;
+            this.timeAccumulator -= 1000;
+          }
+
+          // 更新玩家
+          this.updatePlayer();
+
+          // 更新特效時間
+          this.updateEffects(deltaTime);
+
+          // 生成障礙物
+          this.spawnObstacles();
+
+          // 生成能量球
+          this.spawnPowerUps();
+
+          // 更新障礙物
+          this.updateObstacles();
+
+          // 更新能量球
+          this.updatePowerUps();
+
+          // 檢查碰撞
+          this.checkCollisions();
+
+          // 更新難度
+          this.updateDifficulty();
+        }
+
+        updatePlayer() {
+          const speed = this.player.speed;
+
+          // 移動控制
+          if (this.keys["ArrowUp"] || this.keys["w"] || this.keys["W"]) {
+            this.player.y -= speed;
+          }
+          if (this.keys["ArrowDown"] || this.keys["s"] || this.keys["S"]) {
+            this.player.y += speed;
+          }
+          if (this.keys["ArrowLeft"] || this.keys["a"] || this.keys["A"]) {
+            this.player.x -= speed;
+          }
+          if (this.keys["ArrowRight"] || this.keys["d"] || this.keys["D"]) {
+            this.player.x += speed;
+          }
+
+          // 限制邊界
+          this.player.x = Math.max(
+            this.player.radius,
+            Math.min(this.canvas.width - this.player.radius, this.player.x)
+          );
+          this.player.y = Math.max(
+            this.player.radius,
+            Math.min(this.canvas.height - this.player.radius, this.player.y)
+          );
+
+          // 更新無敵時間
+          if (this.player.invulnerable) {
+            this.player.invulnerableTime -= 16;
+            if (this.player.invulnerableTime <= 0) {
+              this.player.invulnerable = false;
+            }
+          }
+        }
+
+        updateEffects(deltaTime) {
+          if (this.effects.slowMotion) {
+            this.effects.slowMotionTime -= deltaTime;
+            if (this.effects.slowMotionTime <= 0) {
+              this.effects.slowMotion = false;
+            }
+          }
+
+          if (this.effects.doubleScore) {
+            this.effects.doubleScoreTime -= deltaTime;
+            if (this.effects.doubleScoreTime <= 0) {
+              this.effects.doubleScore = false;
+            }
+          }
+        }
+
+        spawnObstacles() {
+          const spawnRate = this.obstacleSpawnRate + this.difficulty * 0.005;
+          if (Math.random() < spawnRate) {
+            const side = Math.floor(Math.random() * 4);
+            let x, y, vx, vy;
+
+            switch (side) {
+              case 0: // 上方
+                x = Math.random() * this.canvas.width;
+                y = -20;
+                vx = (Math.random() - 0.5) * 4;
+                vy = 2 + Math.random() * 3;
+                break;
+              case 1: // 右方
+                x = this.canvas.width + 20;
+                y = Math.random() * this.canvas.height;
+                vx = -(2 + Math.random() * 3);
+                vy = (Math.random() - 0.5) * 4;
+                break;
+              case 2: // 下方
+                x = Math.random() * this.canvas.width;
+                y = this.canvas.height + 20;
+                vx = (Math.random() - 0.5) * 4;
+                vy = -(2 + Math.random() * 3);
+                break;
+              case 3: // 左方
+                x = -20;
+                y = Math.random() * this.canvas.height;
+                vx = 2 + Math.random() * 3;
+                vy = (Math.random() - 0.5) * 4;
+                break;
+            }
+
+            this.obstacles.push({
+              x: x,
+              y: y,
+              radius: 8 + Math.random() * 7,
+              vx: vx * (this.effects.slowMotion ? 0.5 : 1),
+              vy: vy * (this.effects.slowMotion ? 0.5 : 1),
+            });
+          }
+        }
+
+        spawnPowerUps() {
+          if (Math.random() < this.powerUpSpawnRate) {
+            this.powerUps.push({
+              x: Math.random() * (this.canvas.width - 40) + 20,
+              y: Math.random() * (this.canvas.height - 40) + 20,
+              radius: 12,
+              type: this.getRandomPowerUpType(),
+              lifeTime: 8000, // 8秒後消失
+            });
+          }
+        }
+
+        getRandomPowerUpType() {
+          const types = ["invulnerable", "slowMotion", "heal", "doubleScore"];
+          return types[Math.floor(Math.random() * types.length)];
+        }
+
+        updateObstacles() {
+          for (let i = this.obstacles.length - 1; i >= 0; i--) {
+            const obstacle = this.obstacles[i];
+            obstacle.x += obstacle.vx;
+            obstacle.y += obstacle.vy;
+
+            // 移除超出邊界的障礙物
+            if (
+              obstacle.x < -50 ||
+              obstacle.x > this.canvas.width + 50 ||
+              obstacle.y < -50 ||
+              obstacle.y > this.canvas.height + 50
+            ) {
+              this.obstacles.splice(i, 1);
+            }
+          }
+        }
+
+        updatePowerUps() {
+          for (let i = this.powerUps.length - 1; i >= 0; i--) {
+            const powerUp = this.powerUps[i];
+            powerUp.lifeTime -= 16;
+
+            if (powerUp.lifeTime <= 0) {
+              this.powerUps.splice(i, 1);
+            }
+          }
+        }
+
+        checkCollisions() {
+          // 檢查障礙物碰撞
+          if (!this.player.invulnerable) {
+            for (let obstacle of this.obstacles) {
+              const distance = Math.sqrt(
+                Math.pow(this.player.x - obstacle.x, 2) +
+                  Math.pow(this.player.y - obstacle.y, 2)
+              );
+
+              if (distance < this.player.radius + obstacle.radius) {
+                this.lives--;
+                this.player.invulnerable = true;
+                this.player.invulnerableTime = 2000; // 2秒無敵
+
+                if (this.lives <= 0) {
+                  this.gameOver();
+                  return;
+                }
+                break;
+              }
+            }
+          }
+
+          // 檢查能量球碰撞
+          for (let i = this.powerUps.length - 1; i >= 0; i--) {
+            const powerUp = this.powerUps[i];
+            const distance = Math.sqrt(
+              Math.pow(this.player.x - powerUp.x, 2) +
+                Math.pow(this.player.y - powerUp.y, 2)
+            );
+
+            if (distance < this.player.radius + powerUp.radius) {
+              this.collectPowerUp(powerUp);
+              this.powerUps.splice(i, 1);
+              this.powerUpsCollected++;
+              this.score += this.effects.doubleScore ? 100 : 50;
+            }
+          }
+        }
+
+        collectPowerUp(powerUp) {
+          switch (powerUp.type) {
+            case "invulnerable":
+              this.player.invulnerable = true;
+              this.player.invulnerableTime = 3000;
+              break;
+            case "slowMotion":
+              this.effects.slowMotion = true;
+              this.effects.slowMotionTime = 5000;
+              // 更新現有障礙物速度
+              this.obstacles.forEach((obstacle) => {
+                obstacle.vx *= 0.5;
+                obstacle.vy *= 0.5;
+              });
+              break;
+            case "heal":
+              this.lives = Math.min(this.lives + 1, 5); // 最多5條命
+              break;
+            case "doubleScore":
+              this.effects.doubleScore = true;
+              this.effects.doubleScoreTime = 10000;
+              break;
+          }
+        }
+
+        updateDifficulty() {
+          const newDifficulty = Math.floor(this.time / 30) + 1;
+          if (newDifficulty > this.difficulty) {
+            this.difficulty = newDifficulty;
+            document.getElementById(
+              "difficultyIndicator"
+            ).textContent = `難度: ${this.getDifficultyName()}`;
+          }
+        }
+
+        getDifficultyName() {
+          if (this.difficulty <= 2) return "簡單";
+          if (this.difficulty <= 4) return "普通";
+          if (this.difficulty <= 6) return "困難";
+          return "地獄";
+        }
+
+        draw() {
+          // 清除畫布
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+          // 繪製背景效果
+          this.drawBackgroundEffects();
+
+          // 繪製障礙物
+          this.drawObstacles();
+
+          // 繪製能量球
+          this.drawPowerUps();
+
+          // 繪製玩家
+          this.drawPlayer();
+
+          // 繪製特效指示器
+          this.drawEffectIndicators();
+        }
+
+        drawBackgroundEffects() {
+          // 慢動作效果
+          if (this.effects.slowMotion) {
+            this.ctx.save();
+            this.ctx.fillStyle = "rgba(0, 255, 255, 0.1)";
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.restore();
+          }
+
+          // 雙倍分數效果
+          if (this.effects.doubleScore) {
+            this.ctx.save();
+            this.ctx.fillStyle = "rgba(255, 215, 0, 0.1)";
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.restore();
+          }
+        }
+
+        drawPlayer() {
+          this.ctx.save();
+
+          // 無敵閃爍效果
+          if (this.player.invulnerable) {
+            const alpha = Math.sin(Date.now() * 0.02) * 0.5 + 0.5;
+            this.ctx.globalAlpha = alpha;
+          }
+
+          this.ctx.fillStyle = "#3498db";
+          this.ctx.strokeStyle = "#2980b9";
+          this.ctx.lineWidth = 2;
+
+          this.ctx.beginPath();
+          this.ctx.arc(
+            this.player.x,
+            this.player.y,
+            this.player.radius,
+            0,
+            Math.PI * 2
+          );
+          this.ctx.fill();
+          this.ctx.stroke();
+
+          // 玩家光澤
+          this.ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+          this.ctx.beginPath();
+          this.ctx.arc(
+            this.player.x - 5,
+            this.player.y - 5,
+            this.player.radius * 0.4,
+            0,
+            Math.PI * 2
+          );
+          this.ctx.fill();
+
+          this.ctx.restore();
+        }
+
+        drawObstacles() {
+          this.obstacles.forEach((obstacle) => {
+            this.ctx.save();
+            this.ctx.fillStyle = "#e74c3c";
+            this.ctx.strokeStyle = "#c0392b";
+            this.ctx.lineWidth = 1;
+
+            this.ctx.beginPath();
+            this.ctx.arc(
+              obstacle.x,
+              obstacle.y,
+              obstacle.radius,
+              0,
+              Math.PI * 2
+            );
+            this.ctx.fill();
+            this.ctx.stroke();
+
+            // 障礙物光澤
+            this.ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+            this.ctx.beginPath();
+            this.ctx.arc(
+              obstacle.x - 2,
+              obstacle.y - 2,
+              obstacle.radius * 0.3,
+              0,
+              Math.PI * 2
+            );
+            this.ctx.fill();
+
+            this.ctx.restore();
+          });
+        }
+
+        drawPowerUps() {
+          this.powerUps.forEach((powerUp) => {
+            this.ctx.save();
+
+            // 閃爍效果
+            const alpha = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+            this.ctx.globalAlpha = alpha;
+
+            this.ctx.fillStyle = "#f1c40f";
+            this.ctx.strokeStyle = "#f39c12";
+            this.ctx.lineWidth = 2;
+
+            this.ctx.beginPath();
+            this.ctx.arc(powerUp.x, powerUp.y, powerUp.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.stroke();
+
+            // 能量球光澤
+            this.ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+            this.ctx.beginPath();
+            this.ctx.arc(
+              powerUp.x - 3,
+              powerUp.y - 3,
+              powerUp.radius * 0.4,
+              0,
+              Math.PI * 2
+            );
+            this.ctx.fill();
+
+            this.ctx.restore();
+          });
+        }
+
+        drawEffectIndicators() {
+          let y = 50;
+
+          if (this.player.invulnerable) {
+            this.ctx.save();
+            this.ctx.fillStyle = "rgba(52, 152, 219, 0.8)";
+            this.ctx.fillRect(10, y, 100, 20);
+            this.ctx.fillStyle = "white";
+            this.ctx.font = "12px Arial";
+            this.ctx.fillText("無敵模式", 15, y + 14);
+            this.ctx.restore();
+            y += 25;
+          }
+
+          if (this.effects.slowMotion) {
+            this.ctx.save();
+            this.ctx.fillStyle = "rgba(0, 255, 255, 0.8)";
+            this.ctx.fillRect(10, y, 100, 20);
+            this.ctx.fillStyle = "white";
+            this.ctx.font = "12px Arial";
+            this.ctx.fillText("慢動作", 15, y + 14);
+            this.ctx.restore();
+            y += 25;
+          }
+
+          if (this.effects.doubleScore) {
+            this.ctx.save();
+            this.ctx.fillStyle = "rgba(241, 196, 15, 0.8)";
+            this.ctx.fillRect(10, y, 100, 20);
+            this.ctx.fillStyle = "white";
+            this.ctx.font = "12px Arial";
+            this.ctx.fillText("雙倍分數", 15, y + 14);
+            this.ctx.restore();
+          }
+        }
+
+        gameOver() {
+          this.gameRunning = false;
+          this.saveHighScore();
+          this.showGameOverModal();
+        }
+
+        showGameOverModal() {
+          document.getElementById("finalScore").textContent = this.score;
+          document.getElementById("survivalTime").textContent = this.time + "s";
+          document.getElementById("powerUpsCollected").textContent =
+            this.powerUpsCollected;
+          document.getElementById("gameOverModal").style.display = "block";
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("lives").textContent = this.lives;
+          document.getElementById("time").textContent = this.time;
+          document.getElementById("highScore").textContent =
+            this.getHighScore();
+        }
+
+        loadHighScore() {
+          const saved = localStorage.getItem("dodgeBallHighScore");
+          return saved ? parseInt(saved) : 0;
+        }
+
+        saveHighScore() {
+          const currentHigh = this.getHighScore();
+          if (this.score > currentHigh) {
+            localStorage.setItem("dodgeBallHighScore", this.score.toString());
+          }
+        }
+
+        getHighScore() {
+          return this.loadHighScore();
+        }
+
+        gameLoop() {
+          if (!this.gameRunning || this.gamePaused) return;
+
+          const currentTime = performance.now();
+          const deltaTime = currentTime - this.lastTime;
+          this.lastTime = currentTime;
+
+          this.update(deltaTime);
+          this.draw();
+          this.updateDisplay();
+
+          requestAnimationFrame(() => this.gameLoop());
+        }
+      }
+
+      // 初始化遊戲
+      let game;
+
+      document.addEventListener("DOMContentLoaded", function () {
+        game = new DodgeBallGame();
+
+        // 初始化遊戲工具
+        if (typeof GameUtils !== "undefined") {
+          GameUtils.initializeGame("dodgeBall");
+        }
+      });
+    </script>
+  </body>
+</html>

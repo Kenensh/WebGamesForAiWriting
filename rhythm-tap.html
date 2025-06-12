@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>節拍點擊 - 網頁小遊戲</title>
+    <link rel="stylesheet" href="game-styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      #gameCanvas {
+        border: 3px solid #2c3e50;
+        border-radius: 10px;
+        background: linear-gradient(to bottom, #1e3c72, #2a5298);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-track {
+        position: relative;
+        background: rgba(44, 62, 80, 0.8);
+        border-radius: 10px;
+        margin: 10px;
+        height: 80px;
+        overflow: hidden;
+        border: 2px solid #34495e;
+      }
+
+      .track-lane {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        background: linear-gradient(
+          90deg,
+          rgba(52, 152, 219, 0.3) 0%,
+          rgba(155, 89, 182, 0.3) 50%,
+          rgba(231, 76, 60, 0.3) 100%
+        );
+      }
+
+      .hit-zone {
+        position: absolute;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        border: 3px solid #ecf0f1;
+        border-radius: 50%;
+        background: rgba(236, 240, 241, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: #ecf0f1;
+        box-shadow: 0 0 20px rgba(236, 240, 241, 0.5);
+      }
+
+      .hit-zone.active {
+        animation: hitZoneActive 0.3s ease-out;
+        background: rgba(46, 204, 113, 0.8);
+        border-color: #2ecc71;
+        box-shadow: 0 0 30px rgba(46, 204, 113, 0.8);
+      }
+
+      @keyframes hitZoneActive {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .note {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        animation: noteGlow 0.5s ease-in-out infinite alternate;
+      }
+
+      @keyframes noteGlow {
+        0% {
+          box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        }
+        100% {
+          box-shadow: 0 0 25px rgba(255, 255, 255, 0.3);
+        }
+      }
+
+      .note.type1 {
+        background: linear-gradient(45deg, #e74c3c, #c0392b);
+      }
+
+      .note.type2 {
+        background: linear-gradient(45deg, #3498db, #2980b9);
+      }
+
+      .note.type3 {
+        background: linear-gradient(45deg, #2ecc71, #27ae60);
+      }
+
+      .note.type4 {
+        background: linear-gradient(45deg, #f1c40f, #e67e22);
+      }
+
+      .score-popup {
+        position: absolute;
+        font-size: 20px;
+        font-weight: bold;
+        pointer-events: none;
+        z-index: 1000;
+        animation: scorePopup 1s ease-out forwards;
+      }
+
+      @keyframes scorePopup {
+        0% {
+          opacity: 1;
+          transform: scale(0.5) translateY(0);
+        }
+        50% {
+          transform: scale(1.2) translateY(-20px);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(1) translateY(-60px);
+        }
+      }
+
+      .perfect {
+        color: #2ecc71;
+      }
+      .great {
+        color: #f39c12;
+      }
+      .good {
+        color: #3498db;
+      }
+      .miss {
+        color: #e74c3c;
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 20px 0;
+        background: linear-gradient(45deg, #2c3e50, #34495e);
+        padding: 15px 20px;
+        border-radius: 10px;
+        color: white;
+        font-weight: bold;
+      }
+
+      .info-item {
+        text-align: center;
+      }
+
+      .info-value {
+        font-size: 24px;
+        display: block;
+        margin-top: 5px;
+      }
+
+      .combo-display {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: linear-gradient(45deg, #e74c3c, #c0392b);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 18px;
+        display: none;
+        animation: comboGlow 0.5s ease-in-out infinite alternate;
+      }
+
+      @keyframes comboGlow {
+        0% {
+          box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+        100% {
+          box-shadow: 0 0 20px rgba(231, 76, 60, 0.8);
+        }
+      }
+
+      .multiplier-display {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(45deg, #9b59b6, #8e44ad);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 15px;
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .control-keys {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin: 20px 0;
+      }
+
+      .key-display {
+        background: #34495e;
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: bold;
+        min-width: 60px;
+        text-align: center;
+        border: 3px solid #2c3e50;
+        transition: all 0.2s ease;
+      }
+
+      .key-display.active {
+        background: #2ecc71;
+        border-color: #27ae60;
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(46, 204, 113, 0.6);
+      }
+
+      .game-controls {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .control-button {
+        background: linear-gradient(45deg, #e74c3c, #c0392b);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .control-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .control-button:disabled {
+        background: #7f8c8d;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .difficulty-selector {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+      }
+
+      .difficulty-button {
+        background: #34495e;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .difficulty-button.active {
+        background: #2ecc71;
+      }
+
+      .accuracy-bar {
+        width: 100%;
+        height: 8px;
+        background: #ecf0f1;
+        border-radius: 4px;
+        margin: 15px 0;
+        overflow: hidden;
+      }
+
+      .accuracy-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+      }
+
+      .progress-indicator {
+        text-align: center;
+        margin: 10px 0;
+        font-size: 16px;
+        font-weight: bold;
+        color: #2c3e50;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <header class="game-header">
+        <h1 class="game-title">
+          <i class="fas fa-music"></i>
+          節拍點擊
+        </h1>
+        <button class="back-button" onclick="window.location.href='index.html'">
+          <i class="fas fa-arrow-left"></i>
+          返回選單
+        </button>
+      </header>
+
+      <div class="game-info">
+        <div class="info-item">
+          <span>分數</span>
+          <span class="info-value" id="score">0</span>
+        </div>
+        <div class="info-item">
+          <span>命中率</span>
+          <span class="info-value" id="accuracy">100%</span>
+        </div>
+        <div class="info-item">
+          <span>連擊</span>
+          <span class="info-value" id="combo">0</span>
+        </div>
+        <div class="info-item">
+          <span>最大連擊</span>
+          <span class="info-value" id="maxCombo">0</span>
+        </div>
+      </div>
+
+      <div class="difficulty-selector">
+        <button class="difficulty-button active" data-difficulty="easy">
+          簡單
+        </button>
+        <button class="difficulty-button" data-difficulty="medium">中等</button>
+        <button class="difficulty-button" data-difficulty="hard">困難</button>
+        <button class="difficulty-button" data-difficulty="extreme">
+          極限
+        </button>
+      </div>
+
+      <div class="progress-indicator" id="progressIndicator">準備開始...</div>
+
+      <div class="accuracy-bar">
+        <div class="accuracy-fill" id="accuracyFill" style="width: 100%"></div>
+      </div>
+
+      <div class="control-keys">
+        <div class="key-display" data-key="d">D</div>
+        <div class="key-display" data-key="f">F</div>
+        <div class="key-display" data-key="j">J</div>
+        <div class="key-display" data-key="k">K</div>
+      </div>
+
+      <div class="game-canvas-container">
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+        <div class="combo-display" id="comboDisplay">
+          連擊 x<span id="comboCount">0</span>
+        </div>
+        <div class="multiplier-display" id="multiplierDisplay">x1.0</div>
+      </div>
+
+      <div class="game-controls">
+        <button class="control-button" id="startButton">開始遊戲</button>
+        <button class="control-button" id="pauseButton" disabled>暫停</button>
+        <button class="control-button" id="resetButton">重新開始</button>
+        <button class="control-button" id="helpButton">遊戲說明</button>
+      </div>
+
+      <div class="game-stats">
+        <div class="stat-item">
+          <span class="stat-label">最高分：</span>
+          <span class="stat-value" id="highScore">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">總遊戲次數：</span>
+          <span class="stat-value" id="totalGames">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 遊戲說明模態框 -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>🎵 節拍點擊 - 遊戲說明</h2>
+        <div class="help-content">
+          <h3>🎯 遊戲目標</h3>
+          <p>按照節拍準確點擊對應按鍵，獲得最高分數和連擊！</p>
+
+          <h3>🎮 操作方式</h3>
+          <ul>
+            <li>使用 D、F、J、K 鍵對應四個軌道</li>
+            <li>當音符到達右側目標區域時按下對應按鍵</li>
+            <li>按鍵時機越準確，獲得的分數越高</li>
+          </ul>
+
+          <h3>🎯 評分系統</h3>
+          <ul>
+            <li>
+              <span style="color: #2ecc71">Perfect</span> - 完美時機 (100分)
+            </li>
+            <li><span style="color: #f39c12">Great</span> - 很好 (75分)</li>
+            <li><span style="color: #3498db">Good</span> - 不錯 (50分)</li>
+            <li><span style="color: #e74c3c">Miss</span> - 錯過 (0分)</li>
+          </ul>
+
+          <h3>⚡ 難度等級</h3>
+          <ul>
+            <li><strong>簡單：</strong>較慢的音符速度，較寬的判定範圍</li>
+            <li><strong>中等：</strong>標準速度和判定</li>
+            <li><strong>困難：</strong>較快速度，較嚴格判定</li>
+            <li><strong>極限：</strong>最快速度，最嚴格判定</li>
+          </ul>
+
+          <h3>🔥 連擊系統</h3>
+          <ul>
+            <li>連續準確擊中可獲得連擊加成</li>
+            <li>連擊倍數會隨著連擊數增加</li>
+            <li>錯過音符會中斷連擊</li>
+            <li>更高的連擊能獲得更多分數</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 遊戲結束模態框 -->
+    <div id="gameOverModal" class="modal">
+      <div class="modal-content">
+        <h2>🎉 遊戲結束！</h2>
+        <div id="gameOverContent">
+          <p>最終分數：<span id="finalScore">0</span></p>
+          <p>命中率：<span id="finalAccuracy">0%</span></p>
+          <p>最大連擊：<span id="finalMaxCombo">0</span></p>
+          <p>Perfect：<span id="finalPerfect">0</span></p>
+          <p>Great：<span id="finalGreat">0</span></p>
+          <p>Good：<span id="finalGood">0</span></p>
+          <p>Miss：<span id="finalMiss">0</span></p>
+        </div>
+        <div class="modal-buttons">
+          <button class="modal-button" onclick="restartGame()">再玩一次</button>
+          <button
+            class="modal-button"
+            onclick="window.location.href='index.html'"
+          >
+            返回選單
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class RhythmTapGame {
+        constructor() {
+          this.canvas = document.getElementById("gameCanvas");
+          this.ctx = this.canvas.getContext("2d");
+          this.isRunning = false;
+          this.isPaused = false;
+
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.accuracy = 100;
+
+          this.notes = [];
+          this.tracks = 4;
+          this.trackHeight = this.canvas.height / this.tracks;
+          this.noteSpeed = 3;
+          this.difficulty = "easy";
+
+          this.hitCounts = {
+            perfect: 0,
+            great: 0,
+            good: 0,
+            miss: 0,
+          };
+
+          this.keys = ["d", "f", "j", "k"];
+          this.keyStates = {};
+          this.lastNoteSpawn = 0;
+          this.noteSpawnInterval = 1000;
+          this.gameTime = 0;
+          this.gameDuration = 120000; // 2 minutes
+
+          this.difficultySettings = {
+            easy: {
+              speed: 2,
+              spawnRate: 1200,
+              perfectWindow: 100,
+              greatWindow: 150,
+              goodWindow: 200,
+            },
+            medium: {
+              speed: 3,
+              spawnRate: 1000,
+              perfectWindow: 80,
+              greatWindow: 120,
+              goodWindow: 160,
+            },
+            hard: {
+              speed: 4,
+              spawnRate: 800,
+              perfectWindow: 60,
+              greatWindow: 100,
+              goodWindow: 140,
+            },
+            extreme: {
+              speed: 5,
+              spawnRate: 600,
+              perfectWindow: 40,
+              greatWindow: 80,
+              goodWindow: 120,
+            },
+          };
+
+          this.setupEventListeners();
+          this.loadStats();
+          this.setDifficulty("easy");
+        }
+
+        setupEventListeners() {
+          document
+            .getElementById("startButton")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("pauseButton")
+            .addEventListener("click", () => this.togglePause());
+          document
+            .getElementById("resetButton")
+            .addEventListener("click", () => this.resetGame());
+          document
+            .getElementById("helpButton")
+            .addEventListener("click", () => this.showHelp());
+
+          // 難度選擇
+          document.querySelectorAll(".difficulty-button").forEach((button) => {
+            button.addEventListener("click", (e) =>
+              this.setDifficulty(e.target.dataset.difficulty)
+            );
+          });
+
+          // 鍵盤事件
+          document.addEventListener("keydown", (e) => this.handleKeyDown(e));
+          document.addEventListener("keyup", (e) => this.handleKeyUp(e));
+
+          // 模態框設定
+          this.setupModals();
+        }
+
+        setDifficulty(difficulty) {
+          this.difficulty = difficulty;
+          const settings = this.difficultySettings[difficulty];
+
+          this.noteSpeed = settings.speed;
+          this.noteSpawnInterval = settings.spawnRate;
+
+          // 更新UI
+          document
+            .querySelectorAll(".difficulty-button")
+            .forEach((btn) => btn.classList.remove("active"));
+          document
+            .querySelector(`[data-difficulty="${difficulty}"]`)
+            .classList.add("active");
+        }
+
+        startGame() {
+          if (this.isRunning) return;
+
+          this.isRunning = true;
+          this.isPaused = false;
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.accuracy = 100;
+          this.notes = [];
+          this.gameTime = 0;
+
+          this.hitCounts = {
+            perfect: 0,
+            great: 0,
+            good: 0,
+            miss: 0,
+          };
+
+          this.updateUI();
+          this.updateButtons();
+          this.gameLoop();
+
+          document.getElementById("progressIndicator").textContent =
+            "遊戲進行中...";
+        }
+
+        togglePause() {
+          if (!this.isRunning) return;
+
+          this.isPaused = !this.isPaused;
+          document.getElementById("pauseButton").textContent = this.isPaused
+            ? "繼續"
+            : "暫停";
+
+          if (!this.isPaused) {
+            this.gameLoop();
+          }
+        }
+
+        resetGame() {
+          this.isRunning = false;
+          this.isPaused = false;
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.accuracy = 100;
+          this.notes = [];
+          this.gameTime = 0;
+
+          this.hitCounts = {
+            perfect: 0,
+            great: 0,
+            good: 0,
+            miss: 0,
+          };
+
+          this.updateUI();
+          this.updateButtons();
+          this.clearCanvas();
+
+          document.getElementById("progressIndicator").textContent =
+            "準備開始...";
+          document.getElementById("comboDisplay").style.display = "none";
+        }
+
+        handleKeyDown(e) {
+          if (!this.isRunning || this.isPaused) return;
+
+          const key = e.key.toLowerCase();
+          if (this.keys.includes(key) && !this.keyStates[key]) {
+            this.keyStates[key] = true;
+            this.handleKeyPress(key);
+
+            // 視覺反饋
+            const keyDisplay = document.querySelector(`[data-key="${key}"]`);
+            if (keyDisplay) {
+              keyDisplay.classList.add("active");
+            }
+          }
+        }
+
+        handleKeyUp(e) {
+          const key = e.key.toLowerCase();
+          if (this.keys.includes(key)) {
+            this.keyStates[key] = false;
+
+            // 移除視覺反饋
+            const keyDisplay = document.querySelector(`[data-key="${key}"]`);
+            if (keyDisplay) {
+              keyDisplay.classList.remove("active");
+            }
+          }
+        }
+
+        handleKeyPress(key) {
+          const trackIndex = this.keys.indexOf(key);
+          if (trackIndex === -1) return;
+
+          // 找到最近的音符
+          let closestNote = null;
+          let closestDistance = Infinity;
+          const hitZoneX = this.canvas.width - 80;
+
+          for (let i = 0; i < this.notes.length; i++) {
+            const note = this.notes[i];
+            if (note.track === trackIndex) {
+              const distance = Math.abs(note.x - hitZoneX);
+              if (distance < closestDistance) {
+                closestDistance = distance;
+                closestNote = note;
+              }
+            }
+          }
+
+          if (closestNote) {
+            this.checkHit(closestNote, closestDistance);
+          }
+        }
+
+        checkHit(note, distance) {
+          const settings = this.difficultySettings[this.difficulty];
+          let hitType = "miss";
+          let points = 0;
+
+          if (distance <= settings.perfectWindow) {
+            hitType = "perfect";
+            points = 100;
+          } else if (distance <= settings.greatWindow) {
+            hitType = "great";
+            points = 75;
+          } else if (distance <= settings.goodWindow) {
+            hitType = "good";
+            points = 50;
+          }
+
+          if (hitType !== "miss") {
+            this.combo++;
+            this.maxCombo = Math.max(this.maxCombo, this.combo);
+
+            // 連擊加成
+            const comboMultiplier = Math.min(1 + (this.combo - 1) * 0.1, 3);
+            points = Math.floor(points * comboMultiplier);
+
+            this.score += points;
+            this.hitCounts[hitType]++;
+
+            // 移除音符
+            const noteIndex = this.notes.indexOf(note);
+            if (noteIndex !== -1) {
+              this.notes.splice(noteIndex, 1);
+            }
+
+            this.updateComboDisplay();
+          } else {
+            this.combo = 0;
+            this.hitCounts.miss++;
+            this.updateComboDisplay();
+          }
+
+          this.showScorePopup(note.x, note.y, hitType, points);
+          this.updateAccuracy();
+        }
+
+        showScorePopup(x, y, hitType, points) {
+          const popup = document.createElement("div");
+          popup.className = `score-popup ${hitType}`;
+          popup.textContent = hitType === "miss" ? "MISS" : `+${points}`;
+
+          // 將畫布座標轉換為頁面座標
+          const rect = this.canvas.getBoundingClientRect();
+          popup.style.left = rect.left + x + "px";
+          popup.style.top = rect.top + y + "px";
+          popup.style.position = "fixed";
+
+          document.body.appendChild(popup);
+
+          setTimeout(() => {
+            if (popup.parentElement) {
+              popup.parentElement.removeChild(popup);
+            }
+          }, 1000);
+        }
+
+        updateComboDisplay() {
+          const comboDisplay = document.getElementById("comboDisplay");
+          const comboCount = document.getElementById("comboCount");
+          const multiplierDisplay =
+            document.getElementById("multiplierDisplay");
+
+          if (this.combo > 3) {
+            comboCount.textContent = this.combo;
+            comboDisplay.style.display = "block";
+          } else {
+            comboDisplay.style.display = "none";
+          }
+
+          const multiplier = Math.min(1 + Math.max(0, this.combo - 1) * 0.1, 3);
+          multiplierDisplay.textContent = `x${multiplier.toFixed(1)}`;
+        }
+
+        updateAccuracy() {
+          const totalHits = Object.values(this.hitCounts).reduce(
+            (a, b) => a + b,
+            0
+          );
+          if (totalHits > 0) {
+            const successfulHits =
+              this.hitCounts.perfect +
+              this.hitCounts.great +
+              this.hitCounts.good;
+            this.accuracy = Math.round((successfulHits / totalHits) * 100);
+          }
+        }
+
+        gameLoop() {
+          if (!this.isRunning || this.isPaused) return;
+
+          this.gameTime += 16; // 約60FPS
+
+          // 檢查遊戲是否結束
+          if (this.gameTime >= this.gameDuration) {
+            this.endGame();
+            return;
+          }
+
+          this.spawnNotes();
+          this.updateNotes();
+          this.render();
+          this.updateUI();
+
+          requestAnimationFrame(() => this.gameLoop());
+        }
+
+        spawnNotes() {
+          if (this.gameTime - this.lastNoteSpawn >= this.noteSpawnInterval) {
+            this.createNote();
+            this.lastNoteSpawn = this.gameTime;
+          }
+        }
+
+        createNote() {
+          const track = Math.floor(Math.random() * this.tracks);
+          const y = track * this.trackHeight + this.trackHeight / 2;
+
+          const note = {
+            x: -50,
+            y: y,
+            track: track,
+            type: Math.floor(Math.random() * 4) + 1,
+            hit: false,
+          };
+
+          this.notes.push(note);
+        }
+
+        updateNotes() {
+          for (let i = this.notes.length - 1; i >= 0; i--) {
+            const note = this.notes[i];
+            note.x += this.noteSpeed;
+
+            // 移除超出畫面的音符
+            if (note.x > this.canvas.width + 50) {
+              if (!note.hit) {
+                this.combo = 0;
+                this.hitCounts.miss++;
+                this.updateAccuracy();
+                this.updateComboDisplay();
+              }
+              this.notes.splice(i, 1);
+            }
+          }
+        }
+
+        render() {
+          this.clearCanvas();
+          this.drawTracks();
+          this.drawNotes();
+          this.drawHitZones();
+        }
+
+        clearCanvas() {
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+
+        drawTracks() {
+          for (let i = 0; i < this.tracks; i++) {
+            const y = i * this.trackHeight;
+
+            // 軌道背景
+            this.ctx.fillStyle =
+              i % 2 === 0 ? "rgba(52, 73, 94, 0.3)" : "rgba(44, 62, 80, 0.3)";
+            this.ctx.fillRect(0, y, this.canvas.width, this.trackHeight);
+
+            // 軌道分隔線
+            if (i > 0) {
+              this.ctx.strokeStyle = "#34495e";
+              this.ctx.lineWidth = 2;
+              this.ctx.beginPath();
+              this.ctx.moveTo(0, y);
+              this.ctx.lineTo(this.canvas.width, y);
+              this.ctx.stroke();
+            }
+          }
+        }
+
+        drawNotes() {
+          this.notes.forEach((note) => {
+            this.ctx.save();
+
+            // 音符陰影
+            this.ctx.globalAlpha = 0.3;
+            this.ctx.fillStyle = "#000";
+            this.ctx.beginPath();
+            this.ctx.arc(note.x + 2, note.y + 2, 20, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            this.ctx.restore();
+
+            // 音符主體
+            const gradient = this.ctx.createRadialGradient(
+              note.x,
+              note.y,
+              0,
+              note.x,
+              note.y,
+              20
+            );
+
+            switch (note.type) {
+              case 1:
+                gradient.addColorStop(0, "#e74c3c");
+                gradient.addColorStop(1, "#c0392b");
+                break;
+              case 2:
+                gradient.addColorStop(0, "#3498db");
+                gradient.addColorStop(1, "#2980b9");
+                break;
+              case 3:
+                gradient.addColorStop(0, "#2ecc71");
+                gradient.addColorStop(1, "#27ae60");
+                break;
+              case 4:
+                gradient.addColorStop(0, "#f1c40f");
+                gradient.addColorStop(1, "#e67e22");
+                break;
+            }
+
+            this.ctx.fillStyle = gradient;
+            this.ctx.beginPath();
+            this.ctx.arc(note.x, note.y, 20, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // 音符高光
+            this.ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+            this.ctx.beginPath();
+            this.ctx.arc(note.x - 7, note.y - 7, 8, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // 音符標記
+            this.ctx.fillStyle = "white";
+            this.ctx.font = "bold 16px Arial";
+            this.ctx.textAlign = "center";
+            this.ctx.fillText(
+              this.keys[note.track].toUpperCase(),
+              note.x,
+              note.y + 5
+            );
+          });
+        }
+
+        drawHitZones() {
+          for (let i = 0; i < this.tracks; i++) {
+            const x = this.canvas.width - 80;
+            const y = i * this.trackHeight + this.trackHeight / 2;
+
+            // 命中區域
+            this.ctx.strokeStyle = "#ecf0f1";
+            this.ctx.lineWidth = 3;
+            this.ctx.setLineDash([]);
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, 30, 0, Math.PI * 2);
+            this.ctx.stroke();
+
+            // 完美區域
+            this.ctx.strokeStyle = "#2ecc71";
+            this.ctx.lineWidth = 2;
+            this.ctx.setLineDash([5, 5]);
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, 15, 0, Math.PI * 2);
+            this.ctx.stroke();
+
+            // 按鍵標籤
+            this.ctx.fillStyle = "#ecf0f1";
+            this.ctx.font = "bold 18px Arial";
+            this.ctx.textAlign = "center";
+            this.ctx.fillText(this.keys[i].toUpperCase(), x, y + 6);
+          }
+        }
+
+        updateUI() {
+          document.getElementById("score").textContent =
+            this.score.toLocaleString();
+          document.getElementById("accuracy").textContent = this.accuracy + "%";
+          document.getElementById("combo").textContent = this.combo;
+          document.getElementById("maxCombo").textContent = this.maxCombo;
+
+          // 更新準確度條
+          const accuracyFill = document.getElementById("accuracyFill");
+          accuracyFill.style.width = this.accuracy + "%";
+
+          // 更新進度
+          const progress = (this.gameTime / this.gameDuration) * 100;
+          const timeLeft = Math.ceil(
+            (this.gameDuration - this.gameTime) / 1000
+          );
+          document.getElementById(
+            "progressIndicator"
+          ).textContent = `剩餘時間: ${timeLeft}秒 (${Math.round(progress)}%)`;
+        }
+
+        updateButtons() {
+          const startButton = document.getElementById("startButton");
+          const pauseButton = document.getElementById("pauseButton");
+
+          startButton.disabled = this.isRunning;
+          pauseButton.disabled = !this.isRunning;
+
+          startButton.textContent = this.isRunning ? "進行中" : "開始遊戲";
+          pauseButton.textContent = this.isPaused ? "繼續" : "暫停";
+        }
+
+        endGame() {
+          this.isRunning = false;
+          this.updateStats();
+          this.showGameOver();
+          this.updateButtons();
+        }
+
+        showHelp() {
+          const modal = document.getElementById("helpModal");
+          if (modal) {
+            modal.style.display = "block";
+
+            // Set up close button event listener
+            const closeBtn = modal.querySelector(".close");
+            if (closeBtn) {
+              closeBtn.onclick = () => this.closeHelp();
+            }
+
+            // Close when clicking outside the modal
+            modal.addEventListener("click", (e) => {
+              if (e.target === modal) {
+                this.closeHelp();
+              }
+            });
+
+            // Close with escape key
+            document.addEventListener("keydown", (e) => {
+              if (e.key === "Escape") {
+                this.closeHelp();
+              }
+            });
+          }
+        }
+
+        closeHelp() {
+          const modal = document.getElementById("helpModal");
+          if (modal) {
+            modal.style.display = "none";
+          }
+        }
+
+        showGameOver() {
+          document.getElementById("finalScore").textContent =
+            this.score.toLocaleString();
+          document.getElementById("finalAccuracy").textContent =
+            this.accuracy + "%";
+          document.getElementById("finalMaxCombo").textContent = this.maxCombo;
+          document.getElementById("finalPerfect").textContent =
+            this.hitCounts.perfect;
+          document.getElementById("finalGreat").textContent =
+            this.hitCounts.great;
+          document.getElementById("finalGood").textContent =
+            this.hitCounts.good;
+          document.getElementById("finalMiss").textContent =
+            this.hitCounts.miss;
+
+          document.getElementById("gameOverModal").style.display = "block";
+        }
+
+        loadStats() {
+          const stats = JSON.parse(
+            localStorage.getItem("rhythmTapStats") || "{}"
+          );
+          document.getElementById("highScore").textContent = (
+            stats.highScore || 0
+          ).toLocaleString();
+          document.getElementById("totalGames").textContent =
+            stats.totalGames || 0;
+        }
+
+        updateStats() {
+          const stats = JSON.parse(
+            localStorage.getItem("rhythmTapStats") || "{}"
+          );
+
+          stats.highScore = Math.max(stats.highScore || 0, this.score);
+          stats.totalGames = (stats.totalGames || 0) + 1;
+          stats.totalScore = (stats.totalScore || 0) + this.score;
+          stats.bestAccuracy = Math.max(stats.bestAccuracy || 0, this.accuracy);
+          stats.bestCombo = Math.max(stats.bestCombo || 0, this.maxCombo);
+
+          localStorage.setItem("rhythmTapStats", JSON.stringify(stats));
+          this.loadStats();
+        }
+
+        setupModals() {
+          const modals = document.querySelectorAll(".modal");
+          const closeButtons = document.querySelectorAll(".close");
+
+          closeButtons.forEach((button) => {
+            button.addEventListener("click", (e) => {
+              e.target.closest(".modal").style.display = "none";
+            });
+          });
+
+          window.addEventListener("click", (e) => {
+            modals.forEach((modal) => {
+              if (e.target === modal) {
+                modal.style.display = "none";
+              }
+            });
+          });
+        }
+      }
+
+      function restartGame() {
+        document.getElementById("gameOverModal").style.display = "none";
+        game.resetGame();
+        game.startGame();
+      }
+
+      // 初始化遊戲
+      const game = new RhythmTapGame();
+
+      // 註冊遊戲統計
+      if (typeof gameStats !== "undefined") {
+        gameStats.registerGame("rhythmTap", "節拍點擊");
+      }
+    </script>
+  </body>
+</html>

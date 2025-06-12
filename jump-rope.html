@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>跳繩王 - 網頁小遊戲</title>
+    <meta name="game-id" content="jump-rope" />
+    <meta name="game-name" content="跳繩王" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .jump-rope-container {
+        max-width: 600px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .game-stats {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        margin: 20px 0;
+      }
+
+      .stats-box {
+        background-color: #f5f5f5;
+        padding: 15px 20px;
+        border-radius: 8px;
+        width: 30%;
+        text-align: center;
+      }
+
+      .stats-label {
+        font-size: 14px;
+        margin-bottom: 5px;
+        color: #666;
+      }
+
+      .stats-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--primary-color);
+      }
+
+      .game-area {
+        width: 400px;
+        height: 300px;
+        position: relative;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        border: 1px solid #ddd;
+        overflow: hidden;
+        margin-bottom: 20px;
+      }
+
+      .player {
+        position: absolute;
+        width: 60px;
+        height: 80px;
+        bottom: 30px;
+        left: 170px;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140"><circle cx="50" cy="30" r="25" fill="%23ffd700"/><rect x="35" y="55" width="30" height="50" fill="%23ff6347"/><rect x="30" y="105" width="15" height="30" fill="%233b3b3b"/><rect x="55" y="105" width="15" height="30" fill="%233b3b3b"/><rect x="10" y="55" width="15" height="40" fill="%23ff6347"/><rect x="75" y="55" width="15" height="40" fill="%23ff6347"/></svg>');
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: contain;
+        transition: transform 0.3s ease;
+      }
+
+      .player.jump {
+        transform: translateY(-50px);
+      }
+
+      .rope {
+        position: absolute;
+        width: 400px;
+        height: 2px;
+        background-color: #333;
+        bottom: 20px;
+        transform-origin: center;
+      }
+
+      .rope-holder-left {
+        position: absolute;
+        width: 20px;
+        height: 60px;
+        bottom: 20px;
+        left: 0;
+        background-color: #555;
+        border-radius: 5px;
+      }
+
+      .rope-holder-right {
+        position: absolute;
+        width: 20px;
+        height: 60px;
+        bottom: 20px;
+        right: 0;
+        background-color: #555;
+        border-radius: 5px;
+      }
+
+      .game-info {
+        margin: 20px 0;
+        font-size: 18px;
+        color: #333;
+        text-align: center;
+      }
+
+      .jump-button {
+        margin-top: 20px;
+        padding: 15px 40px;
+        font-size: 20px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .jump-button:hover {
+        background-color: #0056b3;
+      }
+
+      .jump-button:active {
+        transform: scale(0.98);
+      }
+
+      .difficulty-controls {
+        display: flex;
+        gap: 10px;
+        margin: 20px 0;
+      }
+
+      .difficulty-btn {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        background-color: #f0f0f0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .difficulty-btn:hover {
+        background-color: #e0e0e0;
+      }
+
+      .difficulty-btn.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        25% {
+          transform: rotate(90deg);
+        }
+        50% {
+          transform: rotate(180deg);
+        }
+        75% {
+          transform: rotate(270deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .rope-animated {
+        animation: spin 1.5s linear infinite;
+      }
+
+      .status-message {
+        font-size: 24px;
+        text-align: center;
+        margin: 10px 0;
+        font-weight: bold;
+        color: #333;
+      }
+
+      .perfect-timing {
+        animation: flash 0.5s;
+      }
+
+      @keyframes flash {
+        0% {
+          background-color: rgba(255, 215, 0, 0.7);
+        }
+        100% {
+          background-color: transparent;
+        }
+      }
+
+      .combo-indicator {
+        position: absolute;
+        font-size: 18px;
+        font-weight: bold;
+        color: gold;
+        text-shadow: 1px 1px 2px black;
+        opacity: 0;
+        transition: opacity 0.3s, transform 1s;
+      }
+
+      .combo-indicator.show {
+        opacity: 1;
+        transform: translateY(-30px);
+      }
+
+      @media (max-width: 600px) {
+        .game-area {
+          width: 300px;
+          height: 250px;
+        }
+
+        .player {
+          left: 120px;
+        }
+
+        .rope {
+          width: 300px;
+        }
+
+        .stats-box {
+          padding: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>跳繩王</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="score-display">分數: <span id="scoreValue">0</span></div>
+
+      <div class="jump-rope-container">
+        <div class="difficulty-controls">
+          <button id="easyBtn" class="difficulty-btn active">簡單</button>
+          <button id="mediumBtn" class="difficulty-btn">中等</button>
+          <button id="hardBtn" class="difficulty-btn">困難</button>
+        </div>
+
+        <div class="game-stats">
+          <div class="stats-box">
+            <div class="stats-label">連續跳躍</div>
+            <div id="combo" class="stats-value">0</div>
+          </div>
+          <div class="stats-box">
+            <div class="stats-label">最佳連續</div>
+            <div id="bestCombo" class="stats-value">0</div>
+          </div>
+          <div class="stats-box">
+            <div class="stats-label">剩餘時間</div>
+            <div id="timeLeft" class="stats-value">60</div>
+          </div>
+        </div>
+
+        <div class="status-message" id="statusMessage">準備開始!</div>
+
+        <div class="game-area" id="gameArea">
+          <div class="rope-holder-left"></div>
+          <div class="rope-holder-right"></div>
+          <div class="rope" id="rope"></div>
+          <div class="player" id="player"></div>
+          <div id="comboIndicator" class="combo-indicator"></div>
+        </div>
+
+        <button id="jumpButton" class="jump-button">跳躍</button>
+
+        <div class="game-info">
+          按下跳躍按鈕或空白鍵跳過繩子。跳躍的時機點很重要！
+        </div>
+      </div>
+
+      <div id="gamePaused" class="game-paused">暫停中</div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "跳繩王 - 遊戲說明",
+          `
+            <h3>遊戲介紹：</h3>
+            <p>跳繩王是一款測試你反應能力和節奏感的小遊戲。在旋轉的繩子到達腳下時及時跳躍來避開繩子。</p>
+            
+            <h3>遊戲規則：</h3>
+            <ul>
+              <li>跳躍按鈕或空白鍵可以控制角色跳躍</li>
+              <li>繩子旋轉一周（經過腳下）時跳躍可獲得分數</li>
+              <li>連續成功跳躍可以獲得連擊獎勵</li>
+              <li>完美時機跳躍（繩子剛好在腳下）可獲得額外獎勵</li>
+              <li>漏跳或跳躍時機不對會中斷連續跳躍</li>
+            </ul>
+            
+            <h3>難度設定：</h3>
+            <ul>
+              <li><strong>簡單</strong>：繩子旋轉速度較慢，跳躍時機要求較寬鬆</li>
+              <li><strong>中等</strong>：繩子旋轉速度適中，需要更精確的跳躍時機</li>
+              <li><strong>困難</strong>：繩子旋轉速度較快，需要精確的跳躍時機和更快的反應</li>
+            </ul>
+            
+            <h3>計分方式：</h3>
+            <ul>
+              <li>基本跳躍：1分</li>
+              <li>完美時機跳躍：3分</li>
+              <li>連續跳躍獎勵：每10次連續跳躍額外獎勵10分</li>
+            </ul>
+            
+            <h3>遊戲目標：</h3>
+            <p>在60秒的時間內獲得盡可能高的分數和連續跳躍記錄！</p>
+          `
+        );
+
+        // 初始化遊戲控制器
+        const gameController = new GameUtils.GameController();
+        const scoreManager = new GameUtils.ScoreManager("scoreValue");
+
+        // DOM 元素
+        const player = document.getElementById("player");
+        const rope = document.getElementById("rope");
+        const gameArea = document.getElementById("gameArea");
+        const jumpButton = document.getElementById("jumpButton");
+        const comboDisplay = document.getElementById("combo");
+        const bestComboDisplay = document.getElementById("bestCombo");
+        const timeLeftDisplay = document.getElementById("timeLeft");
+        const statusMessage = document.getElementById("statusMessage");
+        const comboIndicator = document.getElementById("comboIndicator");
+        const easyBtn = document.getElementById("easyBtn");
+        const mediumBtn = document.getElementById("mediumBtn");
+        const hardBtn = document.getElementById("hardBtn");
+
+        // 遊戲變數
+        let combo = 0;
+        let bestCombo = 0;
+        let timeLeft = 60;
+        let gameActive = false;
+        let jumping = false;
+        let ropeAngle = 0;
+        let difficulty = "easy";
+        let timerId;
+        let animationId;
+        let lastFrameTime = 0;
+        let gameStarted = false;
+        let perfectWindow = 0.15; // 以角度比例計算，0.15表示滿圈的15%
+        let canScore = true;
+
+        // 難度設置
+        const difficultySettings = {
+          easy: {
+            speed: 1.0, // 繩子旋轉速度
+            perfectWindow: 0.15, // 完美時機窗口
+            jumpDuration: 500, // 跳躍動畫時間 (ms)
+          },
+          medium: {
+            speed: 1.5,
+            perfectWindow: 0.1,
+            jumpDuration: 400,
+          },
+          hard: {
+            speed: 2.0,
+            perfectWindow: 0.08,
+            jumpDuration: 350,
+          },
+        };
+
+        // 初始化遊戲
+        function initGame() {
+          combo = 0;
+          bestCombo = 0;
+          timeLeft = 60;
+          gameActive = false;
+          jumping = false;
+          ropeAngle = 0;
+          canScore = true;
+
+          // 更新顯示
+          comboDisplay.textContent = combo;
+          bestComboDisplay.textContent = bestCombo;
+          timeLeftDisplay.textContent = timeLeft;
+          statusMessage.textContent = "準備開始!";
+
+          // 重置分數
+          scoreManager.set(0);
+
+          // 移除動畫類
+          rope.classList.remove("rope-animated");
+          player.classList.remove("jump");
+
+          // 設置難度
+          updateDifficultySettings();
+
+          // 停止計時器和動畫循環
+          if (timerId) {
+            clearInterval(timerId);
+          }
+          if (animationId) {
+            cancelAnimationFrame(animationId);
+          }
+        }
+
+        // 更新難度設定
+        function updateDifficultySettings() {
+          perfectWindow = difficultySettings[difficulty].perfectWindow;
+
+          // 更新跳躍動畫持續時間
+          const jumpDuration = difficultySettings[difficulty].jumpDuration;
+          document.documentElement.style.setProperty(
+            "--jump-duration",
+            `${jumpDuration}ms`
+          );
+
+          // 更新難度按鈕狀態
+          updateDifficultyButtons();
+        }
+
+        // 開始遊戲
+        function startGame() {
+          if (gameStarted) return;
+
+          gameActive = true;
+          gameStarted = true;
+          statusMessage.textContent = "";
+
+          // 啟動繩子動畫
+          startRopeAnimation();
+
+          // 倒數計時
+          timerId = setInterval(() => {
+            if (!gameActive) return;
+
+            timeLeft--;
+            timeLeftDisplay.textContent = timeLeft;
+
+            if (timeLeft <= 10) {
+              timeLeftDisplay.style.color = "red";
+            }
+
+            if (timeLeft <= 0) {
+              endGame();
+            }
+          }, 1000);
+        }
+
+        // 開始繩子動畫
+        function startRopeAnimation() {
+          lastFrameTime = performance.now();
+          animateRope();
+        }
+
+        // 繩子動畫
+        function animateRope(currentTime = performance.now()) {
+          if (!gameActive) return;
+
+          // 計算時間增量
+          const deltaTime = currentTime - lastFrameTime;
+          lastFrameTime = currentTime;
+
+          // 根據難度調整繩子旋轉速度
+          const speed = difficultySettings[difficulty].speed;
+
+          // 更新繩子角度
+          ropeAngle = (ropeAngle + speed * deltaTime * 0.001) % 1;
+
+          // 設置繩子旋轉角度
+          rope.style.transform = `rotate(${ropeAngle * 360}deg)`;
+
+          // 檢查是否可以得分
+          if (ropeAngle < 0.5 && ropeAngle > 0.45 && canScore) {
+            // 錯過跳躍時機
+            if (!jumping) {
+              resetCombo("錯過了！");
+            }
+          }
+
+          // 繩子角度為0到0.05之間時可以得分
+          if (ropeAngle >= 0 && ropeAngle < 0.05) {
+            canScore = true;
+          }
+
+          // 繼續動畫循環
+          animationId = requestAnimationFrame(animateRope);
+        }
+
+        // 跳躍
+        function jump() {
+          if (!gameActive || jumping) return;
+
+          // 如果遊戲尚未開始，先開始遊戲
+          if (!gameStarted) {
+            startGame();
+            return;
+          }
+
+          jumping = true;
+
+          // 添加跳躍動畫
+          player.classList.add("jump");
+
+          // 檢查跳躍時機
+          checkJumpTiming();
+
+          // 跳躍動畫結束後移除類
+          setTimeout(() => {
+            player.classList.remove("jump");
+            jumping = false;
+          }, difficultySettings[difficulty].jumpDuration);
+        }
+
+        // 檢查跳躍時機
+        function checkJumpTiming() {
+          // 繩子在腳下位置（大約0.5旋轉）
+          if (ropeAngle > 0.45 && ropeAngle < 0.55 && canScore) {
+            canScore = false;
+
+            // 是否為完美時機（繩子剛好在腳下）
+            const perfectTiming = Math.abs(ropeAngle - 0.5) < perfectWindow;
+
+            if (perfectTiming) {
+              // 完美跳躍
+              scoreManager.add(3);
+              combo++;
+              gameArea.classList.add("perfect-timing");
+              showComboIndicator("完美! +3", "gold");
+
+              setTimeout(() => {
+                gameArea.classList.remove("perfect-timing");
+              }, 300);
+            } else {
+              // 一般跳躍
+              scoreManager.add(1);
+              combo++;
+              showComboIndicator("+1", "white");
+            }
+
+            // 更新連擊顯示
+            comboDisplay.textContent = combo;
+
+            // 檢查是否為新的最佳連擊
+            if (combo > bestCombo) {
+              bestCombo = combo;
+              bestComboDisplay.textContent = bestCombo;
+            }
+
+            // 連擊獎勵
+            if (combo % 10 === 0) {
+              scoreManager.add(10);
+              showComboIndicator(`連擊 ${combo}! +10`, "gold");
+            }
+          } else {
+            // 跳躍時機不對
+            resetCombo("時機不對！");
+          }
+        }
+
+        // 顯示連擊指示器
+        function showComboIndicator(text, color) {
+          comboIndicator.textContent = text;
+          comboIndicator.style.color = color;
+          comboIndicator.style.left = `${Math.random() * 50 + 25}%`;
+          comboIndicator.style.top = `${Math.random() * 20 + 40}%`;
+
+          comboIndicator.classList.add("show");
+
+          setTimeout(() => {
+            comboIndicator.classList.remove("show");
+          }, 1000);
+        }
+
+        // 重置連擊
+        function resetCombo(message) {
+          if (combo > 0) {
+            statusMessage.textContent = message;
+            setTimeout(() => {
+              statusMessage.textContent = "";
+            }, 1000);
+
+            combo = 0;
+            comboDisplay.textContent = combo;
+          }
+        }
+
+        // 結束遊戲
+        function endGame() {
+          gameActive = false;
+          gameStarted = false;
+
+          // 停止計時器和動畫
+          clearInterval(timerId);
+          cancelAnimationFrame(animationId);
+
+          // 重設時間顯示
+          timeLeftDisplay.style.color = "";
+
+          // 顯示結果
+          statusMessage.textContent = "遊戲結束!";
+
+          // 顯示結束對話框
+          gameController.showMessage(
+            "遊戲結束",
+            `
+            <div style="text-align:center;">
+              <p>你的最終得分：<strong>${scoreManager.get()}</strong></p>
+              <p>最佳連續跳躍：${bestCombo}</p>
+              <p>難度：${getDifficultyName()}</p>
+              <button id="newGameBtn" class="primary-button">再玩一次</button>
+            </div>
+            `
+          );
+
+          setTimeout(() => {
+            document
+              .getElementById("newGameBtn")
+              .addEventListener("click", () => {
+                gameController.hideMessage();
+                initGame();
+              });
+          }, 100);
+        }
+
+        // 獲取難度名稱
+        function getDifficultyName() {
+          switch (difficulty) {
+            case "easy":
+              return "簡單";
+            case "medium":
+              return "中等";
+            case "hard":
+              return "困難";
+            default:
+              return "簡單";
+          }
+        }
+
+        // 更新難度按鈕狀態
+        function updateDifficultyButtons() {
+          easyBtn.classList.toggle("active", difficulty === "easy");
+          mediumBtn.classList.toggle("active", difficulty === "medium");
+          hardBtn.classList.toggle("active", difficulty === "hard");
+        }
+
+        // 事件監聽器
+
+        // 跳躍按鈕
+        jumpButton.addEventListener("click", jump);
+
+        // 空白鍵跳躍
+        document.addEventListener("keydown", (e) => {
+          if (e.code === "Space" && !e.repeat) {
+            jump();
+            e.preventDefault(); // 防止空白鍵滾動頁面
+          }
+        });
+
+        // 難度按鈕事件
+        easyBtn.addEventListener("click", () => {
+          if (gameActive && !confirm("確定要切換難度嗎？這會重新開始遊戲。")) {
+            return;
+          }
+          difficulty = "easy";
+          initGame();
+        });
+
+        mediumBtn.addEventListener("click", () => {
+          if (gameActive && !confirm("確定要切換難度嗎？這會重新開始遊戲。")) {
+            return;
+          }
+          difficulty = "medium";
+          initGame();
+        });
+
+        hardBtn.addEventListener("click", () => {
+          if (gameActive && !confirm("確定要切換難度嗎？這會重新開始遊戲。")) {
+            return;
+          }
+          difficulty = "hard";
+          initGame();
+        });
+
+        // 設置遊戲控制器
+        gameController.setGameLoop(() => {
+          // 在這個遊戲中不需要遊戲循環，因為使用的是requestAnimationFrame
+        });
+
+        // 設置重啟處理器
+        gameController.setRestartHandler(() => {
+          initGame();
+        });
+
+        // 處理暫停狀態變化
+        gameController.onPauseStateChange = function (isPaused) {
+          const pauseIndicator = document.getElementById("gamePaused");
+          if (pauseIndicator) {
+            pauseIndicator.style.display = isPaused ? "flex" : "none";
+          }
+
+          gameActive = !isPaused && gameStarted;
+
+          if (!isPaused && gameStarted && !animationId) {
+            lastFrameTime = performance.now();
+            animateRope();
+          }
+        };
+
+        // 初始化遊戲
+        initGame();
+
+        // 顯示開始動畫
+        gameController.showStartAnimation(() => {
+          gameController.showMessage(
+            "跳繩王",
+            `
+            <div style="text-align:center;">
+              <p>歡迎來到跳繩王！</p>
+              <p>在繩子旋轉到腳下時跳躍來獲得分數。</p>
+              <p>連續成功跳躍可以獲得連擊獎勵！</p>
+              <button id="startBtn" class="primary-button">開始遊戲</button>
+            </div>
+            `
+          );
+
+          setTimeout(() => {
+            document
+              .getElementById("startBtn")
+              .addEventListener("click", () => {
+                gameController.hideMessage();
+                startGame();
+              });
+          }, 100);
+        });
+      });
+    </script>
+  </body>
+</html>

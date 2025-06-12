@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>反應測試器 - 網頁小遊戲</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+      }
+
+      .game-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        max-width: 600px;
+        width: 90%;
+      }
+
+      h1 {
+        margin-bottom: 20px;
+        font-size: 2.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .controls {
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .game-area {
+        width: 100%;
+        height: 400px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        position: relative;
+        margin: 20px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .game-area.waiting {
+        background: rgba(255, 0, 0, 0.3);
+        border-color: #ff4444;
+      }
+
+      .game-area.ready {
+        background: rgba(0, 255, 0, 0.3);
+        border-color: #44ff44;
+        animation: pulse 0.5s infinite alternate;
+      }
+
+      .game-area.too-early {
+        background: rgba(255, 165, 0, 0.3);
+        border-color: #ffaa00;
+      }
+
+      @keyframes pulse {
+        from {
+          transform: scale(1);
+        }
+        to {
+          transform: scale(1.02);
+        }
+      }
+
+      .game-text {
+        font-size: 1.8rem;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-bottom: 5px;
+      }
+
+      .stat-value {
+        font-size: 1.4rem;
+        font-weight: bold;
+      }
+
+      .results {
+        max-height: 200px;
+        overflow-y: auto;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 15px;
+        margin: 20px 0;
+      }
+
+      .result-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .result-item:last-child {
+        border-bottom: none;
+      }
+
+      .result-time {
+        font-weight: bold;
+        color: #4fc3f7;
+      }
+
+      .result-rating {
+        font-size: 0.9rem;
+        padding: 4px 8px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .rating-excellent {
+        background: rgba(76, 175, 80, 0.7) !important;
+      }
+      .rating-good {
+        background: rgba(139, 195, 74, 0.7) !important;
+      }
+      .rating-average {
+        background: rgba(255, 193, 7, 0.7) !important;
+      }
+      .rating-slow {
+        background: rgba(255, 87, 34, 0.7) !important;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+      }
+
+      .modal-content {
+        background: rgba(255, 255, 255, 0.95);
+        color: #333;
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 500px;
+        position: relative;
+        backdrop-filter: blur(10px);
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        position: absolute;
+        right: 15px;
+        top: 10px;
+      }
+
+      .close:hover {
+        color: #000;
+      }
+
+      @media (max-width: 768px) {
+        .game-container {
+          padding: 20px;
+          margin: 10px;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+
+        .game-area {
+          height: 300px;
+        }
+
+        .game-text {
+          font-size: 1.4rem;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .btn {
+          width: 200px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1><i class="fas fa-stopwatch"></i> 反應測試器</h1>
+
+      <div class="controls">
+        <button class="btn" onclick="startTest()">
+          <i class="fas fa-play"></i> 開始測試
+        </button>
+        <button class="btn" onclick="resetTest()">
+          <i class="fas fa-redo"></i> 重置
+        </button>
+        <button class="btn" onclick="showHelp()">
+          <i class="fas fa-question-circle"></i> 說明
+        </button>
+        <button class="btn" onclick="window.location.href='index.html'">
+          <i class="fas fa-home"></i> 返回選單
+        </button>
+      </div>
+
+      <div class="game-area" id="gameArea" onclick="handleClick()">
+        <div class="game-text" id="gameText">點擊「開始測試」開始反應測試</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-label">測試次數</div>
+          <div class="stat-value" id="testCount">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">最快反應</div>
+          <div class="stat-value" id="bestTime">-</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">平均反應</div>
+          <div class="stat-value" id="avgTime">-</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">上次結果</div>
+          <div class="stat-value" id="lastTime">-</div>
+        </div>
+      </div>
+
+      <div class="results" id="results">
+        <h3 style="margin-bottom: 15px">測試結果</h3>
+        <div id="resultsList">尚無測試結果</div>
+      </div>
+    </div>
+
+    <!-- 說明模態框 -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeHelp()">&times;</span>
+        <h2><i class="fas fa-info-circle"></i> 反應測試器說明</h2>
+        <h3>遊戲規則：</h3>
+        <ul style="margin: 15px 0; padding-left: 20px">
+          <li>點擊「開始測試」開始反應時間測試</li>
+          <li>等待紅色區域變成綠色後立即點擊</li>
+          <li>測量從綠色出現到點擊的反應時間</li>
+          <li>如果太早點擊會顯示橙色警告</li>
+          <li>完成多次測試查看統計數據</li>
+        </ul>
+        <h3>評分標準：</h3>
+        <ul style="margin: 15px 0; padding-left: 20px">
+          <li>優秀：< 250ms（綠色）</li>
+          <li>良好：250-350ms（淺綠）</li>
+          <li>一般：350-500ms（黃色）</li>
+          <li>緩慢：> 500ms（橙色）</li>
+        </ul>
+        <h3>操作方式：</h3>
+        <ul style="margin: 15px 0; padding-left: 20px">
+          <li>滑鼠點擊或觸控螢幕觸碰</li>
+          <li>空白鍵也可以觸發反應</li>
+          <li>支援鍵盤和觸控操作</li>
+        </ul>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      let gameState = "idle"; // idle, waiting, ready, testing
+      let startTime = 0;
+      let testResults = [];
+      let currentTimeout = null;
+
+      // 從本地存儲載入數據
+      function loadData() {
+        const saved = localStorage.getItem("reflexTesterResults");
+        if (saved) {
+          testResults = JSON.parse(saved);
+          updateStats();
+          updateResultsList();
+        }
+      }
+
+      // 保存數據到本地存儲
+      function saveData() {
+        localStorage.setItem(
+          "reflexTesterResults",
+          JSON.stringify(testResults)
+        );
+      }
+
+      // 開始測試
+      function startTest() {
+        if (gameState !== "idle") return;
+
+        gameState = "waiting";
+        updateGameArea();
+
+        // 隨機等待2-6秒後顯示綠色
+        const waitTime = 2000 + Math.random() * 4000;
+        currentTimeout = setTimeout(() => {
+          if (gameState === "waiting") {
+            gameState = "ready";
+            startTime = Date.now();
+            updateGameArea();
+          }
+        }, waitTime);
+      }
+
+      // 處理點擊
+      function handleClick() {
+        if (gameState === "waiting") {
+          // 太早點擊
+          gameState = "too-early";
+          clearTimeout(currentTimeout);
+          updateGameArea();
+          setTimeout(() => {
+            gameState = "idle";
+            updateGameArea();
+          }, 2000);
+        } else if (gameState === "ready") {
+          // 正確反應
+          const reactionTime = Date.now() - startTime;
+          recordResult(reactionTime);
+          gameState = "idle";
+          updateGameArea();
+        }
+      }
+
+      // 處理鍵盤事件
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "Space") {
+          e.preventDefault();
+          handleClick();
+        } else if (e.code === "Enter") {
+          if (gameState === "idle") {
+            startTest();
+          }
+        }
+      });
+
+      // 記錄測試結果
+      function recordResult(time) {
+        const result = {
+          time: time,
+          timestamp: Date.now(),
+          rating: getRating(time),
+        };
+
+        testResults.push(result);
+
+        // 保留最近20次結果
+        if (testResults.length > 20) {
+          testResults.shift();
+        }
+
+        saveData();
+        updateStats();
+        updateResultsList();
+      }
+
+      // 獲取評分
+      function getRating(time) {
+        if (time < 250) return { text: "優秀", class: "rating-excellent" };
+        if (time < 350) return { text: "良好", class: "rating-good" };
+        if (time < 500) return { text: "一般", class: "rating-average" };
+        return { text: "緩慢", class: "rating-slow" };
+      }
+
+      // 更新遊戲區域
+      function updateGameArea() {
+        const area = document.getElementById("gameArea");
+        const text = document.getElementById("gameText");
+
+        area.className = "game-area";
+
+        switch (gameState) {
+          case "idle":
+            text.textContent = "點擊「開始測試」或按Enter開始";
+            break;
+          case "waiting":
+            area.classList.add("waiting");
+            text.textContent = "等待綠色出現...";
+            break;
+          case "ready":
+            area.classList.add("ready");
+            text.textContent = "點擊！";
+            break;
+          case "too-early":
+            area.classList.add("too-early");
+            text.textContent = "太早了！請等待綠色";
+            break;
+        }
+      }
+
+      // 更新統計數據
+      function updateStats() {
+        if (testResults.length === 0) {
+          document.getElementById("testCount").textContent = "0";
+          document.getElementById("bestTime").textContent = "-";
+          document.getElementById("avgTime").textContent = "-";
+          document.getElementById("lastTime").textContent = "-";
+          return;
+        }
+
+        const times = testResults.map((r) => r.time);
+        const bestTime = Math.min(...times);
+        const avgTime = times.reduce((a, b) => a + b, 0) / times.length;
+        const lastTime = testResults[testResults.length - 1].time;
+
+        document.getElementById("testCount").textContent = testResults.length;
+        document.getElementById("bestTime").textContent = bestTime + "ms";
+        document.getElementById("avgTime").textContent =
+          Math.round(avgTime) + "ms";
+        document.getElementById("lastTime").textContent = lastTime + "ms";
+      }
+
+      // 更新結果列表
+      function updateResultsList() {
+        const listElement = document.getElementById("resultsList");
+
+        if (testResults.length === 0) {
+          listElement.innerHTML = "尚無測試結果";
+          return;
+        }
+
+        const recentResults = testResults.slice(-10).reverse();
+        listElement.innerHTML = recentResults
+          .map(
+            (result, index) => `
+                <div class="result-item">
+                    <span>第 ${testResults.length - index} 次</span>
+                    <span class="result-time">${result.time}ms</span>
+                    <span class="result-rating ${result.rating.class}">${
+              result.rating.text
+            }</span>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      // 重置測試
+      function resetTest() {
+        if (currentTimeout) {
+          clearTimeout(currentTimeout);
+        }
+        gameState = "idle";
+        testResults = [];
+        saveData();
+        updateGameArea();
+        updateStats();
+        updateResultsList();
+      }
+
+      // 顯示說明
+      function showHelp() {
+        document.getElementById("helpModal").style.display = "block";
+      }
+
+      // 關閉說明
+      function closeHelp() {
+        document.getElementById("helpModal").style.display = "none";
+      }
+
+      // 點擊模態框外部關閉
+      window.onclick = function (event) {
+        const modal = document.getElementById("helpModal");
+        if (event.target === modal) {
+          modal.style.display = "none";
+        }
+      };
+
+      // 初始化
+      document.addEventListener("DOMContentLoaded", () => {
+        loadData();
+        updateGameArea();
+      });
+    </script>
+  </body>
+</html>

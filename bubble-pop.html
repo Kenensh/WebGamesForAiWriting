@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>泡泡爆破 - 網頁小遊戲</title>
+    <link rel="stylesheet" href="game-styles.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      #gameCanvas {
+        border: 3px solid #2c3e50;
+        border-radius: 10px;
+        background: linear-gradient(to bottom, #87ceeb, #e6f3ff);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        cursor: crosshair;
+      }
+
+      .bubble {
+        border-radius: 50%;
+        position: absolute;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: inset -10px -10px 0px rgba(255, 255, 255, 0.2);
+        animation: float 0.1s ease-in-out infinite alternate;
+      }
+
+      @keyframes float {
+        0% {
+          transform: translateY(0px);
+        }
+        100% {
+          transform: translateY(-2px);
+        }
+      }
+
+      .pop-effect {
+        position: absolute;
+        pointer-events: none;
+        font-size: 20px;
+        font-weight: bold;
+        color: #fff;
+        text-shadow: 2px 2px 0px #000;
+        animation: popAnimation 0.6s ease-out forwards;
+      }
+
+      @keyframes popAnimation {
+        0% {
+          opacity: 1;
+          transform: scale(0.5);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(1) translateY(-50px);
+        }
+      }
+
+      .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        pointer-events: none;
+        animation: particle 0.8s ease-out forwards;
+      }
+
+      @keyframes particle {
+        0% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(0.5) translateY(-100px);
+        }
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 20px 0;
+        background: linear-gradient(45deg, #3498db, #2980b9);
+        padding: 15px 20px;
+        border-radius: 10px;
+        color: white;
+        font-weight: bold;
+      }
+
+      .info-item {
+        text-align: center;
+      }
+
+      .info-value {
+        font-size: 24px;
+        display: block;
+        margin-top: 5px;
+      }
+
+      .combo-display {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 215, 0, 0.9);
+        color: #000;
+        padding: 10px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 18px;
+        display: none;
+        animation: pulse 0.5s ease-in-out infinite alternate;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        100% {
+          transform: scale(1.1);
+        }
+      }
+
+      .time-warning {
+        animation: timeWarning 0.5s ease-in-out infinite alternate;
+      }
+
+      @keyframes timeWarning {
+        0% {
+          color: #e74c3c;
+        }
+        100% {
+          color: #c0392b;
+        }
+      }
+
+      .game-controls {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .control-button {
+        background: linear-gradient(45deg, #e74c3c, #c0392b);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .control-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .control-button:active {
+        transform: translateY(0);
+      }
+
+      .control-button:disabled {
+        background: #7f8c8d;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .difficulty-selector {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+      }
+
+      .difficulty-button {
+        background: #34495e;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .difficulty-button.active {
+        background: #2ecc71;
+      }
+
+      .difficulty-button:hover {
+        background: #4a6078;
+      }
+
+      .difficulty-button.active:hover {
+        background: #27ae60;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <header class="game-header">
+        <h1 class="game-title">
+          <i class="fas fa-soap"></i>
+          泡泡爆破
+        </h1>
+        <button class="back-button" onclick="window.location.href='index.html'">
+          <i class="fas fa-arrow-left"></i>
+          返回選單
+        </button>
+      </header>
+
+      <div class="game-info">
+        <div class="info-item">
+          <span>分數</span>
+          <span class="info-value" id="score">0</span>
+        </div>
+        <div class="info-item">
+          <span>時間</span>
+          <span class="info-value" id="timer">60</span>
+        </div>
+        <div class="info-item">
+          <span>泡泡</span>
+          <span class="info-value" id="bubblesPopped">0</span>
+        </div>
+        <div class="info-item">
+          <span>準確率</span>
+          <span class="info-value" id="accuracy">100%</span>
+        </div>
+      </div>
+
+      <div class="difficulty-selector">
+        <button class="difficulty-button active" data-difficulty="easy">
+          簡單
+        </button>
+        <button class="difficulty-button" data-difficulty="medium">中等</button>
+        <button class="difficulty-button" data-difficulty="hard">困難</button>
+      </div>
+
+      <div class="game-controls">
+        <button class="control-button" id="startButton">開始遊戲</button>
+        <button class="control-button" id="pauseButton" disabled>暫停</button>
+        <button class="control-button" id="resetButton">重新開始</button>
+        <button class="control-button" id="helpButton">遊戲說明</button>
+      </div>
+
+      <div class="game-canvas-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div class="combo-display" id="comboDisplay">
+          連擊 x<span id="comboCount">0</span>
+        </div>
+      </div>
+
+      <div class="game-stats">
+        <div class="stat-item">
+          <span class="stat-label">最高分：</span>
+          <span class="stat-value" id="highScore">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">總遊戲次數：</span>
+          <span class="stat-value" id="totalGames">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 遊戲說明模態框 -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>🫧 泡泡爆破 - 遊戲說明</h2>
+        <div class="help-content">
+          <h3>🎯 遊戲目標</h3>
+          <p>在限定時間內點擊爆破泡泡，獲得最高分數！</p>
+
+          <h3>🎮 遊戲規則</h3>
+          <ul>
+            <li>點擊泡泡將其爆破並獲得分數</li>
+            <li>不同顏色的泡泡有不同分值：</li>
+            <li>🔵 藍色泡泡：10分</li>
+            <li>🟢 綠色泡泡：15分</li>
+            <li>🟡 黃色泡泡：20分</li>
+            <li>🔴 紅色泡泡：25分</li>
+            <li>🟣 紫色泡泡：30分（稀有）</li>
+            <li>連續點擊泡泡可獲得連擊加成</li>
+            <li>錯過點擊會中斷連擊</li>
+          </ul>
+
+          <h3>⚡ 難度等級</h3>
+          <ul>
+            <li><strong>簡單：</strong>泡泡移動較慢，數量較少</li>
+            <li><strong>中等：</strong>平衡的難度設定</li>
+            <li><strong>困難：</strong>泡泡移動快速，數量較多</li>
+          </ul>
+
+          <h3>🏆 得分技巧</h3>
+          <ul>
+            <li>保持連擊以獲得加成分數</li>
+            <li>優先點擊高分值的泡泡</li>
+            <li>注意泡泡的移動軌跡</li>
+            <li>在泡泡消失前及時點擊</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 遊戲結束模態框 -->
+    <div id="gameOverModal" class="modal">
+      <div class="modal-content">
+        <h2>🎉 遊戲結束！</h2>
+        <div id="gameOverContent">
+          <p>最終分數：<span id="finalScore">0</span></p>
+          <p>泡泡爆破：<span id="finalBubbles">0</span></p>
+          <p>準確率：<span id="finalAccuracy">0%</span></p>
+          <p>最大連擊：<span id="finalCombo">0</span></p>
+        </div>
+        <div class="modal-buttons">
+          <button class="modal-button" onclick="restartGame()">再玩一次</button>
+          <button
+            class="modal-button"
+            onclick="window.location.href='index.html'"
+          >
+            返回選單
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class BubblePopGame {
+        constructor() {
+          this.canvas = document.getElementById("gameCanvas");
+          this.ctx = this.canvas.getContext("2d");
+          this.isRunning = false;
+          this.isPaused = false;
+          this.score = 0;
+          this.timeLeft = 60;
+          this.bubbles = [];
+          this.bubblesPopped = 0;
+          this.totalClicks = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.difficulty = "easy";
+          this.bubbleSpawnRate = 1000;
+          this.bubbleSpeed = 1;
+          this.maxBubbles = 8;
+
+          this.bubbleColors = [
+            { color: "#3498db", value: 10, weight: 40 }, // 藍色
+            { color: "#2ecc71", value: 15, weight: 30 }, // 綠色
+            { color: "#f1c40f", value: 20, weight: 20 }, // 黃色
+            { color: "#e74c3c", value: 25, weight: 8 }, // 紅色
+            { color: "#9b59b6", value: 30, weight: 2 }, // 紫色
+          ];
+
+          this.particles = [];
+          this.lastBubbleSpawn = 0;
+          this.gameTimer = null;
+          this.bubbleTimer = null;
+
+          this.setupEventListeners();
+          this.loadStats();
+          this.setDifficulty("easy");
+        }
+
+        setupEventListeners() {
+          document
+            .getElementById("startButton")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("pauseButton")
+            .addEventListener("click", () => this.togglePause());
+          document
+            .getElementById("resetButton")
+            .addEventListener("click", () => this.resetGame());
+          document
+            .getElementById("helpButton")
+            .addEventListener("click", () => this.showHelp());
+
+          // 難度選擇
+          document.querySelectorAll(".difficulty-button").forEach((button) => {
+            button.addEventListener("click", (e) =>
+              this.setDifficulty(e.target.dataset.difficulty)
+            );
+          });
+
+          // 畫布點擊事件
+          this.canvas.addEventListener("click", (e) =>
+            this.handleCanvasClick(e)
+          );
+
+          // 模態框事件
+          setupModals();
+        }
+
+        setDifficulty(difficulty) {
+          this.difficulty = difficulty;
+
+          // 更新UI
+          document
+            .querySelectorAll(".difficulty-button")
+            .forEach((btn) => btn.classList.remove("active"));
+          document
+            .querySelector(`[data-difficulty="${difficulty}"]`)
+            .classList.add("active");
+
+          // 設定難度參數
+          switch (difficulty) {
+            case "easy":
+              this.bubbleSpawnRate = 1500;
+              this.bubbleSpeed = 0.8;
+              this.maxBubbles = 6;
+              this.timeLeft = 60;
+              break;
+            case "medium":
+              this.bubbleSpawnRate = 1200;
+              this.bubbleSpeed = 1.2;
+              this.maxBubbles = 8;
+              this.timeLeft = 60;
+              break;
+            case "hard":
+              this.bubbleSpawnRate = 800;
+              this.bubbleSpeed = 1.6;
+              this.maxBubbles = 12;
+              this.timeLeft = 45;
+              break;
+          }
+
+          document.getElementById("timer").textContent = this.timeLeft;
+        }
+
+        startGame() {
+          if (this.isRunning) return;
+
+          this.isRunning = true;
+          this.isPaused = false;
+          this.score = 0;
+          this.bubblesPopped = 0;
+          this.totalClicks = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.bubbles = [];
+          this.particles = [];
+          this.setDifficulty(this.difficulty);
+
+          this.updateUI();
+          this.updateButtons();
+
+          // 開始遊戲循環
+          this.gameLoop();
+
+          // 開始計時器
+          this.gameTimer = setInterval(() => {
+            if (!this.isPaused) {
+              this.timeLeft--;
+              this.updateUI();
+
+              if (this.timeLeft <= 0) {
+                this.endGame();
+              }
+            }
+          }, 1000);
+
+          // 開始生成泡泡
+          this.spawnBubbles();
+        }
+
+        togglePause() {
+          if (!this.isRunning) return;
+
+          this.isPaused = !this.isPaused;
+          document.getElementById("pauseButton").textContent = this.isPaused
+            ? "繼續"
+            : "暫停";
+
+          if (!this.isPaused) {
+            this.gameLoop();
+            this.spawnBubbles();
+          }
+        }
+
+        resetGame() {
+          this.isRunning = false;
+          this.isPaused = false;
+          clearInterval(this.gameTimer);
+          clearTimeout(this.bubbleTimer);
+
+          this.score = 0;
+          this.timeLeft = 60;
+          this.bubblesPopped = 0;
+          this.totalClicks = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.bubbles = [];
+          this.particles = [];
+
+          this.setDifficulty(this.difficulty);
+          this.updateUI();
+          this.updateButtons();
+          this.clearCanvas();
+
+          // 隱藏連擊顯示
+          document.getElementById("comboDisplay").style.display = "none";
+        }
+
+        endGame() {
+          this.isRunning = false;
+          clearInterval(this.gameTimer);
+          clearTimeout(this.bubbleTimer);
+
+          // 更新統計
+          this.updateStats();
+
+          // 顯示遊戲結束畫面
+          this.showGameOver();
+
+          this.updateButtons();
+        }
+
+        spawnBubbles() {
+          if (!this.isRunning || this.isPaused) return;
+
+          if (this.bubbles.length < this.maxBubbles) {
+            this.createBubble();
+          }
+
+          this.bubbleTimer = setTimeout(
+            () => this.spawnBubbles(),
+            this.bubbleSpawnRate
+          );
+        }
+
+        createBubble() {
+          const colorData = this.getRandomBubbleColor();
+          const size = 30 + Math.random() * 20;
+
+          const bubble = {
+            x: Math.random() * (this.canvas.width - size * 2) + size,
+            y: this.canvas.height + size,
+            size: size,
+            color: colorData.color,
+            value: colorData.value,
+            speed: this.bubbleSpeed * (0.8 + Math.random() * 0.4),
+            vx: (Math.random() - 0.5) * 2,
+            vy: -this.bubbleSpeed * (0.8 + Math.random() * 0.4),
+            life: 1.0,
+            pulse: 0,
+          };
+
+          this.bubbles.push(bubble);
+        }
+
+        getRandomBubbleColor() {
+          const totalWeight = this.bubbleColors.reduce(
+            (sum, color) => sum + color.weight,
+            0
+          );
+          let random = Math.random() * totalWeight;
+
+          for (const color of this.bubbleColors) {
+            random -= color.weight;
+            if (random <= 0) {
+              return color;
+            }
+          }
+
+          return this.bubbleColors[0];
+        }
+
+        handleCanvasClick(e) {
+          if (!this.isRunning || this.isPaused) return;
+
+          const rect = this.canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          this.totalClicks++;
+
+          // 檢查是否點擊到泡泡
+          let hit = false;
+          for (let i = this.bubbles.length - 1; i >= 0; i--) {
+            const bubble = this.bubbles[i];
+            const dx = x - bubble.x;
+            const dy = y - bubble.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance <= bubble.size) {
+              this.popBubble(i, x, y);
+              hit = true;
+              break;
+            }
+          }
+
+          if (!hit) {
+            this.combo = 0;
+            this.updateComboDisplay();
+          }
+
+          this.updateUI();
+        }
+
+        popBubble(index, x, y) {
+          const bubble = this.bubbles[index];
+
+          // 增加分數和連擊
+          this.combo++;
+          this.maxCombo = Math.max(this.maxCombo, this.combo);
+          const comboMultiplier = Math.min(this.combo, 10);
+          const points = bubble.value * comboMultiplier;
+          this.score += points;
+          this.bubblesPopped++;
+
+          // 顯示得分效果
+          this.showPopEffect(x, y, points);
+
+          // 創建粒子效果
+          this.createParticles(x, y, bubble.color);
+
+          // 移除泡泡
+          this.bubbles.splice(index, 1);
+
+          // 更新連擊顯示
+          this.updateComboDisplay();
+        }
+
+        showPopEffect(x, y, points) {
+          const effect = document.createElement("div");
+          effect.className = "pop-effect";
+          effect.textContent = `+${points}`;
+          effect.style.left = x + "px";
+          effect.style.top = y + "px";
+
+          this.canvas.parentElement.appendChild(effect);
+
+          setTimeout(() => {
+            if (effect.parentElement) {
+              effect.parentElement.removeChild(effect);
+            }
+          }, 600);
+        }
+
+        createParticles(x, y, color) {
+          for (let i = 0; i < 8; i++) {
+            const particle = {
+              x: x,
+              y: y,
+              vx: (Math.random() - 0.5) * 10,
+              vy: (Math.random() - 0.5) * 10,
+              color: color,
+              life: 1.0,
+              decay: 0.02,
+            };
+            this.particles.push(particle);
+          }
+        }
+
+        updateComboDisplay() {
+          const comboDisplay = document.getElementById("comboDisplay");
+          const comboCount = document.getElementById("comboCount");
+
+          if (this.combo > 1) {
+            comboCount.textContent = this.combo;
+            comboDisplay.style.display = "block";
+          } else {
+            comboDisplay.style.display = "none";
+          }
+        }
+
+        gameLoop() {
+          if (!this.isRunning || this.isPaused) return;
+
+          this.updateBubbles();
+          this.updateParticles();
+          this.render();
+
+          requestAnimationFrame(() => this.gameLoop());
+        }
+
+        updateBubbles() {
+          for (let i = this.bubbles.length - 1; i >= 0; i--) {
+            const bubble = this.bubbles[i];
+
+            bubble.x += bubble.vx;
+            bubble.y += bubble.vy;
+            bubble.pulse += 0.1;
+
+            // 邊界碰撞
+            if (
+              bubble.x <= bubble.size ||
+              bubble.x >= this.canvas.width - bubble.size
+            ) {
+              bubble.vx *= -0.8;
+              bubble.x = Math.max(
+                bubble.size,
+                Math.min(this.canvas.width - bubble.size, bubble.x)
+              );
+            }
+
+            // 頂部碰撞
+            if (bubble.y <= bubble.size) {
+              bubble.vy *= -0.8;
+              bubble.y = bubble.size;
+            }
+
+            // 重力效果
+            bubble.vy += 0.1;
+
+            // 移除超出畫面的泡泡
+            if (bubble.y > this.canvas.height + bubble.size) {
+              this.bubbles.splice(i, 1);
+            }
+          }
+        }
+
+        updateParticles() {
+          for (let i = this.particles.length - 1; i >= 0; i--) {
+            const particle = this.particles[i];
+
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            particle.vy += 0.2; // 重力
+            particle.life -= particle.decay;
+
+            if (particle.life <= 0) {
+              this.particles.splice(i, 1);
+            }
+          }
+        }
+
+        render() {
+          this.clearCanvas();
+
+          // 繪製泡泡
+          this.bubbles.forEach((bubble) => this.drawBubble(bubble));
+
+          // 繪製粒子
+          this.particles.forEach((particle) => this.drawParticle(particle));
+        }
+
+        clearCanvas() {
+          this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+
+        drawBubble(bubble) {
+          const pulseSize = bubble.size + Math.sin(bubble.pulse) * 2;
+
+          // 泡泡陰影
+          this.ctx.save();
+          this.ctx.globalAlpha = 0.3;
+          this.ctx.fillStyle = "#000";
+          this.ctx.beginPath();
+          this.ctx.arc(bubble.x + 2, bubble.y + 2, pulseSize, 0, Math.PI * 2);
+          this.ctx.fill();
+          this.ctx.restore();
+
+          // 泡泡主體
+          this.ctx.fillStyle = bubble.color;
+          this.ctx.beginPath();
+          this.ctx.arc(bubble.x, bubble.y, pulseSize, 0, Math.PI * 2);
+          this.ctx.fill();
+
+          // 泡泡高光
+          const gradient = this.ctx.createRadialGradient(
+            bubble.x - pulseSize * 0.3,
+            bubble.y - pulseSize * 0.3,
+            0,
+            bubble.x,
+            bubble.y,
+            pulseSize
+          );
+          gradient.addColorStop(0, "rgba(255, 255, 255, 0.8)");
+          gradient.addColorStop(0.3, "rgba(255, 255, 255, 0.3)");
+          gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+          this.ctx.fillStyle = gradient;
+          this.ctx.beginPath();
+          this.ctx.arc(bubble.x, bubble.y, pulseSize, 0, Math.PI * 2);
+          this.ctx.fill();
+
+          // 分數標籤
+          this.ctx.fillStyle = "#fff";
+          this.ctx.strokeStyle = "#000";
+          this.ctx.lineWidth = 2;
+          this.ctx.font = "bold 14px Arial";
+          this.ctx.textAlign = "center";
+          this.ctx.strokeText(bubble.value.toString(), bubble.x, bubble.y + 4);
+          this.ctx.fillText(bubble.value.toString(), bubble.x, bubble.y + 4);
+        }
+
+        drawParticle(particle) {
+          this.ctx.save();
+          this.ctx.globalAlpha = particle.life;
+          this.ctx.fillStyle = particle.color;
+          this.ctx.beginPath();
+          this.ctx.arc(particle.x, particle.y, 3, 0, Math.PI * 2);
+          this.ctx.fill();
+          this.ctx.restore();
+        }
+
+        updateUI() {
+          document.getElementById("score").textContent =
+            this.score.toLocaleString();
+          document.getElementById("timer").textContent = this.timeLeft;
+          document.getElementById("bubblesPopped").textContent =
+            this.bubblesPopped;
+
+          const accuracy =
+            this.totalClicks > 0
+              ? Math.round((this.bubblesPopped / this.totalClicks) * 100)
+              : 100;
+          document.getElementById("accuracy").textContent = accuracy + "%";
+
+          // 時間警告
+          const timerElement = document.getElementById("timer");
+          if (this.timeLeft <= 10) {
+            timerElement.classList.add("time-warning");
+          } else {
+            timerElement.classList.remove("time-warning");
+          }
+        }
+
+        updateButtons() {
+          const startButton = document.getElementById("startButton");
+          const pauseButton = document.getElementById("pauseButton");
+
+          startButton.disabled = this.isRunning;
+          pauseButton.disabled = !this.isRunning;
+
+          startButton.textContent = this.isRunning ? "進行中" : "開始遊戲";
+          pauseButton.textContent = this.isPaused ? "繼續" : "暫停";
+        }
+
+        showHelp() {
+          const modal = document.getElementById("helpModal");
+          if (modal) {
+            modal.style.display = "block";
+
+            // Set up close button event listener
+            const closeBtn = modal.querySelector(".close");
+            if (closeBtn) {
+              closeBtn.onclick = () => this.closeHelp();
+            }
+
+            // Close when clicking outside the modal
+            modal.addEventListener("click", (e) => {
+              if (e.target === modal) {
+                this.closeHelp();
+              }
+            });
+
+            // Close with escape key
+            document.addEventListener("keydown", (e) => {
+              if (e.key === "Escape") {
+                this.closeHelp();
+              }
+            });
+          }
+        }
+
+        closeHelp() {
+          const modal = document.getElementById("helpModal");
+          if (modal) {
+            modal.style.display = "none";
+          }
+        }
+
+        showGameOver() {
+          document.getElementById("finalScore").textContent =
+            this.score.toLocaleString();
+          document.getElementById("finalBubbles").textContent =
+            this.bubblesPopped;
+
+          const accuracy =
+            this.totalClicks > 0
+              ? Math.round((this.bubblesPopped / this.totalClicks) * 100)
+              : 100;
+          document.getElementById("finalAccuracy").textContent = accuracy + "%";
+          document.getElementById("finalCombo").textContent = this.maxCombo;
+
+          document.getElementById("gameOverModal").style.display = "block";
+        }
+
+        loadStats() {
+          const stats = JSON.parse(
+            localStorage.getItem("bubblePopStats") || "{}"
+          );
+          document.getElementById("highScore").textContent = (
+            stats.highScore || 0
+          ).toLocaleString();
+          document.getElementById("totalGames").textContent =
+            stats.totalGames || 0;
+        }
+
+        updateStats() {
+          const stats = JSON.parse(
+            localStorage.getItem("bubblePopStats") || "{}"
+          );
+
+          stats.highScore = Math.max(stats.highScore || 0, this.score);
+          stats.totalGames = (stats.totalGames || 0) + 1;
+          stats.totalBubbles = (stats.totalBubbles || 0) + this.bubblesPopped;
+          stats.totalScore = (stats.totalScore || 0) + this.score;
+
+          localStorage.setItem("bubblePopStats", JSON.stringify(stats));
+          this.loadStats();
+        }
+      }
+
+      // 模態框設定
+      function setupModals() {
+        const modals = document.querySelectorAll(".modal");
+        const closeButtons = document.querySelectorAll(".close");
+
+        closeButtons.forEach((button) => {
+          button.addEventListener("click", (e) => {
+            e.target.closest(".modal").style.display = "none";
+          });
+        });
+
+        window.addEventListener("click", (e) => {
+          modals.forEach((modal) => {
+            if (e.target === modal) {
+              modal.style.display = "none";
+            }
+          });
+        });
+      }
+
+      function restartGame() {
+        document.getElementById("gameOverModal").style.display = "none";
+        game.resetGame();
+        game.startGame();
+      }
+
+      // 初始化遊戲
+      const game = new BubblePopGame();
+
+      // 註冊遊戲統計
+      if (typeof gameStats !== "undefined") {
+        gameStats.registerGame("bubblePop", "泡泡爆破");
+      }
+    </script>
+  </body>
+</html>

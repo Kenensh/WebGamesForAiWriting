@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>色彩反應速度 - 網頁小遊戲</title>
+    <meta name="game-id" content="color-reaction" />
+    <meta name="game-name" content="色彩反應速度" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .game-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .color-game-board {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        width: 100%;
+        max-width: 600px;
+        margin-bottom: 20px;
+      }
+
+      .game-header {
+        margin-bottom: 30px;
+      }
+
+      .score-display {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+      }
+
+      .score-item {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 10px 15px;
+        border-radius: 10px;
+        min-width: 100px;
+        text-align: center;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .score-item h3 {
+        font-size: 14px;
+        margin: 0 0 5px 0;
+        color: #333;
+        font-weight: 500;
+      }
+
+      .score-item .value {
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--primary-color);
+        margin: 0;
+      }
+
+      .instruction-text {
+        font-size: 18px;
+        color: white;
+        margin-bottom: 20px;
+        font-weight: 500;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .color-target {
+        font-size: 32px;
+        font-weight: bold;
+        color: white;
+        margin: 20px 0;
+        padding: 15px 30px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .color-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin: 30px 0;
+        max-width: 400px;
+      }
+
+      .color-btn {
+        width: 120px;
+        height: 120px;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .color-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+      }
+
+      .color-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .color-btn.correct {
+        animation: correctPulse 0.6s ease;
+      }
+
+      .color-btn.wrong {
+        animation: wrongShake 0.6s ease;
+      }
+
+      @keyframes correctPulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+      }
+
+      @keyframes wrongShake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-10px);
+        }
+        75% {
+          transform: translateX(10px);
+        }
+      }
+
+      .time-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 20px 0;
+      }
+
+      .time-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #00ff88, #ffaa00, #ff0000);
+        border-radius: 4px;
+        transition: width 0.1s linear;
+        width: 100%;
+      }
+
+      .difficulty-select {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .difficulty-btn {
+        padding: 8px 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 500;
+      }
+
+      .difficulty-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+      }
+
+      .difficulty-btn.active {
+        background: white;
+        color: var(--primary-color);
+        border-color: white;
+      }
+
+      .start-button {
+        padding: 15px 30px;
+        font-size: 18px;
+        font-weight: bold;
+        background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        margin-top: 20px;
+      }
+
+      .start-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
+      }
+
+      .start-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .combo-display {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(45deg, #ffd700, #ffed4e);
+        color: #333;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        transform: scale(0);
+        transition: transform 0.3s ease;
+      }
+
+      .combo-display.show {
+        transform: scale(1);
+      }
+
+      .streak-effect {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 24px;
+        font-weight: bold;
+        color: #ffd700;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        animation: streakPop 1s ease-out;
+        pointer-events: none;
+      }
+
+      @keyframes streakPop {
+        0% {
+          transform: translate(-50%, -50%) scale(0);
+          opacity: 0;
+        }
+        50% {
+          transform: translate(-50%, -50%) scale(1.2);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 0;
+        }
+      }
+
+      .best-score {
+        text-align: center;
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        color: white;
+      }
+
+      .best-score h3 {
+        margin: 0 0 10px 0;
+        font-size: 16px;
+      }
+
+      .best-score .score {
+        font-size: 24px;
+        font-weight: bold;
+        color: #ffd700;
+      }
+
+      /* 響應式設計 */
+      @media (max-width: 600px) {
+        .color-buttons {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 10px;
+        }
+
+        .color-btn {
+          width: 100px;
+          height: 100px;
+          font-size: 16px;
+        }
+
+        .score-display {
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .score-item {
+          min-width: auto;
+          width: 100%;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .color-game-board {
+          padding: 20px;
+        }
+
+        .color-btn {
+          width: 90px;
+          height: 90px;
+          font-size: 14px;
+        }
+
+        .instruction-text {
+          font-size: 16px;
+        }
+
+        .color-target {
+          font-size: 24px;
+          padding: 10px 20px;
+        }
+      }
+
+      /* Modal Styles */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+
+      .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        border-radius: 10px;
+        width: 80%;
+        max-width: 500px;
+        position: relative;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+      }
+
+      .modal h2 {
+        margin-top: 0;
+        color: #333;
+      }
+
+      .modal p {
+        line-height: 1.6;
+        color: #666;
+      }
+
+      .modal ul {
+        padding-left: 20px;
+      }
+
+      .modal li {
+        margin-bottom: 8px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <h1 class="site-title">
+          <a href="index.html">
+            <i class="fas fa-gamepad"></i>
+            網頁小遊戲
+          </a>
+        </h1>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>色彩反應速度</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="game-container">
+        <div class="color-game-board">
+          <div class="difficulty-select">
+            <button class="difficulty-btn active" data-difficulty="easy">
+              簡單
+            </button>
+            <button class="difficulty-btn" data-difficulty="medium">
+              中等
+            </button>
+            <button class="difficulty-btn" data-difficulty="hard">困難</button>
+          </div>
+
+          <div class="score-display">
+            <div class="score-item">
+              <h3>分數</h3>
+              <div class="value" id="currentScore">0</div>
+            </div>
+            <div class="score-item">
+              <h3>連擊</h3>
+              <div class="value" id="comboCount">0</div>
+            </div>
+            <div class="score-item">
+              <h3>剩餘時間</h3>
+              <div class="value" id="timeLeft">60</div>
+            </div>
+            <div class="score-item">
+              <h3>準確率</h3>
+              <div class="value" id="accuracy">100%</div>
+            </div>
+          </div>
+
+          <div class="time-bar">
+            <div class="time-fill" id="timeFill"></div>
+          </div>
+
+          <div class="instruction-text" id="instructionText">
+            點擊與目標顏色相同的按鈕！
+          </div>
+
+          <div class="color-target" id="colorTarget">準備開始</div>
+
+          <div class="color-buttons" id="colorButtons">
+            <!-- 色彩按鈕將由 JavaScript 動態生成 -->
+          </div>
+
+          <button class="start-button" id="startButton">開始遊戲</button>
+
+          <div class="combo-display" id="comboDisplay">連擊 x5!</div>
+        </div>
+
+        <div class="best-score">
+          <h3>最佳紀錄</h3>
+          <div class="score" id="bestScore">0</div>
+        </div>
+      </div>
+
+      <div id="gamePaused" class="game-paused">暫停中</div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "遊戲說明",
+          `
+          <h3>色彩反應速度遊戲說明</h3>
+          <p>這是一個測試色彩反應速度和認知能力的遊戲。</p>
+          <h4>遊戲玩法：</h4>
+          <ul>
+            <li>遊戲會顯示一個目標顏色名稱</li>
+            <li>快速點擊與目標顏色相符的按鈕</li>
+            <li>正確選擇可獲得分數和連擊獎勵</li>
+            <li>錯誤選擇會重置連擊數</li>
+            <li>在時間結束前盡可能獲得高分</li>
+          </ul>
+          <h4>難度級別：</h4>
+          <ul>
+            <li><strong>簡單</strong>：4種顏色，較慢節奏</li>
+            <li><strong>中等</strong>：6種顏色，中等節奏</li>
+            <li><strong>困難</strong>：8種顏色，快速節奏</li>
+          </ul>
+          <h4>計分規則：</h4>
+          <ul>
+            <li>基礎分數：正確答案 +10 分</li>
+            <li>連擊獎勵：連續正確可獲得額外分數</li>
+            <li>時間獎勵：快速反應可獲得額外分數</li>
+          </ul>
+        `
+        );
+
+        const gameController = new GameUtils.GameController();
+        const scoreManager = new GameUtils.ScoreManager(
+          "colorReactionScore",
+          0
+        );
+
+        // DOM 元素
+        const startButton = document.getElementById("startButton");
+        const colorTarget = document.getElementById("colorTarget");
+        const colorButtons = document.getElementById("colorButtons");
+        const instructionText = document.getElementById("instructionText");
+        const currentScore = document.getElementById("currentScore");
+        const comboCount = document.getElementById("comboCount");
+        const timeLeft = document.getElementById("timeLeft");
+        const accuracy = document.getElementById("accuracy");
+        const timeFill = document.getElementById("timeFill");
+        const comboDisplay = document.getElementById("comboDisplay");
+        const bestScore = document.getElementById("bestScore");
+        const difficultyButtons = document.querySelectorAll(".difficulty-btn");
+
+        // 遊戲變數
+        let gameActive = false;
+        let currentDifficulty = "easy";
+        let gameTimer = null;
+        let questionTimer = null;
+        let timeRemaining = 60;
+        let gameScore = 0;
+        let streak = 0;
+        let totalQuestions = 0;
+        let correctAnswers = 0;
+        let currentTarget = "";
+        let questionStartTime = 0;
+
+        // 顏色配置
+        const colorSets = {
+          easy: [
+            { name: "紅色", color: "#e74c3c", textColor: "white" },
+            { name: "藍色", color: "#3498db", textColor: "white" },
+            { name: "綠色", color: "#2ecc71", textColor: "white" },
+            { name: "黃色", color: "#f1c40f", textColor: "black" },
+          ],
+          medium: [
+            { name: "紅色", color: "#e74c3c", textColor: "white" },
+            { name: "藍色", color: "#3498db", textColor: "white" },
+            { name: "綠色", color: "#2ecc71", textColor: "white" },
+            { name: "黃色", color: "#f1c40f", textColor: "black" },
+            { name: "紫色", color: "#9b59b6", textColor: "white" },
+            { name: "橙色", color: "#e67e22", textColor: "white" },
+          ],
+          hard: [
+            { name: "紅色", color: "#e74c3c", textColor: "white" },
+            { name: "藍色", color: "#3498db", textColor: "white" },
+            { name: "綠色", color: "#2ecc71", textColor: "white" },
+            { name: "黃色", color: "#f1c40f", textColor: "black" },
+            { name: "紫色", color: "#9b59b6", textColor: "white" },
+            { name: "橙色", color: "#e67e22", textColor: "white" },
+            { name: "粉色", color: "#e91e63", textColor: "white" },
+            { name: "青色", color: "#1abc9c", textColor: "white" },
+          ],
+        };
+
+        // 初始化遊戲
+        function initGame() {
+          gameActive = false;
+          gameScore = 0;
+          streak = 0;
+          totalQuestions = 0;
+          correctAnswers = 0;
+          timeRemaining = 60;
+
+          updateDisplay();
+          updateBestScore();
+          createColorButtons();
+
+          colorTarget.textContent = "準備開始";
+          instructionText.textContent = "點擊與目標顏色相同的按鈕！";
+          startButton.textContent = "開始遊戲";
+          startButton.disabled = false;
+
+          clearTimeout(gameTimer);
+          clearTimeout(questionTimer);
+        }
+
+        // 創建顏色按鈕
+        function createColorButtons() {
+          const colors = colorSets[currentDifficulty];
+          colorButtons.innerHTML = "";
+
+          colors.forEach((colorData, index) => {
+            const button = document.createElement("button");
+            button.className = "color-btn";
+            button.style.backgroundColor = colorData.color;
+            button.style.color = colorData.textColor;
+            button.textContent = colorData.name;
+            button.dataset.colorName = colorData.name;
+
+            button.addEventListener("click", () =>
+              handleColorClick(colorData.name, button)
+            );
+            colorButtons.appendChild(button);
+          });
+        }
+
+        // 開始遊戲
+        function startGame() {
+          if (gameActive) return;
+
+          gameActive = true;
+          gameScore = 0;
+          streak = 0;
+          totalQuestions = 0;
+          correctAnswers = 0;
+          timeRemaining = 60;
+
+          startButton.disabled = true;
+          startButton.textContent = "遊戲中...";
+
+          // 開始計時器
+          startGameTimer();
+
+          // 開始第一個問題
+          nextQuestion();
+        }
+
+        // 開始遊戲計時器
+        function startGameTimer() {
+          gameTimer = setInterval(() => {
+            timeRemaining--;
+            updateDisplay();
+
+            if (timeRemaining <= 0) {
+              endGame();
+            }
+          }, 1000);
+        }
+
+        // 下一個問題
+        function nextQuestion() {
+          if (!gameActive) return;
+
+          const colors = colorSets[currentDifficulty];
+          const randomColor = colors[Math.floor(Math.random() * colors.length)];
+          currentTarget = randomColor.name;
+
+          colorTarget.textContent = currentTarget;
+          totalQuestions++;
+          questionStartTime = Date.now();
+
+          // 根據難度設置問題時間限制
+          const timeLimit =
+            currentDifficulty === "easy"
+              ? 4000
+              : currentDifficulty === "medium"
+              ? 3000
+              : 2000;
+
+          clearTimeout(questionTimer);
+          questionTimer = setTimeout(() => {
+            if (gameActive) {
+              handleWrongAnswer();
+              nextQuestion();
+            }
+          }, timeLimit);
+        }
+
+        // 處理顏色點擊
+        function handleColorClick(colorName, buttonElement) {
+          if (!gameActive) return;
+
+          clearTimeout(questionTimer);
+
+          const responseTime = Date.now() - questionStartTime;
+
+          if (colorName === currentTarget) {
+            handleCorrectAnswer(buttonElement, responseTime);
+          } else {
+            handleWrongAnswer(buttonElement);
+          }
+
+          setTimeout(() => {
+            if (gameActive) {
+              nextQuestion();
+            }
+          }, 600);
+        }
+
+        // 處理正確答案
+        function handleCorrectAnswer(buttonElement, responseTime) {
+          correctAnswers++;
+          streak++;
+
+          // 計算分數
+          let points = 10;
+
+          // 連擊獎勵
+          if (streak >= 5) {
+            points += Math.floor(streak / 5) * 5;
+          }
+
+          // 時間獎勵
+          if (responseTime < 1000) {
+            points += 5;
+          } else if (responseTime < 2000) {
+            points += 2;
+          }
+
+          gameScore += points;
+          scoreManager.add(points);
+
+          // 視覺效果
+          buttonElement.classList.add("correct");
+          setTimeout(() => buttonElement.classList.remove("correct"), 600);
+
+          // 連擊顯示
+          if (streak >= 5 && streak % 5 === 0) {
+            showComboEffect(streak);
+          }
+
+          updateDisplay();
+        }
+
+        // 處理錯誤答案
+        function handleWrongAnswer(buttonElement) {
+          streak = 0;
+
+          if (buttonElement) {
+            buttonElement.classList.add("wrong");
+            setTimeout(() => buttonElement.classList.remove("wrong"), 600);
+          }
+
+          updateDisplay();
+        }
+
+        // 顯示連擊效果
+        function showComboEffect(comboNum) {
+          comboDisplay.textContent = `連擊 x${comboNum}!`;
+          comboDisplay.classList.add("show");
+
+          setTimeout(() => {
+            comboDisplay.classList.remove("show");
+          }, 2000);
+
+          // 創建飄動效果
+          const streakElement = document.createElement("div");
+          streakElement.className = "streak-effect";
+          streakElement.textContent = `+${
+            Math.floor(comboNum / 5) * 5
+          } 連擊獎勵!`;
+          document
+            .querySelector(".color-game-board")
+            .appendChild(streakElement);
+
+          setTimeout(() => {
+            streakElement.remove();
+          }, 1000);
+        }
+
+        // 更新顯示
+        function updateDisplay() {
+          currentScore.textContent = gameScore;
+          comboCount.textContent = streak;
+          timeLeft.textContent = timeRemaining;
+
+          const accuracyPercent =
+            totalQuestions > 0
+              ? Math.round((correctAnswers / totalQuestions) * 100)
+              : 100;
+          accuracy.textContent = accuracyPercent + "%";
+
+          // 更新時間條
+          const timePercent = (timeRemaining / 60) * 100;
+          timeFill.style.width = timePercent + "%";
+        }
+
+        // 更新最佳分數
+        function updateBestScore() {
+          const best = localStorage.getItem("colorReactionBestScore") || 0;
+          bestScore.textContent = best;
+        }
+
+        // 結束遊戲
+        function endGame() {
+          gameActive = false;
+          clearTimeout(gameTimer);
+          clearTimeout(questionTimer);
+
+          // 檢查是否為新紀錄
+          const currentBest = parseInt(
+            localStorage.getItem("colorReactionBestScore") || 0
+          );
+          if (gameScore > currentBest) {
+            localStorage.setItem("colorReactionBestScore", gameScore);
+            updateBestScore();
+          }
+
+          colorTarget.textContent = "遊戲結束";
+          instructionText.textContent = `最終分數：${gameScore} 分`;
+          startButton.disabled = false;
+          startButton.textContent = "再玩一次";
+
+          // 顯示遊戲結束訊息
+          const message = `
+            遊戲結束！<br>
+            最終分數：${gameScore} 分<br>
+            準確率：${Math.round((correctAnswers / totalQuestions) * 100)}%<br>
+            最高連擊：${Math.max(...(streak > 0 ? [streak] : [0]))}
+          `;
+
+          gameController.endGame(gameScore, message);
+        }
+
+        // 設置難度
+        function setDifficulty(difficulty) {
+          if (gameActive) return;
+
+          currentDifficulty = difficulty;
+
+          difficultyButtons.forEach((btn) => {
+            btn.classList.toggle(
+              "active",
+              btn.dataset.difficulty === difficulty
+            );
+          });
+
+          createColorButtons();
+        }
+
+        // 事件監聽器
+        startButton.addEventListener("click", startGame);
+
+        difficultyButtons.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            setDifficulty(btn.dataset.difficulty);
+          });
+        });
+
+        // 設置遊戲控制器
+        gameController.setRestartHandler(() => {
+          initGame();
+        }); // 處理暫停狀態變化
+        gameController.onPauseStateChange = function (isPaused) {
+          const pauseIndicator = document.getElementById("gamePaused");
+          if (pauseIndicator) {
+            pauseIndicator.style.display = isPaused ? "flex" : "none";
+          }
+
+          if (isPaused && gameActive) {
+            clearTimeout(gameTimer);
+            clearTimeout(questionTimer);
+          } else if (!isPaused && gameActive) {
+            startGameTimer();
+            nextQuestion();
+          }
+        };
+
+        // 設置幫助按鈕事件監聽器
+        document.getElementById("helpButton").addEventListener("click", () => {
+          helpModal.show();
+        });
+
+        // 初始化遊戲
+        gameController.showStartAnimation(() => {
+          initGame();
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cursor Chase - Advanced Mouse Tracking Challenge</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: none;
+      }
+
+      .game-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        text-align: center;
+        max-width: 900px;
+        width: 90%;
+      }
+
+      h1 {
+        color: white;
+        margin-bottom: 30px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        color: white;
+        font-weight: bold;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .game-area {
+        position: relative;
+        width: 100%;
+        height: 500px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        margin: 20px 0;
+        overflow: hidden;
+        cursor: none;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .cursor {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        background: radial-gradient(circle, #00ff00, #008000);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 100;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+        transition: transform 0.1s ease;
+      }
+
+      .target {
+        position: absolute;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      .target:hover {
+        transform: scale(1.1);
+      }
+
+      .target.normal {
+        background: radial-gradient(circle, #2196f3, #1976d2);
+        box-shadow: 0 0 15px rgba(33, 150, 243, 0.6);
+      }
+
+      .target.fast {
+        background: radial-gradient(circle, #ff9800, #f57c00);
+        box-shadow: 0 0 15px rgba(255, 152, 0, 0.6);
+      }
+
+      .target.bonus {
+        background: radial-gradient(circle, #4caf50, #388e3c);
+        box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+      }
+
+      .target.danger {
+        background: radial-gradient(circle, #f44336, #d32f2f);
+        box-shadow: 0 0 15px rgba(244, 67, 54, 0.6);
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: 0 0 15px rgba(33, 150, 243, 0.6);
+        }
+        50% {
+          transform: scale(1.05);
+          box-shadow: 0 0 25px rgba(33, 150, 243, 0.8);
+        }
+      }
+
+      .trail {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: rgba(0, 255, 0, 0.3);
+        border-radius: 50%;
+        pointer-events: none;
+        animation: fade-out 1s ease-out forwards;
+      }
+
+      @keyframes fade-out {
+        0% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(0.5);
+        }
+      }
+
+      .difficulty-selector {
+        margin: 20px 0;
+        color: white;
+      }
+
+      .difficulty-btn {
+        margin: 5px;
+        padding: 8px 16px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .difficulty-btn.active {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: white;
+      }
+
+      .game-controls {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        backdrop-filter: blur(5px);
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+      }
+
+      .btn-primary {
+        background: linear-gradient(45deg, #4caf50, #45a049);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 10px;
+        color: white;
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .challenge-info {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        padding: 15px;
+        margin: 20px 0;
+        color: white;
+        min-height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .accuracy-meter {
+        width: 100%;
+        height: 15px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+
+      .accuracy-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #f44336, #ff9800, #4caf50);
+        transition: width 0.3s ease;
+        border-radius: 8px;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content {
+        background: rgba(255, 255, 255, 0.95);
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 20px;
+        width: 80%;
+        max-width: 600px;
+        backdrop-filter: blur(10px);
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+
+      .close:hover {
+        color: black;
+      }
+
+      .combo-indicator {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(255, 215, 0, 0.9);
+        color: #333;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 18px;
+        display: none;
+        animation: combo-bounce 0.5s ease;
+      }
+
+      @keyframes combo-bounce {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+      }
+
+      @media (max-width: 600px) {
+        .game-container {
+          padding: 15px;
+        }
+
+        .game-area {
+          height: 400px;
+        }
+
+        .game-info {
+          font-size: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1>🎯 Cursor Chase</h1>
+
+      <div class="game-info">
+        <div>Score: <span id="score">0</span></div>
+        <div>
+          Targets: <span id="targetsHit">0</span>/<span id="totalTargets"
+            >0</span
+          >
+        </div>
+        <div>Accuracy: <span id="accuracy">100%</span></div>
+        <div>Best: <span id="bestScore">0</span></div>
+      </div>
+
+      <div class="challenge-info" id="challengeInfo">
+        Select difficulty and click START to begin the cursor tracking
+        challenge!
+      </div>
+
+      <div class="difficulty-selector">
+        <div>Select Difficulty:</div>
+        <button class="difficulty-btn active" data-difficulty="easy">
+          Easy
+        </button>
+        <button class="difficulty-btn" data-difficulty="medium">Medium</button>
+        <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+        <button class="difficulty-btn" data-difficulty="expert">Expert</button>
+      </div>
+
+      <div class="game-area" id="gameArea">
+        <div class="cursor" id="customCursor"></div>
+        <div class="combo-indicator" id="comboIndicator">
+          COMBO x<span id="comboCount">0</span>!
+        </div>
+      </div>
+
+      <div class="accuracy-meter">
+        <div class="accuracy-fill" id="accuracyFill" style="width: 100%"></div>
+      </div>
+
+      <div class="game-controls">
+        <button class="btn btn-primary" id="startBtn">START</button>
+        <button class="btn" id="helpBtn">HELP</button>
+        <button class="btn" onclick="window.location.href='index.html'">
+          BACK
+        </button>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="totalGames">0</div>
+          <div class="stat-label">Games Played</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="avgAccuracy">0%</div>
+          <div class="stat-label">Avg Accuracy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="bestCombo">0</div>
+          <div class="stat-label">Best Combo</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="perfectRounds">0</div>
+          <div class="stat-label">Perfect Rounds</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>🎯 How to Play Cursor Chase</h2>
+        <p>
+          <strong>Objective:</strong> Test your mouse precision and tracking
+          skills by chasing and clicking on moving targets.
+        </p>
+
+        <h3>🎮 Controls:</h3>
+        <ul>
+          <li>🖱️ <strong>Mouse:</strong> Move to control the green cursor</li>
+          <li>👆 <strong>Click:</strong> Click on targets to score points</li>
+          <li>👀 <strong>Track:</strong> Follow targets as they move around</li>
+          <li>⚡ <strong>Speed:</strong> React quickly for higher scores</li>
+        </ul>
+
+        <h3>🎯 Target Types:</h3>
+        <ul>
+          <li>
+            🔵 <strong>Normal (Blue):</strong> Standard targets, +10 points
+          </li>
+          <li>
+            🟠 <strong>Fast (Orange):</strong> Quick moving targets, +25 points
+          </li>
+          <li>
+            🟢 <strong>Bonus (Green):</strong> High-value targets, +50 points
+          </li>
+          <li>🔴 <strong>Danger (Red):</strong> Avoid these! -20 points</li>
+        </ul>
+
+        <h3>🏆 Scoring System:</h3>
+        <ul>
+          <li>
+            ✅ <strong>Hit Target:</strong> Earn points based on target type
+          </li>
+          <li>
+            🔥 <strong>Combo Bonus:</strong> Chain hits for multiplier bonuses
+          </li>
+          <li>
+            ⏱️ <strong>Speed Bonus:</strong> Quick reactions earn extra points
+          </li>
+          <li>
+            🎯 <strong>Accuracy:</strong> Maintain high accuracy for bonus
+          </li>
+          <li>❌ <strong>Miss/Danger:</strong> Lose points and break combos</li>
+        </ul>
+
+        <h3>🎚️ Difficulty Levels:</h3>
+        <ul>
+          <li>
+            🟢 <strong>Easy:</strong> Slow targets, large size, fewer danger
+            targets
+          </li>
+          <li>🟡 <strong>Medium:</strong> Moderate speed, medium size</li>
+          <li>
+            🟠 <strong>Hard:</strong> Fast targets, smaller size, more danger
+          </li>
+          <li>
+            🔴 <strong>Expert:</strong> Lightning fast, tiny targets, many
+            dangers
+          </li>
+        </ul>
+
+        <h3>🌟 Special Features:</h3>
+        <ul>
+          <li>
+            🎨 <strong>Cursor Trail:</strong> Visual feedback for movement
+          </li>
+          <li>
+            🔥 <strong>Combo System:</strong> Build momentum for higher scores
+          </li>
+          <li>
+            📈 <strong>Real-time Accuracy:</strong> Live accuracy tracking
+          </li>
+          <li>
+            💫 <strong>Particle Effects:</strong> Visual feedback for hits
+          </li>
+        </ul>
+
+        <h3>💡 Tips:</h3>
+        <ul>
+          <li>Use smooth, controlled movements</li>
+          <li>Anticipate target movement patterns</li>
+          <li>Prioritize accuracy over speed</li>
+          <li>Avoid danger targets to maintain combos</li>
+        </ul>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class CursorChase {
+        constructor() {
+          this.gameArea = document.getElementById("gameArea");
+          this.customCursor = document.getElementById("customCursor");
+          this.targets = [];
+          this.score = 0;
+          this.targetsHit = 0;
+          this.totalTargets = 0;
+          this.difficulty = "easy";
+          this.gameActive = false;
+          this.combo = 0;
+          this.bestCombo = 0;
+          this.gameTimer = null;
+          this.targetSpawnTimer = null;
+          this.stats = this.loadStats();
+          this.mousePos = { x: 0, y: 0 };
+
+          this.initializeGame();
+          this.setupEventListeners();
+          this.updateDisplay();
+        }
+
+        initializeGame() {
+          this.startBtn = document.getElementById("startBtn");
+          this.helpBtn = document.getElementById("helpBtn");
+          this.comboIndicator = document.getElementById("comboIndicator");
+
+          this.difficultySettings = {
+            easy: {
+              speed: 1,
+              targetSize: 60,
+              spawnRate: 2000,
+              dangerChance: 0.1,
+            },
+            medium: {
+              speed: 1.5,
+              targetSize: 45,
+              spawnRate: 1500,
+              dangerChance: 0.2,
+            },
+            hard: {
+              speed: 2,
+              targetSize: 35,
+              spawnRate: 1000,
+              dangerChance: 0.3,
+            },
+            expert: {
+              speed: 3,
+              targetSize: 25,
+              spawnRate: 800,
+              dangerChance: 0.4,
+            },
+          };
+        }
+
+        setupEventListeners() {
+          this.startBtn.addEventListener("click", () => this.startGame());
+          this.helpBtn.addEventListener("click", () => this.showHelp());
+
+          // Difficulty selector
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.addEventListener("click", () =>
+              this.setDifficulty(btn.dataset.difficulty)
+            );
+          });
+
+          // Mouse tracking
+          this.gameArea.addEventListener("mousemove", (e) =>
+            this.updateCursor(e)
+          );
+          this.gameArea.addEventListener("click", (e) => this.handleClick(e));
+
+          // Modal events
+          document
+            .querySelector(".close")
+            .addEventListener("click", () => this.hideHelp());
+          document
+            .getElementById("helpModal")
+            .addEventListener("click", (e) => {
+              if (e.target.id === "helpModal") this.hideHelp();
+            });
+
+          // Prevent context menu in game area
+          this.gameArea.addEventListener("contextmenu", (e) =>
+            e.preventDefault()
+          );
+        }
+
+        setDifficulty(difficulty) {
+          this.difficulty = difficulty;
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.classList.toggle(
+              "active",
+              btn.dataset.difficulty === difficulty
+            );
+          });
+        }
+
+        updateCursor(e) {
+          const rect = this.gameArea.getBoundingClientRect();
+          this.mousePos.x = e.clientX - rect.left;
+          this.mousePos.y = e.clientY - rect.top;
+
+          this.customCursor.style.left = this.mousePos.x - 10 + "px";
+          this.customCursor.style.top = this.mousePos.y - 10 + "px";
+
+          // Create trail effect
+          if (this.gameActive) {
+            this.createTrail();
+          }
+        }
+
+        createTrail() {
+          const trail = document.createElement("div");
+          trail.className = "trail";
+          trail.style.left = this.mousePos.x - 2 + "px";
+          trail.style.top = this.mousePos.y - 2 + "px";
+
+          this.gameArea.appendChild(trail);
+
+          setTimeout(() => {
+            if (trail.parentNode) {
+              trail.parentNode.removeChild(trail);
+            }
+          }, 1000);
+        }
+
+        startGame() {
+          this.gameActive = true;
+          this.score = 0;
+          this.targetsHit = 0;
+          this.totalTargets = 0;
+          this.combo = 0;
+          this.clearTargets();
+
+          this.startBtn.disabled = true;
+          document.getElementById(
+            "challengeInfo"
+          ).textContent = `🎯 Game Active! Chase and click targets for 60 seconds!`;
+
+          this.startTargetSpawning();
+
+          // Game duration: 60 seconds
+          this.gameTimer = setTimeout(() => {
+            this.endGame();
+          }, 60000);
+
+          this.updateDisplay();
+        }
+
+        startTargetSpawning() {
+          const settings = this.difficultySettings[this.difficulty];
+
+          this.targetSpawnTimer = setInterval(() => {
+            if (this.gameActive) {
+              this.spawnTarget();
+            }
+          }, settings.spawnRate);
+        }
+
+        spawnTarget() {
+          const settings = this.difficultySettings[this.difficulty];
+          const target = document.createElement("div");
+          target.className = "target";
+
+          // Determine target type
+          const random = Math.random();
+          let targetType, points, lifespan;
+
+          if (random < settings.dangerChance) {
+            targetType = "danger";
+            points = -20;
+            lifespan = 4000;
+          } else if (random < settings.dangerChance + 0.15) {
+            targetType = "bonus";
+            points = 50;
+            lifespan = 2500;
+          } else if (random < settings.dangerChance + 0.35) {
+            targetType = "fast";
+            points = 25;
+            lifespan = 2000;
+          } else {
+            targetType = "normal";
+            points = 10;
+            lifespan = 3000;
+          }
+
+          target.classList.add(targetType);
+          target.dataset.points = points;
+          target.dataset.type = targetType;
+
+          // Set size and position
+          const size = settings.targetSize;
+          target.style.width = size + "px";
+          target.style.height = size + "px";
+
+          const maxX = this.gameArea.clientWidth - size;
+          const maxY = this.gameArea.clientHeight - size;
+          let x = Math.random() * maxX;
+          let y = Math.random() * maxY;
+
+          target.style.left = x + "px";
+          target.style.top = y + "px";
+
+          // Add type indicator
+          const indicators = {
+            normal: "🔵",
+            fast: "⚡",
+            bonus: "💎",
+            danger: "☠️",
+          };
+          target.textContent = indicators[targetType];
+
+          // Click handler
+          target.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.hitTarget(target);
+          });
+
+          this.gameArea.appendChild(target);
+          this.targets.push({
+            element: target,
+            vx: (Math.random() - 0.5) * settings.speed * 2,
+            vy: (Math.random() - 0.5) * settings.speed * 2,
+            type: targetType,
+          });
+
+          this.totalTargets++;
+
+          // Auto-remove after lifespan
+          setTimeout(() => {
+            if (target.parentNode) {
+              this.removeTarget(target);
+              if (targetType !== "danger") {
+                this.breakCombo();
+              }
+            }
+          }, lifespan);
+        }
+
+        hitTarget(targetElement) {
+          const points = parseInt(targetElement.dataset.points);
+          const type = targetElement.dataset.type;
+
+          if (type === "danger") {
+            this.score += points;
+            this.breakCombo();
+            this.createHitEffect(targetElement, "💥", "#ff4444");
+          } else {
+            this.targetsHit++;
+            this.combo++;
+            this.bestCombo = Math.max(this.bestCombo, this.combo);
+
+            // Calculate combo bonus
+            let totalPoints = points;
+            if (this.combo > 1) {
+              const comboBonus = Math.floor(points * (this.combo * 0.1));
+              totalPoints += comboBonus;
+            }
+
+            this.score += totalPoints;
+            this.createHitEffect(targetElement, `+${totalPoints}`, "#44ff44");
+
+            // Show combo indicator
+            if (this.combo >= 3) {
+              this.showComboIndicator();
+            }
+          }
+
+          this.removeTarget(targetElement);
+          this.updateDisplay();
+        }
+
+        createHitEffect(target, text, color) {
+          const effect = document.createElement("div");
+          effect.textContent = text;
+          effect.style.position = "absolute";
+          effect.style.left = target.style.left;
+          effect.style.top = target.style.top;
+          effect.style.color = color;
+          effect.style.fontWeight = "bold";
+          effect.style.fontSize = "20px";
+          effect.style.pointerEvents = "none";
+          effect.style.zIndex = "1000";
+          effect.style.animation = "fade-out 1s ease-out forwards";
+
+          this.gameArea.appendChild(effect);
+
+          setTimeout(() => {
+            if (effect.parentNode) {
+              effect.parentNode.removeChild(effect);
+            }
+          }, 1000);
+        }
+
+        showComboIndicator() {
+          document.getElementById("comboCount").textContent = this.combo;
+          this.comboIndicator.style.display = "block";
+
+          setTimeout(() => {
+            this.comboIndicator.style.display = "none";
+          }, 1500);
+        }
+
+        breakCombo() {
+          this.combo = 0;
+          this.comboIndicator.style.display = "none";
+        }
+
+        removeTarget(targetElement) {
+          this.targets = this.targets.filter(
+            (target) => target.element !== targetElement
+          );
+          if (targetElement.parentNode) {
+            targetElement.parentNode.removeChild(targetElement);
+          }
+        }
+
+        handleClick(e) {
+          if (!this.gameActive) return;
+
+          // Check if click missed all targets
+          const clickedTarget = e.target.classList.contains("target");
+          if (!clickedTarget) {
+            this.breakCombo();
+            this.updateDisplay();
+          }
+        }
+
+        updateTargetPositions() {
+          if (!this.gameActive) return;
+
+          this.targets.forEach((target) => {
+            const element = target.element;
+            const rect = element.getBoundingClientRect();
+            const gameRect = this.gameArea.getBoundingClientRect();
+
+            let x = parseFloat(element.style.left);
+            let y = parseFloat(element.style.top);
+
+            x += target.vx;
+            y += target.vy;
+
+            // Bounce off walls
+            const size = parseFloat(element.style.width);
+            if (x <= 0 || x >= this.gameArea.clientWidth - size) {
+              target.vx *= -1;
+              x = Math.max(0, Math.min(x, this.gameArea.clientWidth - size));
+            }
+            if (y <= 0 || y >= this.gameArea.clientHeight - size) {
+              target.vy *= -1;
+              y = Math.max(0, Math.min(y, this.gameArea.clientHeight - size));
+            }
+
+            element.style.left = x + "px";
+            element.style.top = y + "px";
+          });
+
+          requestAnimationFrame(() => this.updateTargetPositions());
+        }
+
+        clearTargets() {
+          this.targets.forEach((target) => {
+            if (target.element.parentNode) {
+              target.element.parentNode.removeChild(target.element);
+            }
+          });
+          this.targets = [];
+        }
+
+        endGame() {
+          this.gameActive = false;
+
+          if (this.gameTimer) {
+            clearTimeout(this.gameTimer);
+            this.gameTimer = null;
+          }
+
+          if (this.targetSpawnTimer) {
+            clearInterval(this.targetSpawnTimer);
+            this.targetSpawnTimer = null;
+          }
+
+          this.clearTargets();
+          this.startBtn.disabled = false;
+
+          const accuracy =
+            this.totalTargets > 0
+              ? Math.round((this.targetsHit / this.totalTargets) * 100)
+              : 100;
+
+          document.getElementById(
+            "challengeInfo"
+          ).textContent = `🎉 Game Complete! Score: ${this.score}, Accuracy: ${accuracy}%, Best Combo: ${this.bestCombo}`;
+
+          // Update stats
+          this.stats.totalGames++;
+          this.stats.totalHits += this.targetsHit;
+          this.stats.totalTargets += this.totalTargets;
+          this.stats.bestScore = Math.max(this.stats.bestScore, this.score);
+          this.stats.bestCombo = Math.max(this.stats.bestCombo, this.bestCombo);
+          if (accuracy === 100 && this.totalTargets > 0) {
+            this.stats.perfectRounds++;
+          }
+
+          this.saveStats();
+          this.updateDisplay();
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("targetsHit").textContent = this.targetsHit;
+          document.getElementById("totalTargets").textContent =
+            this.totalTargets;
+          document.getElementById("bestScore").textContent =
+            this.stats.bestScore;
+          document.getElementById("totalGames").textContent =
+            this.stats.totalGames;
+          document.getElementById("bestCombo").textContent =
+            this.stats.bestCombo;
+          document.getElementById("perfectRounds").textContent =
+            this.stats.perfectRounds;
+
+          const currentAccuracy =
+            this.totalTargets > 0
+              ? Math.round((this.targetsHit / this.totalTargets) * 100)
+              : 100;
+          document.getElementById("accuracy").textContent =
+            currentAccuracy + "%";
+          document.getElementById("accuracyFill").style.width =
+            currentAccuracy + "%";
+
+          const avgAccuracy =
+            this.stats.totalTargets > 0
+              ? Math.round(
+                  (this.stats.totalHits / this.stats.totalTargets) * 100
+                )
+              : 0;
+          document.getElementById("avgAccuracy").textContent =
+            avgAccuracy + "%";
+        }
+
+        showHelp() {
+          document.getElementById("helpModal").style.display = "block";
+        }
+
+        hideHelp() {
+          document.getElementById("helpModal").style.display = "none";
+        }
+
+        loadStats() {
+          const saved = localStorage.getItem("cursorChaseStats");
+          return saved
+            ? JSON.parse(saved)
+            : {
+                totalGames: 0,
+                totalHits: 0,
+                totalTargets: 0,
+                bestScore: 0,
+                bestCombo: 0,
+                perfectRounds: 0,
+              };
+        }
+
+        saveStats() {
+          localStorage.setItem("cursorChaseStats", JSON.stringify(this.stats));
+        }
+      }
+
+      // Initialize game when page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        const cursorChase = new CursorChase();
+
+        // Start target movement animation
+        cursorChase.updateTargetPositions();
+      });
+    </script>
+  </body>
+</html>

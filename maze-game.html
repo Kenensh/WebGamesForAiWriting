@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>迷宮探險 - 網頁小遊戲</title>
+    <meta name="game-id" content="maze-game" />
+    <meta name="game-name" content="迷宮探險" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .maze-container {
+        max-width: 700px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .difficulty-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        justify-content: center;
+      }
+
+      .difficulty-button {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        background-color: #f0f0f0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .difficulty-button:hover {
+        background-color: #e0e0e0;
+      }
+
+      .difficulty-button.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 500px;
+        margin: 10px 0 20px;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .timer-display, .level-display, .coin-display {
+        flex: 1;
+        padding: 0 10px;
+      }
+
+      .timer-display span, .level-display span, .coin-display span {
+        font-weight: bold;
+        color: #333;
+      }
+
+      .maze-wrapper {
+        position: relative;
+        border: 2px solid #333;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+
+      .maze-canvas {
+        display: block;
+        background-color: white;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+
+      .control-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 20px;
+        max-width: 320px;
+      }
+
+      .control-row {
+        display: flex;
+        gap: 10px;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .control-button {
+        width: 60px;
+        height: 60px;
+        background-color: #f0f0f0;
+        border: none;
+        border-radius: 5px;
+        font-size: 24px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+        -webkit-user-select: none;
+        transition: all 0.1s;
+      }
+
+      .control-button:active, .control-button.pressed {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      @media (min-width: 768px) {
+        .control-buttons {
+          display: none;
+        }
+      }
+
+      .game-message {
+        font-size: 24px;
+        text-align: center;
+        margin: 15px 0;
+        font-weight: bold;
+        color: var(--primary-color);
+      }
+
+      /* 迷宮物件樣式 */
+      .player {
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        background-color: red;
+        border-radius: 50%;
+        z-index: 10;
+      }
+
+      .coin {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        background-color: gold;
+        border-radius: 50%;
+        z-index: 5;
+      }
+
+      .goal {
+        position: absolute;
+        width: 32px;
+        height: 32px;
+        background-color: green;
+        border-radius: 5px;
+        z-index: 5;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>迷宮探險</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="score-display">分數: <span id="scoreValue">0</span></div>
+
+      <div class="maze-container">
+        <div class="difficulty-selector">
+          <button id="easyBtn" class="difficulty-button active">簡單</button>
+          <button id="mediumBtn" class="difficulty-button">中等</button>
+          <button id="hardBtn" class="difficulty-button">困難</button>
+        </div>
+
+        <div class="game-info">
+          <div class="level-display">
+            關卡: <span id="level">1</span>
+          </div>
+          <div class="timer-display">
+            時間: <span id="timer">00:00</span>
+          </div>
+          <div class="coin-display">
+            金幣: <span id="coins">0</span>
+          </div>
+        </div>
+
+        <div id="gameMessage" class="game-message">準備開始!</div>
+
+        <div id="mazeWrapper" class="maze-wrapper">
+          <canvas id="mazeCanvas" class="maze-canvas" width="500" height="500"></canvas>
+        </div>
+
+        <div class="control-buttons">
+          <div class="control-row">
+            <button id="upBtn" class="control-button">↑</button>
+          </div>
+          <div class="control-row">
+            <button id="leftBtn" class="control-button">←</button>
+            <button id="downBtn" class="control-button">↓</button>
+            <button id="rightBtn" class="control-button">→</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="gamePaused" class="game-paused">暫停中</div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "迷宮探險 - 遊戲說明",
+          `
+            <h3>遊戲介紹：</h3>
+            <p>迷宮探險是一款益智遊戲，你需要在複雜的迷宮中找到出口，同時收集盡可能多的金幣。</p>
+            
+            <h3>遊戲規則：</h3>
+            <ul>
+              <li>使用鍵盤方向鍵或觸控按鈕控制角色移動</li>
+              <li>找到迷宮的出口（綠色方塊）進入下一關</li>
+              <li>收集迷宮中的金幣增加分數</li>
+              <li>在限定時間內完成所有關卡</li>
+            </ul>
+            
+            <h3>操作方式：</h3>
+            <ul>
+              <li><strong>電腦：</strong>使用方向鍵 ↑ ↓ ← → 控制角色移動</li>
+              <li><strong>手機：</strong>使用螢幕下方的方向按鈕控制移動</li>
+            </ul>
+            
+            <h3>遊戲難度：</h3>
+            <ul>
+              <li><strong>簡單：</strong>10×10 網格，迷宮較為簡單</li>
+              <li><strong>中等：</strong>15×15 網格，迷宮較為複雜</li>
+              <li><strong>困難：</strong>20×20 網格，迷宮非常複雜</li>
+            </ul>
+            
+            <h3>計分方式：</h3>
+            <ul>
+              <li>收集每個金幣：10分</li>
+              <li>完成一個迷宮：50分</li>
+              <li>在時間內完成所有關卡：額外獎勵分數</li>
+            </ul>
+            
+            <h3>遊戲目標：</h3>
+            <p>在限定時間內收集盡可能多的金幣並完成所有迷宮關卡！</p>
+          `
+        );
+
+        // 初始化遊戲控制器
+        const gameController = new GameUtils.GameController();
+        const scoreManager = new GameUtils.ScoreManager("scoreValue");
+        
+        // 取得 DOM 元素
+        const mazeCanvas = document.getElementById("mazeCanvas");
+        const mazeWrapper = document.getElementById("mazeWrapper");
+        const ctx = mazeCanvas.getContext("2d");
+        const levelDisplay = document.getElementById("level");
+        const timerDisplay = document.getElementById("timer");
+        const coinsDisplay = document.getElementById("coins");
+        const gameMessage = document.getElementById("gameMessage");
+        const easyBtn = document.getElementById("easyBtn");
+        const mediumBtn = document.getElementById("mediumBtn");
+        const hardBtn = document.getElementById("hardBtn");
+        const upBtn = document.getElementById("upBtn");
+        const downBtn = document.getElementById("downBtn");
+        const leftBtn = document.getElementById("leftBtn");
+        const rightBtn = document.getElementById("rightBtn");
+        
+        // 遊戲變數
+        let maze = [];
+        let player = { x: 0, y: 0 };
+        let goal = { x: 0, y: 0 };
+        let coins = [];
+        let collectedCoins = 0;
+        let totalCoins = 0;
+        let cellSize = 0;
+        let level = 1;
+        let maxLevel = 5;
+        let difficulty = "easy";
+        let timePlayed = 0;
+        let gameActive = false;
+        let timerInterval;
+        let keys = { up: false, down: false, left: false, right: false };
+        let lastUpdateTime = 0;
+        let animationFrame;
+        
+        // 難度設置
+        const difficultySettings = {
+          easy: {
+            size: 10,
+            coinCount: 5,
+            timeLimit: 300, // 5分鐘
+            cellSize: 40,
+          },
+          medium: {
+            size: 15,
+            coinCount: 10,
+            timeLimit: 420, // 7分鐘
+            cellSize: 30,
+          },
+          hard: {
+            size: 20,
+            coinCount: 15,
+            timeLimit: 600, // 10分鐘
+            cellSize: 24,
+          },
+        };
+        
+        // 初始化遊戲
+        function initGame() {
+          // 停止之前的遊戲循環
+          if (animationFrame) {
+            cancelAnimationFrame(animationFrame);
+          }
+          
+          // 重置遊戲狀態
+          level = 1;
+          collectedCoins = 0;
+          totalCoins = 0;
+          timePlayed = 0;
+          gameActive = false;
+          
+          // 清空按鍵狀態
+          keys = { up: false, down: false, left: false, right: false };
+          
+          // 更新顯示
+          levelDisplay.textContent = level;
+          coinsDisplay.textContent = "0";
+          updateTimerDisplay();
+          scoreManager.set(0);
+          gameMessage.textContent = "準備開始!";
+          
+          // 設置難度
+          updateDifficultyButtons();
+          
+          // 調整畫布大小
+          const setting = difficultySettings[difficulty];
+          cellSize = setting.cellSize;
+          const mazeSize = setting.size * cellSize;
+          
+          mazeCanvas.width = mazeSize;
+          mazeCanvas.height = mazeSize;
+          
+          // 創建迷宮
+          generateMaze();
+          
+          // 創建迷宮物件
+          placePlayer();
+          placeGoal();
+          placeCoins();
+          
+          // 繪製迷宮
+          drawMaze();
+          
+          // 設置遊戲為活動狀態
+          gameActive = true;
+          
+          // 開始計時
+          startTimer();
+          
+          // 開始遊戲循環
+          lastUpdateTime = performance.now();
+          gameLoop();
+        }
+        
+        // 生成迷宮使用深度優先搜尋算法
+        function generateMaze() {
+          const setting = difficultySettings[difficulty];
+          const size = setting.size;
+          
+          // 初始化迷宮網格
+          // 0 = 路徑, 1 = 牆
+          maze = Array(size).fill().map(() => Array(size).fill(1));
+          
+          // 起點設為路徑
+          const startX = 1;
+          const startY = 1;
+          maze[startY][startX] = 0;
+          
+          // 使用深度優先搜尋算法生成迷宮
+          const stack = [{ x: startX, y: startY }];
+          
+          while (stack.length > 0) {
+            const current = stack[stack.length - 1];
+            
+            // 獲取未訪問的相鄰格子
+            const neighbors = getUnvisitedNeighbors(current.x, current.y);
+            
+            if (neighbors.length > 0) {
+              // 隨機選擇一個相鄰格子
+              const next = neighbors[Math.floor(Math.random() * neighbors.length)];
+              
+              // 打通牆壁
+              const wallX = current.x + (next.x - current.x) / 2;
+              const wallY = current.y + (next.y - current.y) / 2;
+              maze[wallY][wallX] = 0;
+              
+              // 標記為已訪問
+              maze[next.y][next.x] = 0;
+              
+              // 將下一個格子加入堆疊
+              stack.push(next);
+            } else {
+              // 如果沒有未訪問的相鄰格子，回溯
+              stack.pop();
+            }
+          }
+          
+          // 生成一些額外的路徑，使迷宮不那麼難
+          addExtraPaths();
+        }
+        
+        // 獲取未訪問的相鄰格子
+        function getUnvisitedNeighbors(x, y) {
+          const setting = difficultySettings[difficulty];
+          const size = setting.size;
+          const neighbors = [];
+          
+          // 檢查上下左右四個方向，間隔2個格子
+          const directions = [
+            { dx: 0, dy: -2 }, // 上
+            { dx: 2, dy: 0 },  // 右
+            { dx: 0, dy: 2 },  // 下
+            { dx: -2, dy: 0 }  // 左
+          ];
+          
+          directions.forEach(dir => {
+            const nx = x + dir.dx;
+            const ny = y + dir.dy;
+            
+            // 檢查是否在迷宮範圍內且未被訪問
+            if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && maze[ny][nx] === 1) {
+              neighbors.push({ x: nx, y: ny });
+            }
+          });
+          
+          return neighbors;
+        }
+        
+        // 添加額外的路徑
+        function addExtraPaths() {
+          const setting = difficultySettings[difficulty];
+          const size = setting.size;
+          
+          // 根據難度決定額外路徑數量
+          let extraPaths;
+          switch (difficulty) {
+            case "easy":
+              extraPaths = Math.floor(size * 0.4);
+              break;
+            case "medium":
+              extraPaths = Math.floor(size * 0.3);
+              break;
+            case "hard":
+              extraPaths = Math.floor(size * 0.2);
+              break;
+          }
+          
+          for (let i = 0; i < extraPaths; i++) {
+            // 隨機選擇一個牆
+            let wallX, wallY;
+            let attempts = 0;
+            
+            do {
+              wallX = Math.floor(Math.random() * (size - 2)) + 1;
+              wallY = Math.floor(Math.random() * (size - 2)) + 1;
+              attempts++;
+            } while (maze[wallY][wallX] === 0 && attempts < 100);
+            
+            if (attempts < 100) {
+              // 檢查是否是連接兩個路徑的牆
+              let pathCount = 0;
+              if (wallY > 0 && maze[wallY - 1][wallX] === 0) pathCount++;
+              if (wallY < size - 1 && maze[wallY + 1][wallX] === 0) pathCount++;
+              if (wallX > 0 && maze[wallY][wallX - 1] === 0) pathCount++;
+              if (wallX < size - 1 && maze[wallY][wallX + 1] === 0) pathCount++;
+              
+              // 如果是連接兩個路徑的牆，打通它
+              if (pathCount >= 2) {
+                maze[wallY][wallX] = 0;
+              }
+            }
+          }
+        }
+        
+        // 放置玩家
+        function placePlayer() {
+          // 玩家總是從左上角開始
+          player = { x: 1, y: 1 };
+        }
+        
+        // 放置終點
+        function placeGoal() {
+          const setting = difficultySettings[difficulty];
+          const size = setting.size;
+          
+          // 終點總是在迷宮最遠處
+          goal = { x: size - 2, y: size - 2 };
+          
+          // 確保終點是路徑
+          maze[goal.y][goal.x] = 0;
+        }
+        
+        // 放置金幣
+        function placeCoins() {
+          const setting = difficultySettings[difficulty];
+          const size = setting.size;
+          const coinCount = setting.coinCount * level; // 隨關卡增加
+          
+          coins = [];
+          totalCoins += coinCount;
+          
+          // 隨機放置金幣在路徑上
+          for (let i = 0; i < coinCount; i++) {
+            let coinX, coinY;
+            let attempts = 0;
+            
+            do {
+              coinX = Math.floor(Math.random() * (size - 2)) + 1;
+              coinY = Math.floor(Math.random() * (size - 2)) + 1;
+              attempts++;
+              
+              // 檢查是否是路徑且不是玩家位置或終點位置
+              const isPath = maze[coinY][coinX] === 0;
+              const isNotPlayerOrGoal = 
+                (coinX !== player.x || coinY !== player.y) && 
+                (coinX !== goal.x || coinY !== goal.y);
+              const isNotCoinPosition = !coins.some(coin => coin.x === coinX && coin.y === coinY);
+              
+              if (isPath && isNotPlayerOrGoal && isNotCoinPosition) {
+                coins.push({ x: coinX, y: coinY });
+                break;
+              }
+            } while (attempts < 100);
+          }
+        }
+        
+        // 繪製迷宮
+        function drawMaze() {
+          const setting = difficultySettings[difficulty];
+          const size = setting.size;
+          
+          // 清除畫布
+          ctx.clearRect(0, 0, mazeCanvas.width, mazeCanvas.height);
+          
+          // 繪製迷宮網格
+          for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+              if (maze[y][x] === 1) {
+                // 牆
+                ctx.fillStyle = "#333";
+                ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+              } else {
+                // 路徑
+                ctx.fillStyle = "#fff";
+                ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+              }
+            }
+          }
+          
+          // 繪製金幣
+          coins.forEach(coin => {
+            ctx.fillStyle = "gold";
+            const coinSize = cellSize * 0.4;
+            ctx.beginPath();
+            ctx.arc(
+              coin.x * cellSize + cellSize / 2,
+              coin.y * cellSize + cellSize / 2,
+              coinSize / 2,
+              0,
+              Math.PI * 2
+            );
+            ctx.fill();
+          });
+          
+          // 繪製終點
+          ctx.fillStyle = "green";
+          ctx.fillRect(
+            goal.x * cellSize + cellSize * 0.1,
+            goal.y * cellSize + cellSize * 0.1,
+            cellSize * 0.8,
+            cellSize * 0.8
+          );
+          
+          // 繪製玩家
+          ctx.fillStyle = "red";
+          const playerSize = cellSize * 0.6;
+          ctx.beginPath();
+          ctx.arc(
+            player.x * cellSize + cellSize / 2,
+            player.y * cellSize + cellSize / 2,
+            playerSize / 2,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        }
+        
+        // 移動玩家
+        function movePlayer(dx, dy) {
+          if (!gameActive) return;
+          
+          const newX = player.x + dx;
+          const newY = player.y + dy;
+          
+          // 檢查新位置是否是路徑
+          if (maze[newY][newX] === 0) {
+            player.x = newX;
+            player.y = newY;
+            
+            // 檢查是否碰到金幣
+            checkCoinCollision();
+            
+            // 檢查是否到達終點
+            checkGoalReached();
+          }
+        }
+        
+        // 檢查金幣碰撞
+        function checkCoinCollision() {
+          for (let i = coins.length - 1; i >= 0; i--) {
+            if (coins[i].x === player.x && coins[i].y === player.y) {
+              // 收集金幣
+              coins.splice(i, 1);
+              collectedCoins++;
+              
+              // 更新顯示
+              coinsDisplay.textContent = collectedCoins;
+              
+              // 加分
+              scoreManager.add(10);
+              
+              // 播放音效
+              const audio = new Audio(
+                "data:audio/wav;base64,UklGRpQGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YXAGAACAgICAgICAgICAgICAgICAgICAgICAgICAf3hxeH+AfXZ1eHx6dnR5fXt9fXZ8gXqAe3qAfXqCgX96fX+Af3+AYYF/gn59fn1/gIF/fX+Af3+BgH5+fn6Af3+Af35/f4B/f4B+f39/f4B/f35/f4B/f35/f39/gH9+f39/gH9/f39/f4B/f39/f39/f39/f39/f39/f39/f39/f3+Af39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f4CAf39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f3+Af39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f38AvH2KABgAGP/Y/xj/GP+IALx9ig=="
+              );
+              audio.volume = 0.3;
+              audio.play();
+            }
+          }
+        }
+        
+        // 檢查是否到達終點
+        function checkGoalReached() {
+          if (player.x === goal.x && player.y === goal.y) {
+            // 加分
+            scoreManager.add(50);
+            
+            // 播放音效
+            const audio = new Audio(
+              "data:audio/wav;base64,UklGRlwEAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YTQEAAB2Kys9LKNugXR5bXlqe3pycIFsY3uFZmKC/4h7gXRwgWlwiX5lfYJwZX15ZYB7bmh1eW13cnN/fXBnfmxpeHNphnlzaX5yboF2TW9a/v+Mbm6P/2Z7i/+VhI/zgXWLgYOLdHSBiHx3gnWDcoV6fHmDdYhuiopweHx5gXB+eH5ygG9+cnieZRD/AACIiI2Uc3abeFNuXVIwi/+J//8A//9uOP//kP//AP//SzT//4H//wD//2go//9+//8A//9uJP//e///AP//dCT//33//wD//3gs//98//8A//90MP//d///AP//fDT//3j//wD//3w4//9z//8A//98PP//bf//AP//fED//2f//wD//3RE//9i//8A//90SP//Xf//AP//cEz//1j//wD//2xQ//9U//8A//9oVP//UP//AP//YFj//0z//wD//1hc//9I//8A//9QYP//RP//AP//SGT//0D//wD//0Bo//88//8A//80bP//OP//AP//JHD//zT//wD//xR0//8w//8A//8MeP//LP//AP///3z//yj//wD///+A//8k//8A////hP//IP//AP///4j//xz//wD///+M//8Y//8A////kP//FP//AP///5T//xD//wD///+Y//8M//8A////nP//CP//AP///6D//wT//wD///+k////AP///6j///z//wD////7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/sA"
+            );
+            audio.volume = 0.3;
+            audio.play();
+            
+            // 進入下一關
+            goToNextLevel();
+          }
+        }
+        
+        // 進入下一關
+        function goToNextLevel() {
+          level++;
+          levelDisplay.textContent = level;
+          
+          // 顯示關卡訊息
+          gameMessage.textContent = `進入第 ${level} 關！`;
+          setTimeout(() => {
+            gameMessage.textContent = "";
+          }, 2000);
+          
+          // 如果已經是最後一關，就完成遊戲
+          if (level > maxLevel) {
+            gameComplete();
+            return;
+          }
+          
+          // 創建新迷宮
+          generateMaze();
+          
+          // 創建迷宮物件
+          placePlayer();
+          placeGoal();
+          placeCoins();
+          
+          // 繪製迷宮
+          drawMaze();
+        }
+        
+        // 更新遊戲
+        function update(deltaTime) {
+          // 移動玩家
+          const moveSpeed = 0.2; // 每秒移動格數
+          const moveDistance = moveSpeed * deltaTime / 1000;
+          
+          if (keys.up) movePlayer(0, -1);
+          if (keys.down) movePlayer(0, 1);
+          if (keys.left) movePlayer(-1, 0);
+          if (keys.right) movePlayer(1, 0);
+          
+          // 繪製迷宮
+          drawMaze();
+        }
+        
+        // 遊戲循環
+        function gameLoop(timestamp) {
+          if (!gameActive) return;
+          
+          const deltaTime = timestamp - lastUpdateTime;
+          lastUpdateTime = timestamp;
+          
+          update(deltaTime);
+          
+          animationFrame = requestAnimationFrame(gameLoop);
+        }
+        
+        // 開始計時器
+        function startTimer() {
+          stopTimer(); // 先清除之前的計時器
+          timePlayed = 0;
+          updateTimerDisplay();
+          
+          timerInterval = setInterval(() => {
+            if (gameActive) {
+              timePlayed++;
+              updateTimerDisplay();
+              
+              // 檢查是否超過時間限制
+              const setting = difficultySettings[difficulty];
+              if (timePlayed >= setting.timeLimit) {
+                gameOver("時間到！");
+              }
+            }
+          }, 1000);
+        }
+        
+        // 停止計時器
+        function stopTimer() {
+          if (timerInterval) {
+            clearInterval(timerInterval);
+          }
+        }
+        
+        // 更新計時器顯示
+        function updateTimerDisplay() {
+          timerDisplay.textContent = formatTime(timePlayed);
+        }
+        
+        // 格式化時間為 MM:SS
+        function formatTime(seconds) {
+          const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+          const secs = (seconds % 60).toString().padStart(2, '0');
+          return `${mins}:${secs}`;
+        }
+        
+        // 遊戲結束
+        function gameOver(message) {
+          gameActive = false;
+          stopTimer();
+          
+          if (animationFrame) {
+            cancelAnimationFrame(animationFrame);
+          }
+          
+          gameController.showMessage(
+            "遊戲結束",
+            `
+            <div style="text-align:center;">
+              <p>${message}</p>
+              <p>你的分數：${scoreManager.get()}</p>
+              <p>收集金幣：${collectedCoins}/${totalCoins}</p>
+              <p>達到關卡：${level}/${maxLevel}</p>
+              <button id="tryAgainBtn" class="primary-button">再試一次</button>
+            </div>
+            `
+          );
+          
+          setTimeout(() => {
+            document.getElementById("tryAgainBtn").addEventListener("click", () => {
+              gameController.hideMessage();
+              initGame();
+            });
+          }, 100);
+        }
+        
+        // 遊戲完成
+        function gameComplete() {
+          gameActive = false;
+          stopTimer();
+          
+          if (animationFrame) {
+            cancelAnimationFrame(animationFrame);
+          }
+          
+          // 計算得分
+          let baseScore = parseInt(scoreManager.get());
+          
+          // 根據難度增加基礎分數
+          let difficultyBonus = 0;
+          switch (difficulty) {
+            case "easy":
+              difficultyBonus = 50;
+              break;
+            case "medium":
+              difficultyBonus = 100;
+              break;
+            case "hard":
+              difficultyBonus = 200;
+              break;
+          }
+          
+          // 根據收集的金幣比例計算獎勵
+          const coinRatio = collectedCoins / totalCoins;
+          const coinBonus = Math.round(200 * coinRatio);
+          
+          // 根據用時計算獎勵
+          const setting = difficultySettings[difficulty];
+          const timeBonus = Math.max(0, 100 - Math.floor(timePlayed / setting.timeLimit * 100));
+          
+          // 總分
+          const totalScore = baseScore + difficultyBonus + coinBonus + timeBonus;
+          
+          // 設置最終分數
+          scoreManager.set(totalScore);
+          
+          // 顯示完成訊息
+          gameController.showMessage(
+            "恭喜完成！",
+            `
+            <div style="text-align:center;">
+              <p>你成功完成了所有關卡！</p>
+              <p>用時: ${formatTime(timePlayed)}</p>
+              <p>收集金幣: ${collectedCoins}/${totalCoins}</p>
+              <p>難度: ${getDifficultyText()}</p>
+              <p>基礎分數: ${baseScore}</p>
+              <p>難度獎勵: ${difficultyBonus}</p>
+              <p>金幣獎勵: ${coinBonus}</p>
+              <p>時間獎勵: ${timeBonus}</p>
+              <p>最終分數: ${totalScore}</p>
+              <button id="playAgainBtn" class="primary-button">再來一局</button>
+            </div>
+            `
+          );
+          
+          setTimeout(() => {
+            document.getElementById("playAgainBtn").addEventListener("click", () => {
+              gameController.hideMessage();
+              initGame();
+            });
+          }, 100);
+        }
+        
+        // 重啟遊戲
+        function restartGame() {
+          stopTimer();
+          initGame();
+        }
+        
+        // 獲取難度文字
+        function getDifficultyText() {
+          switch (difficulty) {
+            case "easy": return "簡單";
+            case "medium": return "中等";
+            case "hard": return "困難";
+            default: return "簡單";
+          }
+        }
+        
+        // 更新難度按鈕狀態
+        function updateDifficultyButtons() {
+          easyBtn.classList.toggle("active", difficulty === "easy");
+          mediumBtn.classList.toggle("active", difficulty === "medium");
+          hardBtn.classList.toggle("active", difficulty === "hard");
+        }
+        
+        // 難度選擇按鈕事件
+        easyBtn.addEventListener("click", function() {
+          if (!gameActive || confirm("確定要切換難度重新開始嗎？")) {
+            difficulty = "easy";
+            restartGame();
+          }
+        });
+        
+        mediumBtn.addEventListener("click", function() {
+          if (!gameActive || confirm("確定要切換難度重新開始嗎？")) {
+            difficulty = "medium";
+            restartGame();
+          }
+        });
+        
+        hardBtn.addEventListener("click", function() {
+          if (!gameActive || confirm("確定要切換難度重新開始嗎？")) {
+            difficulty = "hard";
+            restartGame();
+          }
+        });
+        
+        // 控制按鈕事件
+        upBtn.addEventListener("mousedown", function() {
+          keys.up = true;
+          this.classList.add("pressed");
+          movePlayer(0, -1);
+        });
+        
+        downBtn.addEventListener("mousedown", function() {
+          keys.down = true;
+          this.classList.add("pressed");
+          movePlayer(0, 1);
+        });
+        
+        leftBtn.addEventListener("mousedown", function() {
+          keys.left = true;
+          this.classList.add("pressed");
+          movePlayer(-1, 0);
+        });
+        
+        rightBtn.addEventListener("mousedown", function() {
+          keys.right = true;
+          this.classList.add("pressed");
+          movePlayer(1, 0);
+        });
+        
+        // 控制按鈕觸控事件
+        upBtn.addEventListener("touchstart", function(e) {
+          e.preventDefault();
+          keys.up = true;
+          this.classList.add("pressed");
+          movePlayer(0, -1);
+        });
+        
+        downBtn.addEventListener("touchstart", function(e) {
+          e.preventDefault();
+          keys.down = true;
+          this.classList.add("pressed");
+          movePlayer(0, 1);
+        });
+        
+        leftBtn.addEventListener("touchstart", function(e) {
+          e.preventDefault();
+          keys.left = true;
+          this.classList.add("pressed");
+          movePlayer(-1, 0);
+        });
+        
+        rightBtn.addEventListener("touchstart", function(e) {
+          e.preventDefault();
+          keys.right = true;
+          this.classList.add("pressed");
+          movePlayer(1, 0);
+        });
+        
+        // 取消按鈕按壓狀態
+        function clearButtonState() {
+          keys.up = keys.down = keys.left = keys.right = false;
+          document.querySelectorAll(".control-button").forEach(btn => {
+            btn.classList.remove("pressed");
+          });
+        }
+        
+        document.addEventListener("mouseup", clearButtonState);
+        document.addEventListener("touchend", clearButtonState);
+        
+        // 鍵盤控制
+        document.addEventListener("keydown", function(e) {
+          if (!gameActive) return;
+          
+          switch (e.key) {
+            case "ArrowUp":
+              keys.up = true;
+              movePlayer(0, -1);
+              break;
+            case "ArrowDown":
+              keys.down = true;
+              movePlayer(0, 1);
+              break;
+            case "ArrowLeft":
+              keys.left = true;
+              movePlayer(-1, 0);
+              break;
+            case "ArrowRight":
+              keys.right = true;
+              movePlayer(1, 0);
+              break;
+          }
+        });
+        
+        document.addEventListener("keyup", function(e) {
+          switch (e.key) {
+            case "ArrowUp":
+              keys.up = false;
+              break;
+            case "ArrowDown":
+              keys.down = false;
+              break;
+            case "ArrowLeft":
+              keys.left = false;
+              break;
+            case "ArrowRight":
+              keys.right = false;
+              break;
+          }
+        });
+        
+        // 設置遊戲控制器
+        gameController.setGameLoop(() => {
+          // 這個遊戲使用requestAnimationFrame來處理遊戲循環
+        });
+        
+        // 設置重啟處理器
+        gameController.setRestartHandler(() => {
+          restartGame();
+        });
+        
+        // 處理暫停狀態變化
+        gameController.onPauseStateChange = function(isPaused) {
+          const pauseIndicator = document.getElementById("gamePaused");
+          if (pauseIndicator) {
+            pauseIndicator.style.display = isPaused ? "flex" : "none";
+          }
+          
+          gameActive = !isPaused;
+          
+          if (!isPaused && animationFrame === undefined) {
+            lastUpdateTime = performance.now();
+            gameLoop(lastUpdateTime);
+          }
+        };
+        
+        // 調整視窗大小時重繪迷宮
+        window.addEventListener("resize", function() {
+          drawMaze();
+        });
+        
+        // 初始化遊戲
+        initGame();
+        
+        // 顯示開始動畫
+        gameController.showStartAnimation(() => {
+          gameController.showMessage(
+            "迷宮探險",
+            `
+            <div style="text-align:center;">
+              <p>歡迎來到迷宮探險！</p>
+              <p>使用方向鍵或觸控按鈕控制角色移動。</p>
+              <p>找到迷宮出口並收集盡可能多的金幣！</p>
+              <button id="startGameBtn" class="primary-button">開始遊戲</button>
+            </div>
+            `
+          );
+          
+          setTimeout(() => {
+            document.getElementById("startGameBtn").addEventListener("click", () => {
+              gameController.hideMessage();
+            });
+          }, 100);
+        });
+      });
+    </script>
+  </body>
+</html>

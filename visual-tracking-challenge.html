@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>視覺追蹤挑戰 - 網頁小遊戲</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #e17055;
+        --secondary-color: #00b894;
+        --accent-color: #fdcb6e;
+        --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --text-light: #ffffff;
+        --text-dark: #333333;
+        --border-radius: 12px;
+        --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        --glass-bg: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        background: var(--background);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .header {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--glass-border);
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        z-index: 1000;
+      }
+
+      .title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-light);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: var(--border-radius);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--glass-bg);
+        color: var(--text-light);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .btn-primary {
+        background: var(--primary-color);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #d63031;
+      }
+
+      .stats {
+        display: flex;
+        gap: 2rem;
+        font-size: 1rem;
+        color: var(--text-light);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-container {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        cursor: crosshair;
+      }
+
+      .target {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        border: 3px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .target:hover {
+        transform: scale(1.2);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      }
+
+      .target-primary {
+        background: radial-gradient(circle, #ff6b6b, #ee5a52);
+        animation: primaryPulse 2s infinite;
+      }
+
+      .target-secondary {
+        background: radial-gradient(circle, #4ecdc4, #00b894);
+      }
+
+      .target-bonus {
+        background: radial-gradient(circle, #fdcb6e, #f39c12);
+        border-color: gold;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        animation: bonusGlow 1.5s infinite alternate;
+      }
+
+      .target-danger {
+        background: radial-gradient(circle, #6c5ce7, #5f3dc4);
+        border-color: #ff4757;
+      }
+
+      @keyframes primaryPulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+      }
+
+      @keyframes bonusGlow {
+        from {
+          box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+        to {
+          box-shadow: 0 0 25px rgba(255, 215, 0, 0.9);
+        }
+      }
+
+      .hit-effect {
+        position: absolute;
+        pointer-events: none;
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        animation: hitAnimation 1s ease-out forwards;
+        z-index: 200;
+      }
+
+      @keyframes hitAnimation {
+        0% {
+          opacity: 1;
+          transform: scale(0.5);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.3);
+        }
+        100% {
+          opacity: 0;
+          transform: scale(1) translateY(-30px);
+        }
+      }
+
+      .crosshair {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        pointer-events: none;
+        z-index: 300;
+      }
+
+      .crosshair::before,
+      .crosshair::after {
+        content: "";
+        position: absolute;
+        background: rgba(255, 255, 255, 0.8);
+      }
+
+      .crosshair::before {
+        width: 20px;
+        height: 2px;
+        top: 9px;
+        left: 0;
+      }
+
+      .crosshair::after {
+        width: 2px;
+        height: 20px;
+        top: 0;
+        left: 9px;
+      }
+
+      .countdown {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 4rem;
+        font-weight: bold;
+        color: var(--accent-color);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        z-index: 500;
+        animation: countdownAnimation 1s ease-in-out;
+      }
+
+      @keyframes countdownAnimation {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.5);
+        }
+        50% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1.2);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+
+      .accuracy-meter {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        color: var(--text-light);
+        text-align: center;
+      }
+
+      .accuracy-bar {
+        width: 100px;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 5px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+      }
+
+      .accuracy-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff4757, #ffa502, #2ed573);
+        transition: width 0.3s ease;
+        border-radius: 5px;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+        color: var(--text-light);
+      }
+
+      .modal h2 {
+        margin-bottom: 1rem;
+        color: var(--accent-color);
+      }
+
+      .game-over-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--glass-border);
+      }
+
+      .difficulty-selector {
+        display: flex;
+        gap: 0.5rem;
+        margin: 1rem 0;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .difficulty-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--glass-border);
+        background: var(--glass-bg);
+        color: var(--text-light);
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+      }
+
+      .difficulty-btn.active {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .help-list {
+        text-align: left;
+        margin: 1rem 0;
+      }
+
+      .help-list li {
+        margin: 0.5rem 0;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      @media (max-width: 768px) {
+        .header {
+          flex-direction: column;
+          gap: 1rem;
+        }
+
+        .controls {
+          order: -1;
+        }
+
+        .stats {
+          gap: 1rem;
+          font-size: 0.9rem;
+        }
+
+        .target {
+          width: 35px;
+          height: 35px;
+        }
+
+        .accuracy-meter {
+          top: 0.5rem;
+          right: 0.5rem;
+          padding: 0.5rem;
+          font-size: 0.9rem;
+        }
+
+        .accuracy-bar {
+          width: 80px;
+          height: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1 class="title">👁️ 視覺追蹤挑戰</h1>
+      <div class="controls">
+        <button id="startBtn" class="btn btn-primary">
+          <i class="fas fa-play"></i> 開始
+        </button>
+        <button id="pauseBtn" class="btn" style="display: none">
+          <i class="fas fa-pause"></i> 暫停
+        </button>
+        <button id="helpBtn" class="btn">
+          <i class="fas fa-question-circle"></i> 說明
+        </button>
+        <a href="index.html" class="btn"> <i class="fas fa-home"></i> 首頁 </a>
+      </div>
+      <div class="stats">
+        <div>分數: <span id="score">0</span></div>
+        <div>命中: <span id="hits">0</span></div>
+        <div>時間: <span id="timer">30</span>s</div>
+        <div>難度: <span id="currentDifficulty">簡單</span></div>
+      </div>
+    </div>
+
+    <div class="game-container" id="gameContainer">
+      <div class="crosshair" id="crosshair"></div>
+
+      <div class="accuracy-meter">
+        <div>準確率</div>
+        <div id="accuracyPercent">100%</div>
+        <div class="accuracy-bar">
+          <div
+            class="accuracy-fill"
+            id="accuracyFill"
+            style="width: 100%"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <h2><i class="fas fa-question-circle"></i> 遊戲說明</h2>
+        <ul class="help-list">
+          <li><strong>目標：</strong>追蹤並點擊移動的目標</li>
+          <li><strong>操作：</strong>用滑鼠點擊目標獲得分數</li>
+          <li><strong>紅色目標：</strong>主要目標，分數較高</li>
+          <li><strong>藍色目標：</strong>次要目標，分數中等</li>
+          <li><strong>金色目標：</strong>獎勵目標，分數很高</li>
+          <li><strong>紫色目標：</strong>危險目標，會扣分</li>
+          <li><strong>準確率：</strong>影響最終分數倍數</li>
+        </ul>
+        <div class="difficulty-selector">
+          <button class="difficulty-btn active" data-difficulty="easy">
+            簡單
+          </button>
+          <button class="difficulty-btn" data-difficulty="medium">中等</button>
+          <button class="difficulty-btn" data-difficulty="hard">困難</button>
+          <button class="difficulty-btn" data-difficulty="expert">專家</button>
+        </div>
+        <button id="closeHelp" class="btn btn-primary">開始遊戲</button>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="modal">
+      <div class="modal-content">
+        <h2><i class="fas fa-trophy"></i> 遊戲結束</h2>
+        <div class="game-over-stats">
+          <div class="stat-item">
+            <div>最終分數</div>
+            <div id="finalScore">0</div>
+          </div>
+          <div class="stat-item">
+            <div>命中總數</div>
+            <div id="totalHits">0</div>
+          </div>
+          <div class="stat-item">
+            <div>準確率</div>
+            <div id="finalAccuracy">0%</div>
+          </div>
+          <div class="stat-item">
+            <div>反應時間</div>
+            <div id="avgReactionTime">0ms</div>
+          </div>
+        </div>
+        <div style="margin-top: 1rem">
+          <button id="restartBtn" class="btn btn-primary">
+            <i class="fas fa-redo"></i> 再玩一次
+          </button>
+          <button id="backToMenuBtn" class="btn">
+            <i class="fas fa-home"></i> 返回主選單
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class VisualTrackingGame {
+        constructor() {
+          this.gameContainer = document.getElementById("gameContainer");
+          this.crosshair = document.getElementById("crosshair");
+          this.score = 0;
+          this.hits = 0;
+          this.misses = 0;
+          this.timeLeft = 30;
+          this.gameActive = false;
+          this.targets = [];
+          this.difficulty = "easy";
+          this.gameTimer = null;
+          this.spawnTimer = null;
+          this.reactionTimes = [];
+
+          this.difficulties = {
+            easy: {
+              timeLimit: 30,
+              spawnRate: 2000,
+              maxTargets: 3,
+              targetSpeed: 1,
+              targetLifetime: 4000,
+              bonusChance: 0.1,
+              dangerChance: 0.05,
+            },
+            medium: {
+              timeLimit: 30,
+              spawnRate: 1500,
+              maxTargets: 4,
+              targetSpeed: 1.5,
+              targetLifetime: 3000,
+              bonusChance: 0.15,
+              dangerChance: 0.1,
+            },
+            hard: {
+              timeLimit: 25,
+              spawnRate: 1200,
+              maxTargets: 5,
+              targetSpeed: 2,
+              targetLifetime: 2500,
+              bonusChance: 0.2,
+              dangerChance: 0.15,
+            },
+            expert: {
+              timeLimit: 20,
+              spawnRate: 1000,
+              maxTargets: 6,
+              targetSpeed: 2.5,
+              targetLifetime: 2000,
+              bonusChance: 0.25,
+              dangerChance: 0.2,
+            },
+          };
+
+          this.targetTypes = {
+            primary: { score: 10, class: "target-primary", symbol: "●" },
+            secondary: { score: 5, class: "target-secondary", symbol: "○" },
+            bonus: { score: 25, class: "target-bonus", symbol: "★" },
+            danger: { score: -15, class: "target-danger", symbol: "✕" },
+          };
+
+          this.initializeGame();
+          this.bindEvents();
+          this.loadStats();
+        }
+
+        initializeGame() {
+          this.updateDisplay();
+          this.showHelp();
+          this.setupMouseTracking();
+        }
+
+        setupMouseTracking() {
+          this.gameContainer.addEventListener("mousemove", (e) => {
+            const rect = this.gameContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            this.crosshair.style.left = x - 10 + "px";
+            this.crosshair.style.top = y - 10 + "px";
+          });
+
+          this.gameContainer.addEventListener("click", (e) => {
+            if (this.gameActive && !e.target.classList.contains("target")) {
+              this.misses++;
+              this.updateAccuracy();
+            }
+          });
+        }
+
+        bindEvents() {
+          document
+            .getElementById("startBtn")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("pauseBtn")
+            .addEventListener("click", () => this.pauseGame());
+          document
+            .getElementById("helpBtn")
+            .addEventListener("click", () => this.showHelp());
+          document
+            .getElementById("closeHelp")
+            .addEventListener("click", () => this.closeHelp());
+          document
+            .getElementById("restartBtn")
+            .addEventListener("click", () => this.restartGame());
+          document
+            .getElementById("backToMenuBtn")
+            .addEventListener("click", () => this.backToMenu());
+
+          // Difficulty selection
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              document
+                .querySelectorAll(".difficulty-btn")
+                .forEach((b) => b.classList.remove("active"));
+              e.target.classList.add("active");
+              this.difficulty = e.target.dataset.difficulty;
+              this.timeLeft = this.difficulties[this.difficulty].timeLimit;
+              this.updateDisplay();
+            });
+          });
+        }
+
+        startGame() {
+          this.gameActive = true;
+          this.score = 0;
+          this.hits = 0;
+          this.misses = 0;
+          this.reactionTimes = [];
+          this.timeLeft = this.difficulties[this.difficulty].timeLimit;
+          this.targets = [];
+
+          // Clear existing targets
+          this.gameContainer
+            .querySelectorAll(".target")
+            .forEach((target) => target.remove());
+
+          document.getElementById("startBtn").style.display = "none";
+          document.getElementById("pauseBtn").style.display = "inline-flex";
+
+          this.updateDisplay();
+          this.updateAccuracy();
+          this.startGameTimer();
+          this.startTargetSpawning();
+
+          // Show countdown
+          this.showCountdown();
+        }
+
+        showCountdown() {
+          let count = 3;
+          const showCount = () => {
+            if (count > 0) {
+              const countdown = document.createElement("div");
+              countdown.className = "countdown";
+              countdown.textContent = count;
+              this.gameContainer.appendChild(countdown);
+
+              setTimeout(() => {
+                if (countdown.parentNode) {
+                  countdown.remove();
+                }
+              }, 1000);
+
+              count--;
+              setTimeout(showCount, 1000);
+            } else {
+              const countdown = document.createElement("div");
+              countdown.className = "countdown";
+              countdown.textContent = "GO!";
+              this.gameContainer.appendChild(countdown);
+
+              setTimeout(() => {
+                if (countdown.parentNode) {
+                  countdown.remove();
+                }
+              }, 1000);
+            }
+          };
+          showCount();
+        }
+
+        pauseGame() {
+          if (this.gameActive) {
+            this.gameActive = false;
+            document.getElementById("startBtn").style.display = "inline-flex";
+            document.getElementById("pauseBtn").style.display = "none";
+
+            if (this.gameTimer) clearInterval(this.gameTimer);
+            if (this.spawnTimer) clearInterval(this.spawnTimer);
+
+            // Pause target movement
+            this.targets.forEach((target) => {
+              target.element.style.animationPlayState = "paused";
+            });
+          } else {
+            this.gameActive = true;
+            document.getElementById("startBtn").style.display = "none";
+            document.getElementById("pauseBtn").style.display = "inline-flex";
+
+            this.startGameTimer();
+            this.startTargetSpawning();
+
+            // Resume target movement
+            this.targets.forEach((target) => {
+              target.element.style.animationPlayState = "running";
+            });
+          }
+        }
+
+        startGameTimer() {
+          this.gameTimer = setInterval(() => {
+            if (this.gameActive) {
+              this.timeLeft--;
+              this.updateDisplay();
+
+              if (this.timeLeft <= 0) {
+                this.endGame();
+              }
+            }
+          }, 1000);
+        }
+
+        startTargetSpawning() {
+          this.spawnTimer = setInterval(() => {
+            if (
+              this.gameActive &&
+              this.targets.length <
+                this.difficulties[this.difficulty].maxTargets
+            ) {
+              this.spawnTarget();
+            }
+          }, this.difficulties[this.difficulty].spawnRate);
+        }
+
+        spawnTarget() {
+          const target = document.createElement("div");
+          target.className = "target";
+
+          // Determine target type
+          const rand = Math.random();
+          const config = this.difficulties[this.difficulty];
+          let type;
+
+          if (rand < config.dangerChance) {
+            type = "danger";
+          } else if (rand < config.dangerChance + config.bonusChance) {
+            type = "bonus";
+          } else if (rand < 0.6) {
+            type = "primary";
+          } else {
+            type = "secondary";
+          }
+
+          const targetInfo = this.targetTypes[type];
+          target.classList.add(targetInfo.class);
+          target.textContent = targetInfo.symbol;
+
+          // Random position and movement
+          const containerRect = this.gameContainer.getBoundingClientRect();
+          const x = Math.random() * (containerRect.width - 40);
+          const y = Math.random() * (containerRect.height - 40);
+          const angle = Math.random() * Math.PI * 2;
+          const speed = config.targetSpeed;
+
+          target.style.left = x + "px";
+          target.style.top = y + "px";
+
+          // Create target object
+          const targetObj = {
+            element: target,
+            type: type,
+            x: x,
+            y: y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            spawnTime: Date.now(),
+            lifetime: config.targetLifetime,
+          };
+
+          // Add click event
+          const clickTime = Date.now();
+          target.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const reactionTime = Date.now() - clickTime;
+            this.hitTarget(targetObj, reactionTime);
+          });
+
+          this.targets.push(targetObj);
+          this.gameContainer.appendChild(target);
+
+          // Start movement
+          this.moveTarget(targetObj);
+        }
+
+        moveTarget(targetObj) {
+          const move = () => {
+            if (!this.gameActive || !targetObj.element.parentNode) return;
+
+            // Update position
+            targetObj.x += targetObj.vx;
+            targetObj.y += targetObj.vy;
+
+            // Bounce off walls
+            const containerRect = this.gameContainer.getBoundingClientRect();
+            if (targetObj.x <= 0 || targetObj.x >= containerRect.width - 40) {
+              targetObj.vx *= -1;
+              targetObj.x = Math.max(
+                0,
+                Math.min(containerRect.width - 40, targetObj.x)
+              );
+            }
+            if (targetObj.y <= 0 || targetObj.y >= containerRect.height - 40) {
+              targetObj.vy *= -1;
+              targetObj.y = Math.max(
+                0,
+                Math.min(containerRect.height - 40, targetObj.y)
+              );
+            }
+
+            targetObj.element.style.left = targetObj.x + "px";
+            targetObj.element.style.top = targetObj.y + "px";
+
+            // Check lifetime
+            if (Date.now() - targetObj.spawnTime > targetObj.lifetime) {
+              this.removeTarget(targetObj);
+              return;
+            }
+
+            requestAnimationFrame(move);
+          };
+          requestAnimationFrame(move);
+        }
+
+        hitTarget(targetObj, reactionTime) {
+          if (!this.gameActive) return;
+
+          this.hits++;
+          this.reactionTimes.push(reactionTime);
+
+          const targetInfo = this.targetTypes[targetObj.type];
+          this.score += targetInfo.score;
+
+          // Show hit effect
+          this.showHitEffect(
+            targetObj.element,
+            targetInfo.score > 0 ? "+" + targetInfo.score : targetInfo.score
+          );
+
+          this.removeTarget(targetObj);
+          this.updateDisplay();
+          this.updateAccuracy();
+        }
+
+        removeTarget(targetObj) {
+          const index = this.targets.indexOf(targetObj);
+          if (index > -1) {
+            this.targets.splice(index, 1);
+            if (targetObj.element.parentNode) {
+              targetObj.element.remove();
+            }
+          }
+        }
+
+        showHitEffect(element, text) {
+          const effect = document.createElement("div");
+          effect.className = "hit-effect";
+          effect.textContent = text;
+          effect.style.color = text.startsWith("+") ? "#00e676" : "#ff1744";
+
+          const rect = element.getBoundingClientRect();
+          const containerRect = this.gameContainer.getBoundingClientRect();
+
+          effect.style.left = rect.left - containerRect.left + "px";
+          effect.style.top = rect.top - containerRect.top + "px";
+
+          this.gameContainer.appendChild(effect);
+
+          setTimeout(() => {
+            if (effect.parentNode) {
+              effect.remove();
+            }
+          }, 1000);
+        }
+
+        updateAccuracy() {
+          const total = this.hits + this.misses;
+          const accuracy =
+            total > 0 ? Math.round((this.hits / total) * 100) : 100;
+
+          document.getElementById("accuracyPercent").textContent =
+            accuracy + "%";
+          document.getElementById("accuracyFill").style.width = accuracy + "%";
+        }
+
+        endGame() {
+          this.gameActive = false;
+
+          if (this.gameTimer) clearInterval(this.gameTimer);
+          if (this.spawnTimer) clearInterval(this.spawnTimer);
+
+          document.getElementById("startBtn").style.display = "inline-flex";
+          document.getElementById("pauseBtn").style.display = "none";
+
+          // Apply accuracy bonus to final score
+          const total = this.hits + this.misses;
+          const accuracy = total > 0 ? this.hits / total : 1;
+          this.score = Math.round(this.score * (0.5 + accuracy * 0.5));
+
+          this.saveStats();
+          this.showGameOver();
+        }
+
+        showGameOver() {
+          document.getElementById("finalScore").textContent = this.score;
+          document.getElementById("totalHits").textContent = this.hits;
+
+          const total = this.hits + this.misses;
+          const accuracy =
+            total > 0 ? Math.round((this.hits / total) * 100) : 100;
+          document.getElementById("finalAccuracy").textContent = accuracy + "%";
+
+          const avgReaction =
+            this.reactionTimes.length > 0
+              ? Math.round(
+                  this.reactionTimes.reduce((a, b) => a + b, 0) /
+                    this.reactionTimes.length
+                )
+              : 0;
+          document.getElementById("avgReactionTime").textContent =
+            avgReaction + "ms";
+
+          document.getElementById("gameOverModal").style.display = "flex";
+        }
+
+        restartGame() {
+          document.getElementById("gameOverModal").style.display = "none";
+          this.gameContainer
+            .querySelectorAll(".target, .hit-effect, .countdown")
+            .forEach((el) => el.remove());
+          this.startGame();
+        }
+
+        backToMenu() {
+          window.location.href = "index.html";
+        }
+
+        showHelp() {
+          document.getElementById("helpModal").style.display = "flex";
+        }
+
+        closeHelp() {
+          document.getElementById("helpModal").style.display = "none";
+          if (!this.gameActive) {
+            this.startGame();
+          }
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("hits").textContent = this.hits;
+          document.getElementById("timer").textContent = this.timeLeft;
+
+          const difficultyNames = {
+            easy: "簡單",
+            medium: "中等",
+            hard: "困難",
+            expert: "專家",
+          };
+          document.getElementById("currentDifficulty").textContent =
+            difficultyNames[this.difficulty];
+        }
+
+        saveStats() {
+          if (typeof saveGameStats === "function") {
+            const total = this.hits + this.misses;
+            const accuracy =
+              total > 0 ? Math.round((this.hits / total) * 100) : 100;
+            const avgReaction =
+              this.reactionTimes.length > 0
+                ? Math.round(
+                    this.reactionTimes.reduce((a, b) => a + b, 0) /
+                      this.reactionTimes.length
+                  )
+                : 0;
+
+            const stats = {
+              score: this.score,
+              hits: this.hits,
+              accuracy: accuracy,
+              avgReactionTime: avgReaction,
+              difficulty: this.difficulty,
+              timestamp: Date.now(),
+            };
+            saveGameStats("visual-tracking-challenge", stats);
+          }
+        }
+
+        loadStats() {
+          if (typeof loadGameStats === "function") {
+            const stats = loadGameStats("visual-tracking-challenge");
+            if (stats && stats.score) {
+              // Could display best score or other stats
+            }
+          }
+        }
+      }
+
+      // Initialize game when page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        new VisualTrackingGame();
+      });
+    </script>
+  </body>
+</html>

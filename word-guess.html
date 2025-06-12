@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>詞語猜猜看 - 小遊戲合集</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "微軟正黑體", "Microsoft JhengHei", Arial, sans-serif;
+      }
+
+      body {
+        background-color: #f5f5f5;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      header {
+        background-color: #3498db;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 1rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      footer {
+        background-color: #34495e;
+        color: white;
+        text-align: center;
+        padding: 1rem;
+        margin-top: auto;
+      }
+
+      .back-button {
+        display: inline-block;
+        margin: 0.5rem 0;
+        padding: 0.5rem 1rem;
+        background-color: #3498db;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+      }
+
+      .back-button:hover {
+        background-color: #2980b9;
+      }
+
+      .game-info {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .game-title {
+        font-size: 1.8rem;
+        color: #3498db;
+        margin-bottom: 0.5rem;
+      }
+
+      .game-instructions {
+        margin-bottom: 1rem;
+        line-height: 1.6;
+      }
+
+      .game-container {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .difficulty {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+      }
+
+      .difficulty label {
+        margin-right: 1rem;
+        font-weight: bold;
+      }
+
+      .difficulty button {
+        margin-right: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        background-color: #ecf0f1;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .difficulty button.active {
+        background-color: #3498db;
+        color: white;
+      }
+
+      .game-buttons {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .game-button {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .start-btn {
+        background-color: #2ecc71;
+        color: white;
+      }
+
+      .start-btn:hover {
+        background-color: #27ae60;
+      }
+
+      .hint-btn {
+        background-color: #f39c12;
+        color: white;
+      }
+
+      .hint-btn:hover {
+        background-color: #d35400;
+      }
+
+      .restart-btn {
+        background-color: #e74c3c;
+        color: white;
+      }
+
+      .restart-btn:hover {
+        background-color: #c0392b;
+      }
+
+      .game-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        background-color: #ecf0f1;
+        padding: 0.5rem;
+        border-radius: 4px;
+      }
+
+      .stat {
+        font-weight: bold;
+      }
+
+      .game-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        position: relative;
+        padding-top: 2rem;
+      }
+
+      /* 猜詞面板 */
+      .word-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        max-width: 350px;
+        width: 100%;
+      }
+
+      .word-row {
+        display: contents;
+      }
+
+      .letter-box {
+        width: 100%;
+        aspect-ratio: 1/1;
+        border: 2px solid #d1d1d1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        transition: all 0.3s;
+      }
+
+      .letter-box.filled {
+        border-color: #7f8c8d;
+      }
+
+      .letter-box.correct {
+        background-color: #2ecc71;
+        color: white;
+        border-color: #2ecc71;
+      }
+
+      .letter-box.wrong-position {
+        background-color: #f1c40f;
+        color: white;
+        border-color: #f1c40f;
+      }
+
+      .letter-box.incorrect {
+        background-color: #7f8c8d;
+        color: white;
+        border-color: #7f8c8d;
+      }
+
+      /* 虛擬鍵盤 */
+      .keyboard {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+        max-width: 500px;
+        margin-top: 1rem;
+      }
+
+      .keyboard-row {
+        display: flex;
+        justify-content: center;
+        gap: 0.25rem;
+      }
+
+      .key {
+        min-width: 2rem;
+        height: 3rem;
+        border-radius: 4px;
+        background-color: #d1d1d1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        cursor: pointer;
+        text-transform: uppercase;
+        flex: 1;
+        transition: all 0.2s;
+      }
+
+      .key:hover {
+        background-color: #b1b1b1;
+      }
+
+      .key.special {
+        flex: 1.5;
+        font-size: 0.75rem;
+      }
+
+      .key.used-correct {
+        background-color: #2ecc71;
+        color: white;
+      }
+
+      .key.used-wrong-position {
+        background-color: #f1c40f;
+        color: white;
+      }
+
+      .key.used-incorrect {
+        background-color: #7f8c8d;
+        color: white;
+      }
+
+      /* 提示區域 */
+      .hint-area {
+        margin: 1rem 0;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+        border-left: 4px solid #3498db;
+        max-width: 500px;
+        width: 100%;
+        font-style: italic;
+        min-height: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .message-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 2rem;
+        text-align: center;
+        z-index: 10;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+
+      .message-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .message-overlay button {
+        margin-top: 1rem;
+        padding: 0.5rem 1.5rem;
+        font-size: 1.2rem;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .message-overlay button:hover {
+        background-color: #2980b9;
+      }
+
+      /* 已用字母指示 */
+      .used-letters {
+        margin-top: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        max-width: 500px;
+        justify-content: center;
+      }
+
+      .used-letter {
+        padding: 0.5rem;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+
+      /* 動畫效果 */
+      @keyframes bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .bounce {
+        animation: bounce 0.5s;
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        10%,
+        30%,
+        50%,
+        70%,
+        90% {
+          transform: translateX(-5px);
+        }
+        20%,
+        40%,
+        60%,
+        80% {
+          transform: translateX(5px);
+        }
+      }
+
+      .shake {
+        animation: shake 0.5s;
+      }
+
+      @keyframes flip {
+        0% {
+          transform: rotateY(0);
+        }
+        50% {
+          transform: rotateY(90deg);
+        }
+        100% {
+          transform: rotateY(0);
+        }
+      }
+
+      .flip {
+        animation: flip 0.5s;
+      }
+
+      @keyframes reveal {
+        0% {
+          transform: rotateX(0);
+        }
+        50% {
+          transform: rotateX(90deg);
+        }
+        100% {
+          transform: rotateX(0);
+        }
+      }
+
+      .reveal {
+        animation: reveal 0.5s;
+      }
+
+      /* 響應式調整 */
+      @media screen and (max-width: 768px) {
+        .container {
+          padding: 0.5rem;
+        }
+
+        .controls {
+          flex-direction: column;
+        }
+
+        .letter-box {
+          font-size: 1.2rem;
+        }
+
+        .key {
+          height: 2.5rem;
+          min-width: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>小遊戲合集</h1>
+      <p>好玩的小遊戲，休閒時間的最佳選擇！</p>
+      <a href="index.html" class="back-button">回到遊戲列表</a>
+    </header>
+
+    <div class="container">
+      <div class="game-info">
+        <h2 class="game-title">詞語猜猜看</h2>
+        <div class="game-instructions">
+          <p><strong>遊戲說明：</strong></p>
+          <p>猜出五個字母的神秘單詞，每次猜測後會得到提示！</p>
+          <ol>
+            <li>你有6次機會猜出隱藏的單詞</li>
+            <li>每次猜測必須是正確的5字詞</li>
+            <li>提交後，每個字母會變色以提供線索：</li>
+            <ul>
+              <li>
+                <span style="color: #2ecc71">綠色</span> - 字母正確且位置正確
+              </li>
+              <li>
+                <span style="color: #f1c40f">黃色</span> - 字母正確但位置錯誤
+              </li>
+              <li><span style="color: #7f8c8d">灰色</span> - 字母不在單詞中</li>
+            </ul>
+            <li>難度越高，可用的單詞越多、越不常見</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="game-container">
+        <div class="controls">
+          <div class="difficulty">
+            <label>難度：</label>
+            <button class="difficulty-btn active" data-difficulty="easy">
+              簡單
+            </button>
+            <button class="difficulty-btn" data-difficulty="medium">
+              中等
+            </button>
+            <button class="difficulty-btn" data-difficulty="hard">困難</button>
+          </div>
+          <div class="game-buttons">
+            <button class="game-button start-btn">開始遊戲</button>
+            <button class="game-button hint-btn" disabled>提示</button>
+            <button class="game-button restart-btn" disabled>重新開始</button>
+          </div>
+        </div>
+
+        <div class="game-stats">
+          <div class="stat">剩餘猜測：<span id="guesses">6</span></div>
+          <div class="stat">已使用提示：<span id="hints">0</span>/3</div>
+          <div class="stat">勝率：<span id="win-rate">0</span>%</div>
+        </div>
+
+        <div class="game-area">
+          <div class="word-grid" id="word-grid">
+            <!-- 6行5列的格子，由JavaScript動態生成 -->
+          </div>
+
+          <div class="hint-area" id="hint-area">等待遊戲開始...</div>
+
+          <div class="keyboard" id="keyboard">
+            <div class="keyboard-row">
+              <div class="key" data-key="q">q</div>
+              <div class="key" data-key="w">w</div>
+              <div class="key" data-key="e">e</div>
+              <div class="key" data-key="r">r</div>
+              <div class="key" data-key="t">t</div>
+              <div class="key" data-key="y">y</div>
+              <div class="key" data-key="u">u</div>
+              <div class="key" data-key="i">i</div>
+              <div class="key" data-key="o">o</div>
+              <div class="key" data-key="p">p</div>
+            </div>
+            <div class="keyboard-row">
+              <div class="key" data-key="a">a</div>
+              <div class="key" data-key="s">s</div>
+              <div class="key" data-key="d">d</div>
+              <div class="key" data-key="f">f</div>
+              <div class="key" data-key="g">g</div>
+              <div class="key" data-key="h">h</div>
+              <div class="key" data-key="j">j</div>
+              <div class="key" data-key="k">k</div>
+              <div class="key" data-key="l">l</div>
+            </div>
+            <div class="keyboard-row">
+              <div class="key special" data-key="enter">提交</div>
+              <div class="key" data-key="z">z</div>
+              <div class="key" data-key="x">x</div>
+              <div class="key" data-key="c">c</div>
+              <div class="key" data-key="v">v</div>
+              <div class="key" data-key="b">b</div>
+              <div class="key" data-key="n">n</div>
+              <div class="key" data-key="m">m</div>
+              <div class="key special" data-key="backspace">刪除</div>
+            </div>
+          </div>
+
+          <div class="message-overlay" id="start-message">
+            <div>準備好了嗎？</div>
+            <div>點擊「開始」按鈕來開始遊戲！</div>
+          </div>
+
+          <div class="message-overlay" id="win-message">
+            <div>恭喜你猜出正確的單詞！</div>
+            <div>答案：<span id="win-word">HAPPY</span></div>
+            <div>你用了 <span id="win-guesses">3</span> 次嘗試</div>
+            <button id="play-again-btn">再玩一次</button>
+          </div>
+
+          <div class="message-overlay" id="lose-message">
+            <div>很遺憾，你沒有猜出單詞！</div>
+            <div>答案是：<span id="lose-word">HAPPY</span></div>
+            <button id="try-again-btn">再試一次</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>&copy; 2023 小遊戲合集 版權所有</p>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 單詞列表 (按難度分級)
+        const wordLists = {
+          easy: [
+            "apple",
+            "happy",
+            "sunny",
+            "house",
+            "music",
+            "puppy",
+            "water",
+            "sweet",
+            "light",
+            "bread",
+            "smile",
+            "teach",
+            "plant",
+            "dream",
+            "cloud",
+            "earth",
+            "color",
+            "fruit",
+            "table",
+            "drink",
+          ],
+          medium: [
+            "cloud",
+            "judge",
+            "night",
+            "quest",
+            "major",
+            "focal",
+            "pilot",
+            "Radio",
+            "vital",
+            "panel",
+            "virus",
+            "unity",
+            "pride",
+            "laser",
+            "cream",
+            "blend",
+            "orbit",
+            "query",
+            "maple",
+            "flame",
+          ],
+          hard: [
+            "abyss",
+            "fjord",
+            "glyph",
+            "inbox",
+            "nymph",
+            "pixel",
+            "quota",
+            "azure",
+            "quark",
+            "waltz",
+            "vivid",
+            "charm",
+            "topaz",
+            "urban",
+            "focal",
+            "psych",
+            "smirk",
+            "axiom",
+            "twerk",
+            "agile",
+          ],
+        };
+
+        // 單詞的中文含義 (用於提示)
+        const wordHints = {
+          apple: "一種紅色或綠色的水果",
+          happy: "感到快樂或滿足的狀態",
+          sunny: "陽光充足的",
+          house: "人們居住的建築物",
+          music: "有組織的聲音藝術",
+          puppy: "小狗",
+          water: "組成海洋、湖泊、河流和雨的無色液體",
+          sweet: "有糖的味道",
+          light: "使我們能看到事物的能量形式",
+          bread: "由麵粉和水製成的烘焙食品",
+          smile: "臉上表達愉快或友好的表情",
+          teach: "傳授知識或技能",
+          plant: "生長在土壤中的有生命的有機體",
+          dream: "睡覺時的想象或願望",
+          cloud: "天空中的水汽集合體",
+          earth: "我們居住的行星",
+          color: "物體反射光線的屬性",
+          fruit: "植物的種子部分，通常是甜的和多汁的",
+          table: "有平面頂部和腿部支撐的家具",
+          drink: "用於解渴的液體",
+          judge: "在法庭上作出裁決的人",
+          night: "一天中的黑暗部分",
+          quest: "長期尋求某物的旅程",
+          major: "較大或較重要的",
+          focal: "焦點的或與焦點有關的",
+          pilot: "駕駛飛機的人",
+          radio: "通過無線電波傳輸聲音的裝置",
+          vital: "絕對必要的或重要的",
+          panel: "較大表面的特定部分",
+          virus: "可感染生物體的微小寄生物",
+          unity: "整體或統一的狀態",
+          pride: "對成就的滿足感",
+          laser: "產生強光束的裝置",
+          cream: "從牛奶中提取的富含脂肪的部分",
+          blend: "混合在一起",
+          orbit: "一個物體圍繞另一個物體的路徑",
+          query: "提出問題",
+          maple: "一種樹木，葉子呈手掌狀",
+          flame: "燃燒時產生的發光氣體",
+          abyss: "深不見底的洞穴或峽谷",
+          fjord: "狹長的海灣",
+          glyph: "雕刻或刻在表面上的符號",
+          inbox: "接收信息的地方",
+          nymph: "神話中的自然女神",
+          pixel: "數字圖像的最小單位",
+          quota: "分配或允許的固定份額",
+          azure: "明亮的藍色，如晴朗的天空",
+          quark: "物理學中的基本粒子",
+          waltz: "一種典雅的圓舞曲",
+          vivid: "明亮而清晰的",
+          charm: "吸引力或魔力",
+          topaz: "一種通常為黃色或棕色的寶石",
+          urban: "與城市相關的",
+          psych: "與心理或精神有關",
+          smirk: "得意或嘲諷的微笑",
+          axiom: "公認的真理或原則",
+          twerk: "一種舞蹈動作",
+          agile: "能夠快速移動和適應的",
+        };
+
+        // 遊戲狀態
+        const gameState = {
+          isPlaying: false,
+          difficulty: "easy",
+          targetWord: "",
+          currentRow: 0,
+          currentCol: 0,
+          guesses: 6,
+          hints: 0,
+          gamesPlayed: 0,
+          gamesWon: 0,
+        };
+
+        // DOM元素
+        const wordGrid = document.getElementById("word-grid");
+        const keyboard = document.getElementById("keyboard");
+        const keys = keyboard.querySelectorAll(".key");
+        const hintArea = document.getElementById("hint-area");
+        const guessesDisplay = document.getElementById("guesses");
+        const hintsDisplay = document.getElementById("hints");
+        const winRateDisplay = document.getElementById("win-rate");
+
+        const startBtn = document.querySelector(".start-btn");
+        const hintBtn = document.querySelector(".hint-btn");
+        const restartBtn = document.querySelector(".restart-btn");
+
+        const difficultyBtns = document.querySelectorAll(".difficulty-btn");
+
+        const startMessage = document.getElementById("start-message");
+        const winMessage = document.getElementById("win-message");
+        const loseMessage = document.getElementById("lose-message");
+        const winWord = document.getElementById("win-word");
+        const loseWord = document.getElementById("lose-word");
+        const winGuesses = document.getElementById("win-guesses");
+        const playAgainBtn = document.getElementById("play-again-btn");
+        const tryAgainBtn = document.getElementById("try-again-btn");
+
+        // 初始化遊戲
+        function initializeGame() {
+          // 創建猜詞網格
+          createWordGrid();
+
+          // 設置按鍵事件
+          setupKeyboard();
+
+          // 設置難度
+          difficultyBtns.forEach((btn) => {
+            btn.addEventListener("click", () => {
+              if (gameState.isPlaying) return;
+
+              difficultyBtns.forEach((b) => b.classList.remove("active"));
+              btn.classList.add("active");
+              gameState.difficulty = btn.dataset.difficulty;
+            });
+          });
+
+          // 設置按鈕事件
+          startBtn.addEventListener("click", startGame);
+          hintBtn.addEventListener("click", getHint);
+          restartBtn.addEventListener("click", restartGame);
+          playAgainBtn.addEventListener("click", restartGame);
+          tryAgainBtn.addEventListener("click", restartGame);
+
+          // 添加鍵盤事件
+          document.addEventListener("keydown", handleKeyDown);
+
+          // 從本地存儲獲取遊戲數據
+          loadGameStats();
+
+          // 顯示開始訊息
+          startMessage.classList.add("visible");
+        }
+
+        // 創建猜詞網格
+        function createWordGrid() {
+          wordGrid.innerHTML = "";
+
+          for (let row = 0; row < 6; row++) {
+            const wordRow = document.createElement("div");
+            wordRow.className = "word-row";
+
+            for (let col = 0; col < 5; col++) {
+              const letterBox = document.createElement("div");
+              letterBox.className = "letter-box";
+              letterBox.dataset.row = row;
+              letterBox.dataset.col = col;
+
+              wordRow.appendChild(letterBox);
+            }
+
+            wordGrid.appendChild(wordRow);
+          }
+        }
+
+        // 設置虛擬鍵盤
+        function setupKeyboard() {
+          keys.forEach((key) => {
+            key.addEventListener("click", () => {
+              if (!gameState.isPlaying) return;
+
+              const keyValue = key.dataset.key;
+
+              if (keyValue === "backspace") {
+                deleteLastLetter();
+              } else if (keyValue === "enter") {
+                submitGuess();
+              } else {
+                addLetter(keyValue);
+              }
+            });
+          });
+        }
+
+        // 鍵盤事件處理
+        function handleKeyDown(e) {
+          if (!gameState.isPlaying) return;
+
+          if (e.key >= "a" && e.key <= "z") {
+            addLetter(e.key.toLowerCase());
+          } else if (e.key === "Backspace") {
+            deleteLastLetter();
+          } else if (e.key === "Enter") {
+            submitGuess();
+          }
+        }
+
+        // 開始遊戲
+        function startGame() {
+          // 重設遊戲狀態
+          gameState.isPlaying = true;
+          gameState.currentRow = 0;
+          gameState.currentCol = 0;
+          gameState.guesses = 6;
+          gameState.hints = 0;
+
+          // 重置UI
+          createWordGrid();
+          resetKeyboard();
+
+          // 選擇目標單詞
+          selectTargetWord();
+
+          // 更新顯示
+          updateDisplays();
+
+          // 啟用按鈕
+          hintBtn.disabled = false;
+          restartBtn.disabled = false;
+          startBtn.disabled = true;
+
+          // 隱藏開始訊息
+          startMessage.classList.remove("visible");
+          winMessage.classList.remove("visible");
+          loseMessage.classList.remove("visible");
+
+          // 設置提示區域
+          hintArea.textContent = "開始猜詞吧！輸入五個字母的單詞。";
+
+          console.log("答案：", gameState.targetWord); // 開發時用，正式版應該移除
+        }
+
+        // 重新開始遊戲
+        function restartGame() {
+          startGame();
+        }
+
+        // 選擇目標單詞
+        function selectTargetWord() {
+          const wordList = wordLists[gameState.difficulty];
+          const randomIndex = Math.floor(Math.random() * wordList.length);
+          gameState.targetWord = wordList[randomIndex].toLowerCase();
+        }
+
+        // 添加字母
+        function addLetter(letter) {
+          if (gameState.currentCol >= 5) return;
+
+          const currentBox = getBox(gameState.currentRow, gameState.currentCol);
+          currentBox.textContent = letter;
+          currentBox.classList.add("filled");
+          currentBox.classList.add("bounce");
+
+          // 移除動畫
+          setTimeout(() => {
+            currentBox.classList.remove("bounce");
+          }, 500);
+
+          gameState.currentCol++;
+        }
+
+        // 刪除最後一個字母
+        function deleteLastLetter() {
+          if (gameState.currentCol <= 0) return;
+
+          gameState.currentCol--;
+          const currentBox = getBox(gameState.currentRow, gameState.currentCol);
+          currentBox.textContent = "";
+          currentBox.classList.remove("filled");
+        }
+
+        // 提交猜測
+        function submitGuess() {
+          // 確認當前行是否填滿
+          if (gameState.currentCol < 5) {
+            showMessage("請輸入完整的五個字母");
+            shakeRow(gameState.currentRow);
+            return;
+          }
+
+          // 獲取當前猜測
+          const guess = getGuessFromRow(gameState.currentRow);
+
+          // 檢查是否是有效單詞
+          if (!isValidWord(guess)) {
+            showMessage("不是有效的單詞");
+            shakeRow(gameState.currentRow);
+            return;
+          }
+
+          // 檢查猜測結果
+          checkGuess(guess);
+
+          // 更新狀態
+          gameState.currentRow++;
+          gameState.currentCol = 0;
+          gameState.guesses--;
+
+          updateDisplays();
+
+          // 檢查遊戲結束條件
+          if (guess === gameState.targetWord) {
+            // 贏了
+            setTimeout(() => {
+              winGame();
+            }, 1500);
+          } else if (gameState.guesses <= 0) {
+            // 輸了
+            setTimeout(() => {
+              loseGame();
+            }, 1500);
+          }
+        }
+
+        // 檢查猜測
+        function checkGuess(guess) {
+          const targetChars = gameState.targetWord.split("");
+          const guessChars = guess.split("");
+          const results = Array(5).fill("incorrect");
+
+          // 記錄已使用的目標字母索引
+          const usedTargetIndices = [];
+
+          // 首先檢查位置和字母都正確的情況
+          for (let i = 0; i < 5; i++) {
+            if (guessChars[i] === targetChars[i]) {
+              results[i] = "correct";
+              usedTargetIndices.push(i);
+            }
+          }
+
+          // 然後檢查字母正確但位置錯誤的情況
+          for (let i = 0; i < 5; i++) {
+            if (results[i] === "correct") continue;
+
+            for (let j = 0; j < 5; j++) {
+              if (
+                guessChars[i] === targetChars[j] &&
+                !usedTargetIndices.includes(j)
+              ) {
+                results[i] = "wrong-position";
+                usedTargetIndices.push(j);
+                break;
+              }
+            }
+          }
+
+          // 更新UI
+          animateGuessResult(guessChars, results);
+        }
+
+        // 動畫顯示猜測結果
+        function animateGuessResult(guessChars, results) {
+          for (let i = 0; i < 5; i++) {
+            (function (index) {
+              setTimeout(() => {
+                const box = getBox(gameState.currentRow, index);
+
+                // 翻轉動畫
+                box.classList.add("flip");
+
+                setTimeout(() => {
+                  // 更新顏色
+                  box.classList.add(results[index]);
+
+                  // 更新鍵盤顏色
+                  updateKeyColor(guessChars[index], results[index]);
+
+                  // 移除動畫
+                  setTimeout(() => {
+                    box.classList.remove("flip");
+                  }, 250);
+                }, 250);
+              }, index * 200);
+            })(i);
+          }
+        }
+
+        // 更新鍵盤顏色
+        function updateKeyColor(letter, result) {
+          const key = document.querySelector(`.key[data-key="${letter}"]`);
+          if (!key) return;
+
+          // 只有在更新為更"好"的結果時才進行更新
+          if (key.classList.contains("used-correct")) {
+            return; // 已經是正確的，不需要更新
+          }
+
+          if (result === "correct") {
+            key.className = "key used-correct";
+          } else if (
+            result === "wrong-position" &&
+            !key.classList.contains("used-wrong-position")
+          ) {
+            key.className = "key used-wrong-position";
+          } else if (
+            !key.classList.contains("used-wrong-position") &&
+            !key.classList.contains("used-incorrect")
+          ) {
+            key.className = "key used-incorrect";
+          }
+        }
+
+        // 重置鍵盤顏色
+        function resetKeyboard() {
+          keys.forEach((key) => {
+            if (
+              key.dataset.key !== "enter" &&
+              key.dataset.key !== "backspace"
+            ) {
+              key.className = "key";
+            } else {
+              key.className = "key special";
+            }
+          });
+        }
+
+        // 獲取提示
+        function getHint() {
+          if (gameState.hints >= 3) {
+            showMessage("提示已用完");
+            return;
+          }
+
+          gameState.hints++;
+          updateDisplays();
+
+          const hint = wordHints[gameState.targetWord] || "這個詞通常用於...";
+          hintArea.textContent = `提示 #${gameState.hints}: ${hint}`;
+
+          // 如果是最後一個提示，還可以提供首字母
+          if (gameState.hints === 3) {
+            hintArea.textContent += ` (首字母是 "${gameState.targetWord[0].toUpperCase()}")`;
+            hintBtn.disabled = true;
+          }
+        }
+
+        // 獲取單詞框
+        function getBox(row, col) {
+          return document.querySelector(
+            `.letter-box[data-row="${row}"][data-col="${col}"]`
+          );
+        }
+
+        // 獲取當前行的猜測單詞
+        function getGuessFromRow(row) {
+          let word = "";
+
+          for (let col = 0; col < 5; col++) {
+            const box = getBox(row, col);
+            word += box.textContent;
+          }
+
+          return word.toLowerCase();
+        }
+
+        // 檢查是否是有效單詞
+        function isValidWord(word) {
+          // 簡單實現：檢查長度為5
+          // 在實際應用中，應該檢查是否在單詞字典中
+          return word.length === 5;
+        }
+
+        // 顯示行抖動動畫
+        function shakeRow(row) {
+          for (let col = 0; col < 5; col++) {
+            const box = getBox(row, col);
+            box.classList.add("shake");
+
+            setTimeout(() => {
+              box.classList.remove("shake");
+            }, 500);
+          }
+        }
+
+        // 顯示訊息
+        function showMessage(text) {
+          hintArea.textContent = text;
+
+          // 幾秒後恢復
+          setTimeout(() => {
+            if (!gameState.isPlaying) return;
+
+            hintArea.textContent =
+              gameState.hints > 0
+                ? `提示 #${gameState.hints}: ${
+                    wordHints[gameState.targetWord] || "這個詞通常用於..."
+                  }`
+                : "繼續猜測吧！或者使用提示獲取幫助。";
+          }, 2000);
+        }
+
+        // 贏了
+        function winGame() {
+          gameState.isPlaying = false;
+          gameState.gamesPlayed++;
+          gameState.gamesWon++;
+
+          saveGameStats();
+          updateDisplays();
+
+          winWord.textContent = gameState.targetWord.toUpperCase();
+          winGuesses.textContent = 6 - gameState.guesses;
+          winMessage.classList.add("visible");
+
+          hintBtn.disabled = true;
+          restartBtn.disabled = false;
+          startBtn.disabled = false;
+        }
+
+        // 輸了
+        function loseGame() {
+          gameState.isPlaying = false;
+          gameState.gamesPlayed++;
+
+          saveGameStats();
+          updateDisplays();
+
+          loseWord.textContent = gameState.targetWord.toUpperCase();
+          loseMessage.classList.add("visible");
+
+          hintBtn.disabled = true;
+          restartBtn.disabled = false;
+          startBtn.disabled = false;
+        }
+
+        // 保存遊戲統計
+        function saveGameStats() {
+          localStorage.setItem("wordleGamesPlayed", gameState.gamesPlayed);
+          localStorage.setItem("wordleGamesWon", gameState.gamesWon);
+        }
+
+        // 加載遊戲統計
+        function loadGameStats() {
+          gameState.gamesPlayed = parseInt(
+            localStorage.getItem("wordleGamesPlayed") || "0"
+          );
+          gameState.gamesWon = parseInt(
+            localStorage.getItem("wordleGamesWon") || "0"
+          );
+          updateDisplays();
+        }
+
+        // 更新顯示
+        function updateDisplays() {
+          guessesDisplay.textContent = gameState.guesses;
+          hintsDisplay.textContent = gameState.hints;
+
+          // 計算勝率
+          const winRate =
+            gameState.gamesPlayed > 0
+              ? Math.round((gameState.gamesWon / gameState.gamesPlayed) * 100)
+              : 0;
+          winRateDisplay.textContent = winRate;
+        }
+
+        // 初始化遊戲
+        initializeGame();
+      });
+    </script>
+  </body>
+</html>

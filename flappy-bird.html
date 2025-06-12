@@ -154,9 +154,13 @@
           </ul>
         `
         );
-
         const scoreManager = new GameUtils.ScoreManager("scoreDisplay", 0);
         const gameController = new GameUtils.GameController();
+
+        // Setup help button
+        document.getElementById("helpButton").addEventListener("click", () => {
+          helpModal.show();
+        });
 
         // 遊戲相關變數
         const canvas = document.getElementById("flappyCanvas");

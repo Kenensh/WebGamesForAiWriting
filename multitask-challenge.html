@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>多重任務挑戰</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: "Arial", sans-serif;
+        overflow: hidden;
+        color: white;
+      }
+
+      .game-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        display: grid;
+        grid-template-areas:
+          "header header header"
+          "task1 task2 task3"
+          "footer footer footer";
+        grid-template-rows: 80px 1fr 100px;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+
+      .header {
+        grid-area: header;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        backdrop-filter: blur(10px);
+      }
+
+      .score-panel {
+        display: flex;
+        gap: 20px;
+        font-size: 1.2em;
+        font-weight: bold;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+      }
+
+      .control-button {
+        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.9em;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .control-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .task-panel {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .task-header {
+        text-align: center;
+        font-size: 1.3em;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #ffd700;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .task-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      /* 任務1: 點擊圓點 */
+      .click-area {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        cursor: pointer;
+      }
+
+      .click-dot {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #ff6b6b, #ee5a52);
+        border: 3px solid white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      .click-dot:hover {
+        transform: scale(1.1);
+      }
+
+      /* 任務2: 數學計算 */
+      .math-problem {
+        text-align: center;
+        font-size: 2em;
+        margin: 20px 0;
+        font-weight: bold;
+      }
+
+      .math-input {
+        font-size: 1.5em;
+        padding: 10px;
+        border: 2px solid #4ecdc4;
+        border-radius: 10px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.9);
+        color: #333;
+        width: 100px;
+      }
+
+      .math-input:focus {
+        outline: none;
+        border-color: #ffd700;
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+      }
+
+      /* 任務3: 記憶序列 */
+      .memory-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        width: 180px;
+        height: 180px;
+      }
+
+      .memory-button {
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.5em;
+        font-weight: bold;
+      }
+
+      .memory-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .memory-button.active {
+        background: #4ecdc4;
+        transform: scale(1.1);
+      }
+
+      .memory-button.correct {
+        background: #2ecc71;
+      }
+
+      .memory-button.wrong {
+        background: #e74c3c;
+      }
+
+      /* 任務進度 */
+      .task-progress {
+        margin-top: 10px;
+        font-size: 1em;
+        text-align: center;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 4px;
+        margin: 10px 0;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4ecdc4, #ffd700);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+      }
+
+      .footer {
+        grid-area: footer;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .time-display {
+        font-size: 2em;
+        font-weight: bold;
+        color: #ffd700;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .task-alert {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #ff6b6b;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.9em;
+        font-weight: bold;
+        animation: pulse 1s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+      }
+
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        color: white;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 10px;
+        backdrop-filter: blur(5px);
+      }
+
+      .back-button {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        z-index: 200;
+      }
+
+      .back-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      @media (max-width: 900px) {
+        .game-container {
+          grid-template-areas:
+            "header"
+            "task1"
+            "task2"
+            "task3"
+            "footer";
+          grid-template-rows: 80px 1fr 1fr 1fr 80px;
+          grid-template-columns: 1fr;
+        }
+
+        .score-panel {
+          font-size: 1em;
+          gap: 10px;
+        }
+
+        .task-header {
+          font-size: 1.1em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <button class="back-button" onclick="window.location.href='index.html'">
+      ← 返回
+    </button>
+
+    <div class="game-container">
+      <div class="header">
+        <div class="score-panel">
+          <div>總分: <span id="totalScore">0</span></div>
+          <div>完成任務: <span id="completedTasks">0</span></div>
+          <div>專注度: <span id="focusLevel">100%</span></div>
+        </div>
+
+        <div class="controls">
+          <button class="control-button" onclick="startGame()">開始遊戲</button>
+          <button class="control-button" onclick="pauseGame()">暫停</button>
+          <button class="control-button" onclick="showHelp()">說明</button>
+        </div>
+      </div>
+
+      <!-- 任務1: 點擊圓點 -->
+      <div class="task-panel" id="task1">
+        <div class="task-header">🎯 快速點擊</div>
+        <div class="task-content">
+          <div class="click-area" id="clickArea"></div>
+        </div>
+        <div class="task-progress">
+          點擊數: <span id="clickCount">0</span>/20
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              id="clickProgress"
+              style="width: 0%"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 任務2: 數學計算 -->
+      <div class="task-panel" id="task2">
+        <div class="task-header">🧮 心算挑戰</div>
+        <div class="task-content">
+          <div class="math-problem" id="mathProblem">準備開始...</div>
+          <input
+            type="number"
+            class="math-input"
+            id="mathInput"
+            placeholder="?"
+            disabled
+          />
+        </div>
+        <div class="task-progress">
+          計算題: <span id="mathCount">0</span>/15
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              id="mathProgress"
+              style="width: 0%"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 任務3: 記憶序列 -->
+      <div class="task-panel" id="task3">
+        <div class="task-header">🧠 記憶挑戰</div>
+        <div class="task-content">
+          <div class="memory-grid" id="memoryGrid">
+            <button class="memory-button" data-index="0">1</button>
+            <button class="memory-button" data-index="1">2</button>
+            <button class="memory-button" data-index="2">3</button>
+            <button class="memory-button" data-index="3">4</button>
+            <button class="memory-button" data-index="4">5</button>
+            <button class="memory-button" data-index="5">6</button>
+            <button class="memory-button" data-index="6">7</button>
+            <button class="memory-button" data-index="7">8</button>
+            <button class="memory-button" data-index="8">9</button>
+          </div>
+        </div>
+        <div class="task-progress">
+          序列長度: <span id="sequenceLength">3</span>
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              id="memoryProgress"
+              style="width: 0%"
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="time-display">
+          剩餘時間: <span id="timeDisplay">120</span>秒
+        </div>
+      </div>
+    </div>
+
+    <!-- 遊戲結束模態框 -->
+    <div class="modal" id="gameOverModal">
+      <div class="modal-content">
+        <h2>🎮 多重任務挑戰完成！</h2>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div>總分</div>
+            <div style="font-size: 1.5em; color: #ffd700" id="finalTotalScore">
+              0
+            </div>
+          </div>
+          <div class="stat-item">
+            <div>完成任務</div>
+            <div
+              style="font-size: 1.5em; color: #4ecdc4"
+              id="finalCompletedTasks"
+            >
+              0
+            </div>
+          </div>
+          <div class="stat-item">
+            <div>平均專注度</div>
+            <div style="font-size: 1.5em; color: #ff6b6b" id="avgFocus">
+              100%
+            </div>
+          </div>
+          <div class="stat-item">
+            <div>點擊任務</div>
+            <div style="font-size: 1.5em; color: #9b59b6" id="clickTaskScore">
+              0
+            </div>
+          </div>
+          <div class="stat-item">
+            <div>數學任務</div>
+            <div style="font-size: 1.5em; color: #e67e22" id="mathTaskScore">
+              0
+            </div>
+          </div>
+          <div class="stat-item">
+            <div>記憶任務</div>
+            <div style="font-size: 1.5em; color: #2ecc71" id="memoryTaskScore">
+              0
+            </div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="control-button" onclick="restartGame()">
+            再玩一次
+          </button>
+          <button class="control-button" onclick="closeModal()">
+            返回選單
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 說明模態框 -->
+    <div class="modal" id="helpModal">
+      <div class="modal-content">
+        <h2>🎮 遊戲說明</h2>
+        <div style="text-align: left; max-height: 60vh; overflow-y: auto">
+          <h3>📋 遊戲目標</h3>
+          <p>在120秒內同時進行三個不同的任務，測試你的多重任務處理能力！</p>
+
+          <h3>🎯 任務說明</h3>
+          <div style="margin: 15px 0">
+            <h4>任務1: 快速點擊 🎯</h4>
+            <ul>
+              <li>點擊出現的紅色圓點</li>
+              <li>圓點會在隨機位置出現</li>
+              <li>需要完成20次點擊</li>
+              <li>每次點擊得10分</li>
+            </ul>
+          </div>
+
+          <div style="margin: 15px 0">
+            <h4>任務2: 心算挑戰 🧮</h4>
+            <ul>
+              <li>解答出現的數學計算題</li>
+              <li>在輸入框中輸入答案</li>
+              <li>按Enter確認答案</li>
+              <li>需要完成15道題目</li>
+              <li>正確答案得20分</li>
+            </ul>
+          </div>
+
+          <div style="margin: 15px 0">
+            <h4>任務3: 記憶挑戰 🧠</h4>
+            <ul>
+              <li>記住按鈕閃光的順序</li>
+              <li>按相同順序點擊按鈕</li>
+              <li>序列長度會逐漸增加</li>
+              <li>正確完成得30分</li>
+            </ul>
+          </div>
+
+          <h3>📊 計分系統</h3>
+          <ul>
+            <li>每個任務都有獨立的分數</li>
+            <li>總分由三個任務分數相加</li>
+            <li>專注度影響最終得分</li>
+            <li>同時進行任務可獲得加成</li>
+          </ul>
+
+          <h3>🎯 小技巧</h3>
+          <ul>
+            <li>合理分配注意力到三個任務</li>
+            <li>先完成簡單的任務</li>
+            <li>保持冷靜，避免慌張</li>
+            <li>定期切換任務保持專注</li>
+          </ul>
+        </div>
+
+        <div class="controls" style="margin-top: 20px">
+          <button class="control-button" onclick="closeHelp()">確定</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      let gameState = "waiting"; // waiting, playing, paused, finished
+      let gameTime = 120;
+      let timeLeft = gameTime;
+      let gameTimer = null;
+
+      // 總分和統計
+      let totalScore = 0;
+      let completedTasks = 0;
+      let focusLevels = [];
+
+      // 任務1: 點擊任務
+      let clickTask = {
+        score: 0,
+        count: 0,
+        target: 20,
+        currentDot: null,
+        timer: null,
+      };
+
+      // 任務2: 數學任務
+      let mathTask = {
+        score: 0,
+        count: 0,
+        target: 15,
+        currentProblem: null,
+        answer: 0,
+      };
+
+      // 任務3: 記憶任務
+      let memoryTask = {
+        score: 0,
+        count: 0,
+        sequence: [],
+        playerSequence: [],
+        sequenceLength: 3,
+        showingSequence: false,
+        timer: null,
+      };
+
+      // 開始遊戲
+      function startGame() {
+        if (gameState === "playing") return;
+
+        gameState = "playing";
+        timeLeft = gameTime;
+        totalScore = 0;
+        completedTasks = 0;
+        focusLevels = [];
+
+        // 重置所有任務
+        resetTasks();
+        updateUI();
+
+        // 開始所有任務
+        startClickTask();
+        startMathTask();
+        startMemoryTask();
+
+        // 開始計時
+        gameTimer = setInterval(() => {
+          timeLeft--;
+          updateUI();
+
+          // 計算專注度（基於任務切換頻率）
+          calculateFocus();
+
+          if (timeLeft <= 0) {
+            endGame();
+          }
+        }, 1000);
+      }
+
+      // 暫停遊戲
+      function pauseGame() {
+        if (gameState === "playing") {
+          gameState = "paused";
+          clearInterval(gameTimer);
+          clearTimeout(clickTask.timer);
+          clearTimeout(memoryTask.timer);
+
+          // 禁用輸入
+          document.getElementById("mathInput").disabled = true;
+        } else if (gameState === "paused") {
+          gameState = "playing";
+
+          // 繼續計時
+          gameTimer = setInterval(() => {
+            timeLeft--;
+            updateUI();
+            calculateFocus();
+
+            if (timeLeft <= 0) {
+              endGame();
+            }
+          }, 1000);
+
+          // 重新啟動任務
+          if (clickTask.count < clickTask.target) {
+            continueClickTask();
+          }
+          if (mathTask.count < mathTask.target) {
+            document.getElementById("mathInput").disabled = false;
+          }
+          if (memoryTask.count < 10) {
+            continueMemoryTask();
+          }
+        }
+      }
+
+      // 重置所有任務
+      function resetTasks() {
+        // 重置點擊任務
+        clickTask = {
+          score: 0,
+          count: 0,
+          target: 20,
+          currentDot: null,
+          timer: null,
+        };
+
+        // 重置數學任務
+        mathTask = {
+          score: 0,
+          count: 0,
+          target: 15,
+          currentProblem: null,
+          answer: 0,
+        };
+
+        // 重置記憶任務
+        memoryTask = {
+          score: 0,
+          count: 0,
+          sequence: [],
+          playerSequence: [],
+          sequenceLength: 3,
+          showingSequence: false,
+          timer: null,
+        };
+
+        // 清理UI
+        document.getElementById("clickArea").innerHTML = "";
+        document.getElementById("mathInput").value = "";
+        document.getElementById("mathInput").disabled = true;
+
+        document.querySelectorAll(".memory-button").forEach((btn) => {
+          btn.classList.remove("active", "correct", "wrong");
+        });
+      }
+
+      // 任務1: 點擊任務
+      function startClickTask() {
+        if (gameState !== "playing" || clickTask.count >= clickTask.target)
+          return;
+
+        spawnClickDot();
+      }
+
+      function spawnClickDot() {
+        if (gameState !== "playing" || clickTask.count >= clickTask.target)
+          return;
+
+        // 移除舊圓點
+        if (clickTask.currentDot) {
+          clickTask.currentDot.remove();
+        }
+
+        const clickArea = document.getElementById("clickArea");
+        const areaRect = clickArea.getBoundingClientRect();
+
+        // 創建新圓點
+        const dot = document.createElement("div");
+        dot.className = "click-dot";
+        dot.textContent = "+10";
+
+        // 隨機位置
+        const x = Math.random() * (areaRect.width - 50);
+        const y = Math.random() * (areaRect.height - 50);
+        dot.style.left = x + "px";
+        dot.style.top = y + "px";
+
+        // 點擊事件
+        dot.addEventListener("click", () => {
+          clickTask.score += 10;
+          clickTask.count++;
+          totalScore += 10;
+
+          dot.remove();
+          clickTask.currentDot = null;
+
+          updateUI();
+
+          if (clickTask.count < clickTask.target) {
+            clickTask.timer = setTimeout(
+              spawnClickDot,
+              1000 + Math.random() * 2000
+            );
+          } else {
+            completedTasks++;
+            showTaskAlert("task1", "點擊任務完成！");
+          }
+        });
+
+        clickArea.appendChild(dot);
+        clickTask.currentDot = dot;
+
+        // 自動消失
+        setTimeout(() => {
+          if (dot.parentNode) {
+            dot.remove();
+            clickTask.currentDot = null;
+            if (clickTask.count < clickTask.target) {
+              clickTask.timer = setTimeout(
+                spawnClickDot,
+                500 + Math.random() * 1000
+              );
+            }
+          }
+        }, 3000);
+      }
+
+      function continueClickTask() {
+        if (clickTask.count < clickTask.target) {
+          clickTask.timer = setTimeout(spawnClickDot, 1000);
+        }
+      }
+
+      // 任務2: 數學任務
+      function startMathTask() {
+        if (gameState !== "playing" || mathTask.count >= mathTask.target)
+          return;
+
+        generateMathProblem();
+        document.getElementById("mathInput").disabled = false;
+      }
+
+      function generateMathProblem() {
+        if (mathTask.count >= mathTask.target) return;
+
+        const operations = ["+", "-", "*"];
+        const operation =
+          operations[Math.floor(Math.random() * operations.length)];
+
+        let a, b, answer;
+
+        switch (operation) {
+          case "+":
+            a = Math.floor(Math.random() * 50) + 10;
+            b = Math.floor(Math.random() * 50) + 10;
+            answer = a + b;
+            break;
+          case "-":
+            a = Math.floor(Math.random() * 50) + 30;
+            b = Math.floor(Math.random() * 20) + 5;
+            answer = a - b;
+            break;
+          case "*":
+            a = Math.floor(Math.random() * 12) + 3;
+            b = Math.floor(Math.random() * 12) + 3;
+            answer = a * b;
+            break;
+        }
+
+        mathTask.currentProblem = `${a} ${operation} ${b} = ?`;
+        mathTask.answer = answer;
+
+        document.getElementById("mathProblem").textContent =
+          mathTask.currentProblem;
+        document.getElementById("mathInput").value = "";
+        document.getElementById("mathInput").focus();
+      }
+
+      // 數學輸入處理
+      document
+        .getElementById("mathInput")
+        .addEventListener("keypress", (event) => {
+          if (event.key === "Enter" && gameState === "playing") {
+            const userAnswer = parseInt(
+              document.getElementById("mathInput").value
+            );
+
+            if (userAnswer === mathTask.answer) {
+              mathTask.score += 20;
+              mathTask.count++;
+              totalScore += 20;
+
+              updateUI();
+
+              if (mathTask.count < mathTask.target) {
+                setTimeout(generateMathProblem, 500);
+              } else {
+                completedTasks++;
+                showTaskAlert("task2", "數學任務完成！");
+                document.getElementById("mathProblem").textContent =
+                  "全部完成！";
+                document.getElementById("mathInput").disabled = true;
+              }
+            } else {
+              // 答錯了，顯示正確答案
+              document.getElementById("mathProblem").style.color = "#ff6b6b";
+              setTimeout(() => {
+                document.getElementById("mathProblem").style.color = "#fff";
+                generateMathProblem();
+              }, 1000);
+            }
+          }
+        });
+
+      // 任務3: 記憶任務
+      function startMemoryTask() {
+        if (gameState !== "playing" || memoryTask.count >= 10) return;
+
+        generateMemorySequence();
+      }
+
+      function generateMemorySequence() {
+        if (memoryTask.count >= 10) return;
+
+        memoryTask.sequence = [];
+        memoryTask.playerSequence = [];
+
+        // 生成隨機序列
+        for (let i = 0; i < memoryTask.sequenceLength; i++) {
+          memoryTask.sequence.push(Math.floor(Math.random() * 9));
+        }
+
+        showMemorySequence();
+      }
+
+      function showMemorySequence() {
+        memoryTask.showingSequence = true;
+        let index = 0;
+
+        const showNext = () => {
+          if (index < memoryTask.sequence.length) {
+            const buttonIndex = memoryTask.sequence[index];
+            const button = document.querySelector(
+              `[data-index="${buttonIndex}"]`
+            );
+
+            button.classList.add("active");
+            setTimeout(() => {
+              button.classList.remove("active");
+              index++;
+              setTimeout(showNext, 200);
+            }, 500);
+          } else {
+            memoryTask.showingSequence = false;
+            enableMemoryInput();
+          }
+        };
+
+        setTimeout(showNext, 1000);
+      }
+
+      function enableMemoryInput() {
+        document.querySelectorAll(".memory-button").forEach((button) => {
+          button.addEventListener("click", handleMemoryClick);
+        });
+      }
+
+      function handleMemoryClick(event) {
+        if (memoryTask.showingSequence || gameState !== "playing") return;
+
+        const buttonIndex = parseInt(event.target.dataset.index);
+        memoryTask.playerSequence.push(buttonIndex);
+
+        const expectedIndex =
+          memoryTask.sequence[memoryTask.playerSequence.length - 1];
+
+        if (buttonIndex === expectedIndex) {
+          event.target.classList.add("correct");
+          setTimeout(() => event.target.classList.remove("correct"), 300);
+
+          if (memoryTask.playerSequence.length === memoryTask.sequence.length) {
+            // 序列完成
+            memoryTask.score += 30;
+            memoryTask.count++;
+            totalScore += 30;
+
+            updateUI();
+
+            // 增加難度
+            if (memoryTask.count % 2 === 0 && memoryTask.sequenceLength < 6) {
+              memoryTask.sequenceLength++;
+            }
+
+            if (memoryTask.count < 10) {
+              setTimeout(() => {
+                disableMemoryInput();
+                generateMemorySequence();
+              }, 1000);
+            } else {
+              completedTasks++;
+              showTaskAlert("task3", "記憶任務完成！");
+              disableMemoryInput();
+            }
+          }
+        } else {
+          // 錯誤
+          event.target.classList.add("wrong");
+          setTimeout(() => event.target.classList.remove("wrong"), 300);
+
+          // 重新開始這個序列
+          setTimeout(() => {
+            disableMemoryInput();
+            generateMemorySequence();
+          }, 1000);
+        }
+      }
+
+      function disableMemoryInput() {
+        document.querySelectorAll(".memory-button").forEach((button) => {
+          button.removeEventListener("click", handleMemoryClick);
+        });
+      }
+
+      function continueMemoryTask() {
+        if (memoryTask.count < 10) {
+          setTimeout(generateMemorySequence, 1000);
+        }
+      }
+
+      // 顯示任務完成警告
+      function showTaskAlert(taskId, message) {
+        const task = document.getElementById(taskId);
+        const alert = document.createElement("div");
+        alert.className = "task-alert";
+        alert.textContent = message;
+
+        task.appendChild(alert);
+
+        setTimeout(() => {
+          if (alert.parentNode) {
+            alert.parentNode.removeChild(alert);
+          }
+        }, 3000);
+      }
+
+      // 計算專注度
+      function calculateFocus() {
+        // 基於任務完成效率計算專注度
+        const timeElapsed = gameTime - timeLeft;
+        if (timeElapsed === 0) return;
+
+        const expectedProgress = timeElapsed / gameTime;
+        const actualProgress =
+          (clickTask.count / clickTask.target +
+            mathTask.count / mathTask.target +
+            memoryTask.count / 10) /
+          3;
+
+        const focus = Math.min(
+          100,
+          Math.max(0, (actualProgress / expectedProgress) * 100)
+        );
+        focusLevels.push(focus);
+      }
+
+      // 更新UI
+      function updateUI() {
+        document.getElementById("totalScore").textContent = totalScore;
+        document.getElementById("completedTasks").textContent = completedTasks;
+        document.getElementById("timeDisplay").textContent = timeLeft;
+
+        // 更新專注度
+        const avgFocus =
+          focusLevels.length > 0
+            ? Math.round(
+                focusLevels.reduce((a, b) => a + b, 0) / focusLevels.length
+              )
+            : 100;
+        document.getElementById("focusLevel").textContent = avgFocus + "%";
+
+        // 更新任務進度
+        document.getElementById("clickCount").textContent = clickTask.count;
+        document.getElementById("clickProgress").style.width =
+          (clickTask.count / clickTask.target) * 100 + "%";
+
+        document.getElementById("mathCount").textContent = mathTask.count;
+        document.getElementById("mathProgress").style.width =
+          (mathTask.count / mathTask.target) * 100 + "%";
+
+        document.getElementById("sequenceLength").textContent =
+          memoryTask.sequenceLength;
+        document.getElementById("memoryProgress").style.width =
+          (memoryTask.count / 10) * 100 + "%";
+      }
+
+      // 結束遊戲
+      function endGame() {
+        gameState = "finished";
+        clearInterval(gameTimer);
+        clearTimeout(clickTask.timer);
+        clearTimeout(memoryTask.timer);
+
+        // 禁用所有輸入
+        document.getElementById("mathInput").disabled = true;
+        disableMemoryInput();
+
+        // 計算最終分數
+        const avgFocus =
+          focusLevels.length > 0
+            ? Math.round(
+                focusLevels.reduce((a, b) => a + b, 0) / focusLevels.length
+              )
+            : 100;
+
+        // 顯示結果
+        document.getElementById("finalTotalScore").textContent = totalScore;
+        document.getElementById("finalCompletedTasks").textContent =
+          completedTasks;
+        document.getElementById("avgFocus").textContent = avgFocus + "%";
+        document.getElementById("clickTaskScore").textContent = clickTask.score;
+        document.getElementById("mathTaskScore").textContent = mathTask.score;
+        document.getElementById("memoryTaskScore").textContent =
+          memoryTask.score;
+
+        document.getElementById("gameOverModal").style.display = "flex";
+
+        // 更新遊戲統計
+        GameUtils.updateGameStats("multitask-challenge", {
+          gamesPlayed: 1,
+          totalScore: totalScore,
+          bestScore: totalScore,
+        });
+      }
+
+      // 重新開始遊戲
+      function restartGame() {
+        closeModal();
+        startGame();
+      }
+
+      // 關閉模態框
+      function closeModal() {
+        document.getElementById("gameOverModal").style.display = "none";
+        gameState = "waiting";
+      }
+
+      // 顯示說明
+      function showHelp() {
+        document.getElementById("helpModal").style.display = "flex";
+      }
+
+      // 關閉說明
+      function closeHelp() {
+        document.getElementById("helpModal").style.display = "none";
+      }
+
+      // 鍵盤事件
+      document.addEventListener("keydown", (event) => {
+        switch (event.key) {
+          case " ":
+            if (event.target !== document.getElementById("mathInput")) {
+              event.preventDefault();
+              if (gameState === "waiting") {
+                startGame();
+              } else if (gameState === "playing" || gameState === "paused") {
+                pauseGame();
+              }
+            }
+            break;
+          case "Escape":
+            closeModal();
+            closeHelp();
+            break;
+          case "r":
+          case "R":
+            if (gameState === "finished") {
+              restartGame();
+            }
+            break;
+        }
+      });
+
+      // 點擊模態框外部關閉
+      document.querySelectorAll(".modal").forEach((modal) => {
+        modal.addEventListener("click", (event) => {
+          if (event.target === event.currentTarget) {
+            modal.style.display = "none";
+          }
+        });
+      });
+
+      // 初始化
+      updateUI();
+    </script>
+  </body>
+</html>

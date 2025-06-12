@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>精準瞄準</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        font-family: "Arial", sans-serif;
+        overflow: hidden;
+        color: white;
+      }
+
+      .game-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      .ui-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(5px);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .score-panel {
+        display: flex;
+        gap: 20px;
+        font-size: 1.2em;
+        font-weight: bold;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+      }
+
+      .control-button {
+        background: linear-gradient(45deg, #4ecdc4, #44a08d);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 1em;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .control-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-canvas {
+        width: 100%;
+        height: 100%;
+        cursor: crosshair;
+        background: radial-gradient(circle at center, #1e3c72 0%, #0f1429 100%);
+      }
+
+      .target {
+        position: absolute;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .target.normal {
+        background: radial-gradient(circle, #ff6b6b, #ee5a52);
+        border: 3px solid #fff;
+      }
+
+      .target.bonus {
+        background: radial-gradient(circle, #ffd700, #ffed4e);
+        border: 3px solid #fff;
+        animation: glow 1s ease-in-out infinite alternate;
+      }
+
+      .target.fast {
+        background: radial-gradient(circle, #4ecdc4, #44a08d);
+        border: 3px solid #fff;
+        animation: pulse 0.5s ease-in-out infinite;
+      }
+
+      .target.mini {
+        background: radial-gradient(circle, #9b59b6, #8e44ad);
+        border: 2px solid #fff;
+      }
+
+      @keyframes glow {
+        0% {
+          box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        100% {
+          box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+        }
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .hit-effect {
+        position: absolute;
+        pointer-events: none;
+        border-radius: 50%;
+        animation: hit-expand 0.5s ease-out forwards;
+      }
+
+      @keyframes hit-expand {
+        0% {
+          width: 20px;
+          height: 20px;
+          opacity: 1;
+          background: radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.8),
+            transparent
+          );
+        }
+        100% {
+          width: 100px;
+          height: 100px;
+          opacity: 0;
+          background: radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0),
+            transparent
+          );
+        }
+      }
+
+      .miss-effect {
+        position: absolute;
+        pointer-events: none;
+        color: #ff6b6b;
+        font-size: 2em;
+        font-weight: bold;
+        animation: miss-fade 1s ease-out forwards;
+      }
+
+      @keyframes miss-fade {
+        0% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-50px);
+        }
+      }
+
+      .score-popup {
+        position: absolute;
+        pointer-events: none;
+        color: #ffd700;
+        font-size: 1.5em;
+        font-weight: bold;
+        animation: score-rise 1s ease-out forwards;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      }
+
+      @keyframes score-rise {
+        0% {
+          opacity: 1;
+          transform: translateY(0) scale(0.8);
+        }
+        50% {
+          transform: translateY(-30px) scale(1.2);
+        }
+        100% {
+          opacity: 0;
+          transform: translateY(-60px) scale(1);
+        }
+      }
+
+      .game-over-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px;
+        border-radius: 20px;
+        text-align: center;
+        max-width: 500px;
+        color: white;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      }
+
+      .modal-content h2 {
+        margin: 0 0 20px 0;
+        font-size: 2.5em;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 10px;
+        backdrop-filter: blur(5px);
+      }
+
+      .difficulty-selector {
+        margin: 20px 0;
+      }
+
+      .difficulty-button {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 2px solid transparent;
+        padding: 10px 20px;
+        margin: 0 5px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: all 0.3s ease;
+      }
+
+      .difficulty-button.active {
+        border-color: #4ecdc4;
+        background: rgba(78, 205, 196, 0.3);
+      }
+
+      .difficulty-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .crosshair {
+        position: absolute;
+        pointer-events: none;
+        z-index: 50;
+        transform: translate(-50%, -50%);
+      }
+
+      .crosshair::before,
+      .crosshair::after {
+        content: "";
+        position: absolute;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 1px;
+      }
+
+      .crosshair::before {
+        width: 20px;
+        height: 2px;
+        left: -10px;
+        top: -1px;
+      }
+
+      .crosshair::after {
+        width: 2px;
+        height: 20px;
+        left: -1px;
+        top: -10px;
+      }
+
+      .back-button {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        z-index: 200;
+      }
+
+      .back-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      @media (max-width: 600px) {
+        .ui-overlay {
+          padding: 10px;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .score-panel {
+          font-size: 1em;
+          gap: 10px;
+        }
+
+        .controls {
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <button class="back-button" onclick="window.location.href='index.html'">
+      ← 返回
+    </button>
+
+    <div class="game-container">
+      <div class="ui-overlay">
+        <div class="score-panel">
+          <div>分數: <span id="score">0</span></div>
+          <div>命中: <span id="hits">0</span></div>
+          <div>精準度: <span id="accuracy">100%</span></div>
+          <div>時間: <span id="time">60</span>s</div>
+        </div>
+
+        <div class="controls">
+          <button class="control-button" onclick="startGame()">開始遊戲</button>
+          <button class="control-button" onclick="pauseGame()">暫停</button>
+          <button class="control-button" onclick="showSettings()">設定</button>
+          <button class="control-button" onclick="showHelp()">說明</button>
+        </div>
+      </div>
+
+      <div class="game-canvas" id="gameCanvas">
+        <div class="crosshair" id="crosshair"></div>
+      </div>
+    </div>
+
+    <!-- 遊戲結束模態框 -->
+    <div class="game-over-modal" id="gameOverModal">
+      <div class="modal-content">
+        <h2>🎯 遊戲結束</h2>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div>最終分數</div>
+            <div style="font-size: 1.5em; color: #ffd700" id="finalScore">
+              0
+            </div>
+          </div>
+          <div class="stat-item">
+            <div>命中目標</div>
+            <div style="font-size: 1.5em; color: #4ecdc4" id="finalHits">0</div>
+          </div>
+          <div class="stat-item">
+            <div>射擊精準度</div>
+            <div style="font-size: 1.5em; color: #ff6b6b" id="finalAccuracy">
+              100%
+            </div>
+          </div>
+          <div class="stat-item">
+            <div>平均反應時間</div>
+            <div style="font-size: 1.5em; color: #9b59b6" id="avgReaction">
+              0ms
+            </div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="control-button" onclick="restartGame()">
+            再玩一次
+          </button>
+          <button class="control-button" onclick="closeModal()">
+            返回選單
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 設定模態框 -->
+    <div class="game-over-modal" id="settingsModal">
+      <div class="modal-content">
+        <h2>⚙️ 遊戲設定</h2>
+
+        <div class="difficulty-selector">
+          <h3>難度選擇</h3>
+          <button
+            class="difficulty-button active"
+            onclick="setDifficulty('easy')"
+          >
+            簡單
+          </button>
+          <button class="difficulty-button" onclick="setDifficulty('normal')">
+            普通
+          </button>
+          <button class="difficulty-button" onclick="setDifficulty('hard')">
+            困難
+          </button>
+          <button class="difficulty-button" onclick="setDifficulty('expert')">
+            專家
+          </button>
+        </div>
+
+        <div style="margin: 20px 0">
+          <h3>遊戲時長</h3>
+          <button class="difficulty-button" onclick="setGameTime(30)">
+            30秒
+          </button>
+          <button class="difficulty-button active" onclick="setGameTime(60)">
+            60秒
+          </button>
+          <button class="difficulty-button" onclick="setGameTime(90)">
+            90秒
+          </button>
+          <button class="difficulty-button" onclick="setGameTime(120)">
+            120秒
+          </button>
+        </div>
+
+        <div class="controls">
+          <button class="control-button" onclick="closeSettings()">確定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 說明模態框 -->
+    <div class="game-over-modal" id="helpModal">
+      <div class="modal-content">
+        <h2>🎯 遊戲說明</h2>
+        <div style="text-align: left; max-height: 60vh; overflow-y: auto">
+          <h3>📋 遊戲目標</h3>
+          <p>在限定時間內點擊出現的目標，獲得最高分數和最佳精準度！</p>
+
+          <h3>🎮 操作方式</h3>
+          <ul>
+            <li>使用滑鼠瞄準並點擊目標</li>
+            <li>十字準星會跟隨滑鼠移動</li>
+            <li>快速準確地點擊以獲得高分</li>
+          </ul>
+
+          <h3>🎯 目標類型</h3>
+          <ul>
+            <li>🔴 普通目標: 基本分數</li>
+            <li>🟡 獎勵目標: 2倍分數 + 閃光效果</li>
+            <li>🔵 快速目標: 移動目標，高分值</li>
+            <li>🟣 迷你目標: 小尺寸，超高分值</li>
+          </ul>
+
+          <h3>📊 計分系統</h3>
+          <ul>
+            <li>根據目標類型和反應速度計分</li>
+            <li>連續命中獲得連擊加成</li>
+            <li>錯過目標會重置連擊</li>
+          </ul>
+
+          <h3>⚙️ 難度級別</h3>
+          <ul>
+            <li>簡單: 大目標，慢速度</li>
+            <li>普通: 中等大小和速度</li>
+            <li>困難: 小目標，快速消失</li>
+            <li>專家: 極小目標，極快速度</li>
+          </ul>
+        </div>
+
+        <div class="controls" style="margin-top: 20px">
+          <button class="control-button" onclick="closeHelp()">確定</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      let gameState = "waiting"; // waiting, playing, paused, finished
+      let score = 0;
+      let hits = 0;
+      let shots = 0;
+      let gameTime = 60;
+      let timeLeft = gameTime;
+      let targets = [];
+      let gameTimer = null;
+      let spawnTimer = null;
+      let difficulty = "normal";
+      let combo = 0;
+      let reactionTimes = [];
+      let targetStartTime = null;
+
+      const difficulties = {
+        easy: {
+          targetSize: { min: 80, max: 120 },
+          spawnRate: 1500,
+          lifetime: 3000,
+          maxTargets: 3,
+          speed: 0.5,
+        },
+        normal: {
+          targetSize: { min: 60, max: 100 },
+          spawnRate: 1200,
+          lifetime: 2500,
+          maxTargets: 4,
+          speed: 1,
+        },
+        hard: {
+          targetSize: { min: 40, max: 80 },
+          spawnRate: 1000,
+          lifetime: 2000,
+          maxTargets: 5,
+          speed: 1.5,
+        },
+        expert: {
+          targetSize: { min: 30, max: 60 },
+          spawnRate: 800,
+          lifetime: 1500,
+          maxTargets: 6,
+          speed: 2,
+        },
+      };
+
+      // 十字準星跟隨滑鼠
+      document.addEventListener("mousemove", (event) => {
+        const crosshair = document.getElementById("crosshair");
+        crosshair.style.left = event.clientX + "px";
+        crosshair.style.top = event.clientY + "px";
+      });
+
+      // 開始遊戲
+      function startGame() {
+        if (gameState === "playing") return;
+
+        gameState = "playing";
+        score = 0;
+        hits = 0;
+        shots = 0;
+        combo = 0;
+        timeLeft = gameTime;
+        targets = [];
+        reactionTimes = [];
+
+        updateUI();
+        clearTargets();
+
+        // 開始生成目標
+        spawnTargets();
+
+        // 開始倒數計時
+        gameTimer = setInterval(() => {
+          timeLeft--;
+          updateUI();
+
+          if (timeLeft <= 0) {
+            endGame();
+          }
+        }, 1000);
+      }
+
+      // 暫停遊戲
+      function pauseGame() {
+        if (gameState === "playing") {
+          gameState = "paused";
+          clearInterval(gameTimer);
+          clearTimeout(spawnTimer);
+
+          // 暫停所有目標動畫
+          targets.forEach((target) => {
+            target.element.style.animationPlayState = "paused";
+          });
+        } else if (gameState === "paused") {
+          gameState = "playing";
+
+          // 繼續倒數計時
+          gameTimer = setInterval(() => {
+            timeLeft--;
+            updateUI();
+
+            if (timeLeft <= 0) {
+              endGame();
+            }
+          }, 1000);
+
+          // 繼續生成目標
+          spawnTargets();
+
+          // 繼續所有目標動畫
+          targets.forEach((target) => {
+            target.element.style.animationPlayState = "running";
+          });
+        }
+      }
+
+      // 生成目標
+      function spawnTargets() {
+        if (gameState !== "playing") return;
+
+        const config = difficulties[difficulty];
+
+        // 如果目標數量未達上限，生成新目標
+        if (targets.length < config.maxTargets) {
+          createTarget();
+        }
+
+        spawnTimer = setTimeout(spawnTargets, config.spawnRate);
+      }
+
+      // 創建目標
+      function createTarget() {
+        const config = difficulties[difficulty];
+        const canvas = document.getElementById("gameCanvas");
+        const canvasRect = canvas.getBoundingClientRect();
+
+        // 隨機目標類型
+        const types = ["normal", "normal", "normal", "bonus", "fast", "mini"];
+        const type = types[Math.floor(Math.random() * types.length)];
+
+        // 根據類型設定大小
+        let size;
+        switch (type) {
+          case "bonus":
+            size =
+              Math.random() * (config.targetSize.max - config.targetSize.min) +
+              config.targetSize.min;
+            break;
+          case "fast":
+            size = (config.targetSize.min + config.targetSize.max) / 2;
+            break;
+          case "mini":
+            size = config.targetSize.min * 0.7;
+            break;
+          default:
+            size =
+              Math.random() * (config.targetSize.max - config.targetSize.min) +
+              config.targetSize.min;
+        }
+
+        // 隨機位置（確保完全在畫布內）
+        const x = Math.random() * (canvasRect.width - size - 40) + 20;
+        const y = Math.random() * (canvasRect.height - size - 120) + 100; // 避開UI區域
+
+        // 創建目標元素
+        const targetElement = document.createElement("div");
+        targetElement.className = `target ${type}`;
+        targetElement.style.width = size + "px";
+        targetElement.style.height = size + "px";
+        targetElement.style.left = x + "px";
+        targetElement.style.top = y + "px";
+
+        // 設定分數顯示
+        const baseScore = Math.round(size / 10);
+        const scoreText =
+          type === "bonus"
+            ? baseScore * 2
+            : type === "fast"
+            ? baseScore * 1.5
+            : type === "mini"
+            ? baseScore * 3
+            : baseScore;
+        targetElement.textContent = "+" + Math.round(scoreText);
+
+        const target = {
+          element: targetElement,
+          type: type,
+          size: size,
+          x: x,
+          y: y,
+          baseScore: Math.round(scoreText),
+          startTime: performance.now(),
+          lifetime: config.lifetime,
+        };
+
+        // 點擊事件
+        targetElement.addEventListener("click", (event) => {
+          event.stopPropagation();
+          hitTarget(target);
+        });
+
+        canvas.appendChild(targetElement);
+        targets.push(target);
+
+        // 如果是移動目標，添加移動動畫
+        if (type === "fast") {
+          moveTarget(target);
+        }
+
+        // 設定生命週期
+        setTimeout(() => {
+          removeTarget(target);
+        }, config.lifetime);
+      }
+
+      // 移動目標
+      function moveTarget(target) {
+        const canvas = document.getElementById("gameCanvas");
+        const canvasRect = canvas.getBoundingClientRect();
+        const config = difficulties[difficulty];
+
+        let vx = (Math.random() - 0.5) * config.speed * 2;
+        let vy = (Math.random() - 0.5) * config.speed * 2;
+
+        const moveInterval = setInterval(() => {
+          if (gameState !== "playing" || !targets.includes(target)) {
+            clearInterval(moveInterval);
+            return;
+          }
+
+          target.x += vx;
+          target.y += vy;
+
+          // 邊界碰撞檢測
+          if (target.x <= 0 || target.x >= canvasRect.width - target.size) {
+            vx = -vx;
+            target.x = Math.max(
+              0,
+              Math.min(canvasRect.width - target.size, target.x)
+            );
+          }
+          if (target.y <= 100 || target.y >= canvasRect.height - target.size) {
+            vy = -vy;
+            target.y = Math.max(
+              100,
+              Math.min(canvasRect.height - target.size, target.y)
+            );
+          }
+
+          target.element.style.left = target.x + "px";
+          target.element.style.top = target.y + "px";
+        }, 16);
+      }
+
+      // 命中目標
+      function hitTarget(target) {
+        if (gameState !== "playing") return;
+
+        hits++;
+        shots++;
+        combo++;
+
+        // 計算反應時間
+        const reactionTime = performance.now() - target.startTime;
+        reactionTimes.push(reactionTime);
+
+        // 計算分數（包含連擊加成）
+        const comboMultiplier = Math.min(1 + (combo - 1) * 0.1, 3); // 最高3倍
+        const finalScore = Math.round(target.baseScore * comboMultiplier);
+        score += finalScore;
+
+        // 創建命中效果
+        createHitEffect(target.x + target.size / 2, target.y + target.size / 2);
+        createScorePopup(
+          target.x + target.size / 2,
+          target.y + target.size / 2,
+          `+${finalScore}`
+        );
+
+        // 移除目標
+        removeTarget(target);
+        updateUI();
+      }
+
+      // 移除目標
+      function removeTarget(target) {
+        const index = targets.indexOf(target);
+        if (index > -1) {
+          targets.splice(index, 1);
+          if (target.element && target.element.parentNode) {
+            target.element.parentNode.removeChild(target.element);
+          }
+        }
+      }
+
+      // 清空所有目標
+      function clearTargets() {
+        targets.forEach((target) => {
+          if (target.element && target.element.parentNode) {
+            target.element.parentNode.removeChild(target.element);
+          }
+        });
+        targets = [];
+      }
+
+      // 創建命中效果
+      function createHitEffect(x, y) {
+        const effect = document.createElement("div");
+        effect.className = "hit-effect";
+        effect.style.left = x - 10 + "px";
+        effect.style.top = y - 10 + "px";
+
+        document.getElementById("gameCanvas").appendChild(effect);
+
+        setTimeout(() => {
+          if (effect.parentNode) {
+            effect.parentNode.removeChild(effect);
+          }
+        }, 500);
+      }
+
+      // 創建分數彈出效果
+      function createScorePopup(x, y, text) {
+        const popup = document.createElement("div");
+        popup.className = "score-popup";
+        popup.textContent = text;
+        popup.style.left = x + "px";
+        popup.style.top = y + "px";
+
+        document.getElementById("gameCanvas").appendChild(popup);
+
+        setTimeout(() => {
+          if (popup.parentNode) {
+            popup.parentNode.removeChild(popup);
+          }
+        }, 1000);
+      }
+
+      // 處理畫布點擊（錯過）
+      document
+        .getElementById("gameCanvas")
+        .addEventListener("click", (event) => {
+          if (gameState === "playing") {
+            shots++;
+            combo = 0; // 重置連擊
+
+            // 創建錯過效果
+            const effect = document.createElement("div");
+            effect.className = "miss-effect";
+            effect.textContent = "MISS";
+            effect.style.left = event.clientX + "px";
+            effect.style.top = event.clientY + "px";
+
+            document.body.appendChild(effect);
+
+            setTimeout(() => {
+              if (effect.parentNode) {
+                effect.parentNode.removeChild(effect);
+              }
+            }, 1000);
+
+            updateUI();
+          }
+        });
+
+      // 更新UI
+      function updateUI() {
+        document.getElementById("score").textContent = score;
+        document.getElementById("hits").textContent = hits;
+        document.getElementById("time").textContent = timeLeft;
+
+        const accuracy = shots > 0 ? Math.round((hits / shots) * 100) : 100;
+        document.getElementById("accuracy").textContent = accuracy + "%";
+      }
+
+      // 結束遊戲
+      function endGame() {
+        gameState = "finished";
+        clearInterval(gameTimer);
+        clearTimeout(spawnTimer);
+        clearTargets();
+
+        // 計算平均反應時間
+        const avgReaction =
+          reactionTimes.length > 0
+            ? Math.round(
+                reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length
+              )
+            : 0;
+
+        // 顯示結果
+        document.getElementById("finalScore").textContent = score;
+        document.getElementById("finalHits").textContent = hits;
+        document.getElementById("finalAccuracy").textContent =
+          shots > 0 ? Math.round((hits / shots) * 100) + "%" : "100%";
+        document.getElementById("avgReaction").textContent = avgReaction + "ms";
+
+        document.getElementById("gameOverModal").style.display = "flex";
+
+        // 更新遊戲統計
+        GameUtils.updateGameStats("precision-aim", {
+          gamesPlayed: 1,
+          totalScore: score,
+          bestScore: score,
+        });
+      }
+
+      // 重新開始遊戲
+      function restartGame() {
+        closeModal();
+        startGame();
+      }
+
+      // 關閉模態框
+      function closeModal() {
+        document.getElementById("gameOverModal").style.display = "none";
+        gameState = "waiting";
+      }
+
+      // 設定難度
+      function setDifficulty(newDifficulty) {
+        difficulty = newDifficulty;
+
+        // 更新按鈕狀態
+        document.querySelectorAll(".difficulty-button").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+        event.target.classList.add("active");
+      }
+
+      // 設定遊戲時間
+      function setGameTime(time) {
+        gameTime = time;
+        timeLeft = time;
+        updateUI();
+
+        // 更新按鈕狀態
+        document.querySelectorAll(".difficulty-button").forEach((btn) => {
+          if (btn.textContent.includes(time + "秒")) {
+            btn.classList.add("active");
+          } else if (btn.textContent.includes("秒")) {
+            btn.classList.remove("active");
+          }
+        });
+      }
+
+      // 顯示設定
+      function showSettings() {
+        document.getElementById("settingsModal").style.display = "flex";
+      }
+
+      // 關閉設定
+      function closeSettings() {
+        document.getElementById("settingsModal").style.display = "none";
+      }
+
+      // 顯示說明
+      function showHelp() {
+        document.getElementById("helpModal").style.display = "flex";
+      }
+
+      // 關閉說明
+      function closeHelp() {
+        document.getElementById("helpModal").style.display = "none";
+      }
+
+      // 鍵盤事件
+      document.addEventListener("keydown", (event) => {
+        switch (event.key) {
+          case " ":
+            event.preventDefault();
+            if (gameState === "waiting") {
+              startGame();
+            } else if (gameState === "playing" || gameState === "paused") {
+              pauseGame();
+            }
+            break;
+          case "Escape":
+            closeModal();
+            closeSettings();
+            closeHelp();
+            break;
+          case "r":
+          case "R":
+            if (gameState === "finished") {
+              restartGame();
+            }
+            break;
+        }
+      });
+
+      // 點擊模態框外部關閉
+      document.querySelectorAll(".game-over-modal").forEach((modal) => {
+        modal.addEventListener("click", (event) => {
+          if (event.target === event.currentTarget) {
+            modal.style.display = "none";
+          }
+        });
+      });
+
+      // 初始化
+      updateUI();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>圖案快打 - 網頁小遊戲</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+      }
+
+      .game-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        max-width: 900px;
+        width: 95%;
+      }
+
+      h1 {
+        margin-bottom: 20px;
+        font-size: 2.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .controls {
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .difficulty-selector {
+        margin: 20px 0;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .difficulty-btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        min-width: 80px;
+      }
+
+      .difficulty-btn.active {
+        background: rgba(76, 175, 80, 0.7);
+        border-color: #4caf50;
+      }
+
+      .game-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .info-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .info-label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin-bottom: 5px;
+      }
+
+      .info-value {
+        font-size: 1.2rem;
+        font-weight: bold;
+      }
+
+      .pattern-display {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px 0;
+        min-height: 120px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+
+      .pattern {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .pattern-symbol {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .pattern-symbol.highlight {
+        background: rgba(255, 255, 255, 0.4);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        transform: scale(1.1);
+      }
+
+      .input-area {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+
+      .symbol-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 10px;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .symbol-btn {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        color: white;
+        font-size: 1.8rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .symbol-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.05);
+      }
+
+      .symbol-btn:active {
+        transform: scale(0.95);
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 5px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4caf50, #8bc34a);
+        border-radius: 5px;
+        transition: width 0.3s ease;
+      }
+
+      .input-display {
+        margin: 15px 0;
+        font-size: 1.5rem;
+        font-weight: bold;
+        min-height: 2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .input-symbol {
+        padding: 5px 10px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .input-symbol.correct {
+        background: rgba(76, 175, 80, 0.7);
+        border-color: #4caf50;
+      }
+
+      .input-symbol.incorrect {
+        background: rgba(244, 67, 54, 0.7);
+        border-color: #f44336;
+      }
+
+      .countdown {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 4rem;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        z-index: 100;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+      }
+
+      .modal-content {
+        background: rgba(255, 255, 255, 0.95);
+        color: #333;
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 500px;
+        position: relative;
+        backdrop-filter: blur(10px);
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        position: absolute;
+        right: 15px;
+        top: 10px;
+      }
+
+      .close:hover {
+        color: #000;
+      }
+
+      @media (max-width: 768px) {
+        .game-container {
+          padding: 20px;
+          margin: 10px;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+
+        .pattern-symbol {
+          width: 50px;
+          height: 50px;
+          font-size: 1.2rem;
+        }
+
+        .symbol-btn {
+          width: 70px;
+          height: 70px;
+          font-size: 1.5rem;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .btn {
+          width: 200px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1><i class="fas fa-puzzle-piece"></i> 圖案快打</h1>
+
+      <div class="controls">
+        <button class="btn" onclick="startGame()" id="startBtn">
+          <i class="fas fa-play"></i> 開始遊戲
+        </button>
+        <button class="btn" onclick="pauseGame()" id="pauseBtn" disabled>
+          <i class="fas fa-pause"></i> 暫停
+        </button>
+        <button class="btn" onclick="resetGame()">
+          <i class="fas fa-redo"></i> 重置
+        </button>
+        <button class="btn" onclick="showHelp()">
+          <i class="fas fa-question-circle"></i> 說明
+        </button>
+        <button class="btn" onclick="window.location.href='index.html'">
+          <i class="fas fa-home"></i> 返回選單
+        </button>
+      </div>
+
+      <div class="difficulty-selector">
+        <button
+          class="btn difficulty-btn active"
+          onclick="setDifficulty('easy')"
+        >
+          簡單
+        </button>
+        <button class="btn difficulty-btn" onclick="setDifficulty('medium')">
+          中等
+        </button>
+        <button class="btn difficulty-btn" onclick="setDifficulty('hard')">
+          困難
+        </button>
+        <button class="btn difficulty-btn" onclick="setDifficulty('expert')">
+          專家
+        </button>
+      </div>
+
+      <div class="game-info">
+        <div class="info-item">
+          <div class="info-label">分數</div>
+          <div class="info-value" id="score">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">關卡</div>
+          <div class="info-value" id="level">1</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">連擊</div>
+          <div class="info-value" id="streak">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">準確率</div>
+          <div class="info-value" id="accuracy">100%</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">最高分</div>
+          <div class="info-value" id="bestScore">0</div>
+        </div>
+      </div>
+
+      <div class="pattern-display" id="patternDisplay">
+        <div style="font-size: 1.5rem; opacity: 0.7">
+          選擇難度並點擊開始遊戲
+        </div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+
+      <div class="input-area">
+        <div class="input-display" id="inputDisplay">等待輸入...</div>
+
+        <div class="symbol-buttons" id="symbolButtons">
+          <!-- 符號按鈕將由 JavaScript 生成 -->
+        </div>
+
+        <div style="margin-top: 15px">
+          <button class="btn" onclick="clearInput()">
+            <i class="fas fa-eraser"></i> 清除
+          </button>
+          <button class="btn" onclick="submitInput()">
+            <i class="fas fa-check"></i> 確認
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 說明模態框 -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeHelp()">&times;</span>
+        <h2><i class="fas fa-info-circle"></i> 圖案快打說明</h2>
+        <h3>遊戲規則：</h3>
+        <ul style="margin: 15px 0; padding-left: 20px">
+          <li>觀察顯示的圖案序列</li>
+          <li>在時間限制內快速重現相同序列</li>
+          <li>使用下方按鈕輸入對應符號</li>
+          <li>完成正確序列獲得分數並進入下一關</li>
+          <li>錯誤輸入會減少生命值</li>
+        </ul>
+        <h3>難度差異：</h3>
+        <ul style="margin: 15px 0; padding-left: 20px">
+          <li><strong>簡單：</strong>3-4個符號，較長時間限制</li>
+          <li><strong>中等：</strong>4-5個符號，中等時間限制</li>
+          <li><strong>困難：</strong>5-6個符號，較短時間限制</li>
+          <li><strong>專家：</strong>6-8個符號，最短時間限制</li>
+        </ul>
+        <h3>計分系統：</h3>
+        <ul style="margin: 15px 0; padding-left: 20px">
+          <li>完成序列獲得基礎分數</li>
+          <li>連續正確有連擊加成</li>
+          <li>剩餘時間越多獲得時間獎勵</li>
+          <li>關卡越高分數倍數越大</li>
+        </ul>
+        <h3>操作提示：</h3>
+        <ul style="margin: 15px 0; padding-left: 20px">
+          <li>可以使用「清除」按鈕重新輸入</li>
+          <li>按「確認」提交答案</li>
+          <li>支援鍵盤快速鍵操作</li>
+        </ul>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      let gameState = "idle"; // idle, playing, paused, gameOver
+      let score = 0;
+      let level = 1;
+      let streak = 0;
+      let totalAttempts = 0;
+      let correctAttempts = 0;
+      let currentPattern = [];
+      let userInput = [];
+      let timeLeft = 0;
+      let maxTime = 0;
+      let gameTimer = null;
+      let currentDifficulty = "easy";
+
+      // 符號集合
+      const symbols = [
+        "⭐",
+        "❤️",
+        "🔥",
+        "⚡",
+        "🎯",
+        "🎮",
+        "🚀",
+        "💎",
+        "🌟",
+        "🎨",
+        "🎪",
+        "🎭",
+      ];
+
+      const difficulties = {
+        easy: {
+          name: "簡單",
+          minLength: 3,
+          maxLength: 4,
+          timePerSymbol: 3,
+          symbolCount: 6,
+        },
+        medium: {
+          name: "中等",
+          minLength: 4,
+          maxLength: 5,
+          timePerSymbol: 2.5,
+          symbolCount: 8,
+        },
+        hard: {
+          name: "困難",
+          minLength: 5,
+          maxLength: 6,
+          timePerSymbol: 2,
+          symbolCount: 10,
+        },
+        expert: {
+          name: "專家",
+          minLength: 6,
+          maxLength: 8,
+          timePerSymbol: 1.5,
+          symbolCount: 12,
+        },
+      };
+
+      // 從本地存儲載入最高分
+      function loadBestScore() {
+        const saved = localStorage.getItem(`patternRush_${currentDifficulty}`);
+        return saved ? parseInt(saved) : 0;
+      }
+
+      // 保存最高分
+      function saveBestScore() {
+        const bestScore = loadBestScore();
+        if (score > bestScore) {
+          localStorage.setItem(
+            `patternRush_${currentDifficulty}`,
+            score.toString()
+          );
+          return true;
+        }
+        return false;
+      }
+
+      // 設置難度
+      function setDifficulty(difficulty) {
+        if (gameState === "playing") return;
+
+        currentDifficulty = difficulty;
+
+        // 更新按鈕狀態
+        document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+        event.target.classList.add("active");
+
+        // 更新最高分顯示
+        updateBestScore();
+
+        // 重新生成符號按鈕
+        generateSymbolButtons();
+      }
+
+      // 更新最高分顯示
+      function updateBestScore() {
+        document.getElementById("bestScore").textContent = loadBestScore();
+      }
+
+      // 生成符號按鈕
+      function generateSymbolButtons() {
+        const container = document.getElementById("symbolButtons");
+        const difficulty = difficulties[currentDifficulty];
+        const availableSymbols = symbols.slice(0, difficulty.symbolCount);
+
+        container.innerHTML = availableSymbols
+          .map(
+            (symbol) =>
+              `<button class="symbol-btn" onclick="addSymbol('${symbol}')">${symbol}</button>`
+          )
+          .join("");
+      }
+
+      // 開始遊戲
+      function startGame() {
+        if (gameState === "playing") return;
+
+        gameState = "playing";
+        score = 0;
+        level = 1;
+        streak = 0;
+        totalAttempts = 0;
+        correctAttempts = 0;
+
+        document.getElementById("startBtn").disabled = true;
+        document.getElementById("pauseBtn").disabled = false;
+
+        updateUI();
+        startCountdown();
+      }
+
+      // 開始倒數
+      function startCountdown() {
+        let count = 3;
+        showCountdown(count);
+
+        const countdownTimer = setInterval(() => {
+          count--;
+          if (count > 0) {
+            showCountdown(count);
+          } else {
+            hideCountdown();
+            generateNewPattern();
+            clearInterval(countdownTimer);
+          }
+        }, 1000);
+      }
+
+      // 顯示倒數
+      function showCountdown(count) {
+        const patternDisplay = document.getElementById("patternDisplay");
+        patternDisplay.innerHTML = `<div class="countdown">${count}</div>`;
+      }
+
+      // 隱藏倒數
+      function hideCountdown() {
+        // 倒數結束後會被新圖案替換
+      }
+
+      // 生成新圖案
+      function generateNewPattern() {
+        if (gameState !== "playing") return;
+
+        const difficulty = difficulties[currentDifficulty];
+        const availableSymbols = symbols.slice(0, difficulty.symbolCount);
+
+        // 計算圖案長度（隨關卡增加）
+        const baseLength = difficulty.minLength + Math.floor((level - 1) / 3);
+        const patternLength = Math.min(baseLength, difficulty.maxLength);
+
+        // 生成隨機圖案
+        currentPattern = [];
+        for (let i = 0; i < patternLength; i++) {
+          currentPattern.push(
+            availableSymbols[
+              Math.floor(Math.random() * availableSymbols.length)
+            ]
+          );
+        }
+
+        // 計算時間限制
+        maxTime = Math.ceil(currentPattern.length * difficulty.timePerSymbol);
+        timeLeft = maxTime;
+
+        // 顯示圖案
+        displayPattern();
+
+        // 清空用戶輸入
+        userInput = [];
+        updateInputDisplay();
+
+        // 開始計時
+        startTimer();
+      }
+
+      // 顯示圖案
+      function displayPattern() {
+        const patternDisplay = document.getElementById("patternDisplay");
+        patternDisplay.innerHTML = `
+                <div class="pattern">
+                    ${currentPattern
+                      .map(
+                        (symbol, index) =>
+                          `<div class="pattern-symbol" style="animation-delay: ${
+                            index * 0.2
+                          }s">${symbol}</div>`
+                      )
+                      .join("")}
+                </div>
+            `;
+
+        // 逐個高亮顯示
+        const symbols = patternDisplay.querySelectorAll(".pattern-symbol");
+        symbols.forEach((symbolElement, index) => {
+          setTimeout(() => {
+            symbolElement.classList.add("highlight");
+            setTimeout(() => symbolElement.classList.remove("highlight"), 500);
+          }, index * 300);
+        });
+      }
+
+      // 開始計時
+      function startTimer() {
+        clearInterval(gameTimer);
+        gameTimer = setInterval(() => {
+          timeLeft--;
+          updateProgressBar();
+
+          if (timeLeft <= 0) {
+            timeUp();
+          }
+        }, 1000);
+      }
+
+      // 更新進度條
+      function updateProgressBar() {
+        const progress = (timeLeft / maxTime) * 100;
+        document.getElementById("progressFill").style.width = progress + "%";
+      }
+
+      // 添加符號到輸入
+      function addSymbol(symbol) {
+        if (gameState !== "playing") return;
+        if (userInput.length >= currentPattern.length) return;
+
+        userInput.push(symbol);
+        updateInputDisplay();
+
+        // 自動檢查是否完成
+        if (userInput.length === currentPattern.length) {
+          setTimeout(submitInput, 500);
+        }
+      }
+
+      // 清除輸入
+      function clearInput() {
+        if (gameState !== "playing") return;
+        userInput = [];
+        updateInputDisplay();
+      }
+
+      // 更新輸入顯示
+      function updateInputDisplay() {
+        const inputDisplay = document.getElementById("inputDisplay");
+
+        if (userInput.length === 0) {
+          inputDisplay.innerHTML = "等待輸入...";
+          return;
+        }
+
+        inputDisplay.innerHTML = userInput
+          .map((symbol, index) => {
+            let className = "input-symbol";
+            if (index < currentPattern.length) {
+              if (symbol === currentPattern[index]) {
+                className += " correct";
+              } else {
+                className += " incorrect";
+              }
+            }
+            return `<span class="${className}">${symbol}</span>`;
+          })
+          .join("");
+      }
+
+      // 提交輸入
+      function submitInput() {
+        if (gameState !== "playing" || userInput.length === 0) return;
+
+        totalAttempts++;
+        const isCorrect = arraysEqual(userInput, currentPattern);
+
+        if (isCorrect) {
+          correctAttempts++;
+          streak++;
+
+          // 計算分數
+          const baseScore = currentPattern.length * 100;
+          const timeBonus = Math.floor(timeLeft * 10);
+          const streakBonus = streak * 50;
+          const levelMultiplier = 1 + (level - 1) * 0.1;
+
+          const roundScore = Math.floor(
+            (baseScore + timeBonus + streakBonus) * levelMultiplier
+          );
+          score += roundScore;
+
+          level++;
+
+          // 顯示成功效果
+          showSuccess(roundScore);
+
+          // 延遲生成下一關
+          setTimeout(() => {
+            generateNewPattern();
+          }, 1500);
+        } else {
+          streak = 0;
+
+          // 顯示失敗效果
+          showFailure();
+
+          // 重新開始當前關卡
+          setTimeout(() => {
+            generateNewPattern();
+          }, 1500);
+        }
+
+        updateUI();
+      }
+
+      // 顯示成功效果
+      function showSuccess(roundScore) {
+        const patternDisplay = document.getElementById("patternDisplay");
+        patternDisplay.innerHTML = `
+                <div style="color: #4CAF50; font-size: 2rem; font-weight: bold;">
+                    <i class="fas fa-check-circle"></i><br>
+                    正確！<br>
+                    <span style="font-size: 1.2rem;">+${roundScore} 分</span>
+                </div>
+            `;
+      }
+
+      // 顯示失敗效果
+      function showFailure() {
+        const patternDisplay = document.getElementById("patternDisplay");
+        patternDisplay.innerHTML = `
+                <div style="color: #f44336; font-size: 2rem; font-weight: bold;">
+                    <i class="fas fa-times-circle"></i><br>
+                    錯誤！<br>
+                    <span style="font-size: 1rem;">正確答案：${currentPattern.join(
+                      " "
+                    )}</span>
+                </div>
+            `;
+      }
+
+      // 時間到
+      function timeUp() {
+        clearInterval(gameTimer);
+        streak = 0;
+        totalAttempts++;
+
+        const patternDisplay = document.getElementById("patternDisplay");
+        patternDisplay.innerHTML = `
+                <div style="color: #ff9800; font-size: 2rem; font-weight: bold;">
+                    <i class="fas fa-clock"></i><br>
+                    時間到！<br>
+                    <span style="font-size: 1rem;">正確答案：${currentPattern.join(
+                      " "
+                    )}</span>
+                </div>
+            `;
+
+        updateUI();
+
+        // 重新開始當前關卡
+        setTimeout(() => {
+          generateNewPattern();
+        }, 2000);
+      }
+
+      // 暫停遊戲
+      function pauseGame() {
+        if (gameState !== "playing") return;
+
+        gameState = "paused";
+        clearInterval(gameTimer);
+
+        document.getElementById("startBtn").disabled = false;
+        document.getElementById("pauseBtn").disabled = true;
+
+        const patternDisplay = document.getElementById("patternDisplay");
+        patternDisplay.innerHTML = `
+                <div style="font-size: 2rem; font-weight: bold;">
+                    <i class="fas fa-pause"></i><br>
+                    遊戲已暫停
+                </div>
+            `;
+      }
+
+      // 重置遊戲
+      function resetGame() {
+        gameState = "idle";
+        clearInterval(gameTimer);
+
+        score = 0;
+        level = 1;
+        streak = 0;
+        totalAttempts = 0;
+        correctAttempts = 0;
+        currentPattern = [];
+        userInput = [];
+        timeLeft = 0;
+
+        document.getElementById("startBtn").disabled = false;
+        document.getElementById("pauseBtn").disabled = true;
+
+        const patternDisplay = document.getElementById("patternDisplay");
+        patternDisplay.innerHTML = `
+                <div style="font-size: 1.5rem; opacity: 0.7;">
+                    選擇難度並點擊開始遊戲
+                </div>
+            `;
+
+        document.getElementById("inputDisplay").innerHTML = "等待輸入...";
+        document.getElementById("progressFill").style.width = "0%";
+
+        updateUI();
+      }
+
+      // 比較數組是否相等
+      function arraysEqual(a, b) {
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) {
+          if (a[i] !== b[i]) return false;
+        }
+        return true;
+      }
+
+      // 更新UI
+      function updateUI() {
+        document.getElementById("score").textContent = score;
+        document.getElementById("level").textContent = level;
+        document.getElementById("streak").textContent = streak;
+
+        const accuracy =
+          totalAttempts > 0
+            ? Math.round((correctAttempts / totalAttempts) * 100)
+            : 100;
+        document.getElementById("accuracy").textContent = accuracy + "%";
+      }
+
+      // 鍵盤事件
+      document.addEventListener("keydown", (e) => {
+        if (gameState !== "playing") return;
+
+        if (e.code === "Backspace") {
+          e.preventDefault();
+          if (userInput.length > 0) {
+            userInput.pop();
+            updateInputDisplay();
+          }
+        } else if (e.code === "Enter") {
+          e.preventDefault();
+          submitInput();
+        } else if (e.code === "Escape") {
+          e.preventDefault();
+          clearInput();
+        }
+      });
+
+      // 顯示說明
+      function showHelp() {
+        document.getElementById("helpModal").style.display = "block";
+      }
+
+      // 關閉說明
+      function closeHelp() {
+        document.getElementById("helpModal").style.display = "none";
+      }
+
+      // 點擊模態框外部關閉
+      window.onclick = function (event) {
+        const modal = document.getElementById("helpModal");
+        if (event.target === modal) {
+          modal.style.display = "none";
+        }
+      };
+
+      // 初始化
+      document.addEventListener("DOMContentLoaded", () => {
+        updateBestScore();
+        generateSymbolButtons();
+        updateUI();
+      });
+    </script>
+  </body>
+</html>

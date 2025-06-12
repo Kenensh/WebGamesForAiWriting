@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>手指狂熱 - 網頁小遊戲</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #fd79a8;
+        --secondary-color: #fdcb6e;
+        --accent-color: #55efc4;
+        --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --text-light: #ffffff;
+        --text-dark: #333333;
+        --border-radius: 12px;
+        --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        --glass-bg: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        background: var(--background);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        touch-action: manipulation;
+      }
+
+      .header {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--glass-border);
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        z-index: 1000;
+      }
+
+      .title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-light);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: var(--border-radius);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--glass-bg);
+        color: var(--text-light);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .btn-primary {
+        background: var(--primary-color);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #e84393;
+      }
+
+      .stats {
+        display: flex;
+        gap: 2rem;
+        font-size: 1rem;
+        color: var(--text-light);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-container {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        touch-action: none;
+      }
+
+      .tap-zone {
+        position: absolute;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .tap-zone:hover {
+        transform: scale(1.1);
+      }
+
+      .tap-zone.active {
+        animation: zoneActive 0.5s ease-in-out infinite alternate;
+      }
+
+      .tap-zone.success {
+        animation: zoneSuccess 0.5s ease-in-out;
+        background: radial-gradient(circle, #00e676, #00c853) !important;
+      }
+
+      .tap-zone.miss {
+        animation: zoneMiss 0.5s ease-in-out;
+        background: radial-gradient(circle, #ff1744, #d32f2f) !important;
+      }
+
+      @keyframes zoneActive {
+        from {
+          transform: scale(1);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        to {
+          transform: scale(1.1);
+          box-shadow: 0 0 25px rgba(255, 255, 255, 0.8);
+        }
+      }
+
+      @keyframes zoneSuccess {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.3);
+        }
+      }
+
+      @keyframes zoneMiss {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        25% {
+          transform: scale(1.1) rotate(-5deg);
+        }
+        75% {
+          transform: scale(1.1) rotate(5deg);
+        }
+      }
+
+      .zone-red {
+        background: radial-gradient(circle, #ff6b6b, #ee5a52);
+      }
+      .zone-blue {
+        background: radial-gradient(circle, #4ecdc4, #00b894);
+      }
+      .zone-green {
+        background: radial-gradient(circle, #55efc4, #00cec9);
+      }
+      .zone-yellow {
+        background: radial-gradient(circle, #fdcb6e, #f39c12);
+      }
+      .zone-purple {
+        background: radial-gradient(circle, #a29bfe, #6c5ce7);
+      }
+      .zone-orange {
+        background: radial-gradient(circle, #fd79a8, #e84393);
+      }
+
+      .combo-display {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3rem;
+        font-weight: bold;
+        color: var(--accent-color);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        pointer-events: none;
+        animation: comboAnimation 1.5s ease-out forwards;
+        z-index: 500;
+      }
+
+      @keyframes comboAnimation {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.5);
+        }
+        50% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1.3);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+
+      .instruction {
+        position: absolute;
+        top: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        padding: 1rem 2rem;
+        color: var(--text-light);
+        font-size: 1.2rem;
+        font-weight: bold;
+        text-align: center;
+        z-index: 100;
+      }
+
+      .progress-container {
+        position: absolute;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        max-width: 400px;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--primary-color),
+          var(--accent-color)
+        );
+        transition: width 0.3s ease;
+        border-radius: 6px;
+      }
+
+      .progress-text {
+        text-align: center;
+        color: var(--text-light);
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+        color: var(--text-light);
+      }
+
+      .modal h2 {
+        margin-bottom: 1rem;
+        color: var(--accent-color);
+      }
+
+      .game-over-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--glass-border);
+      }
+
+      .difficulty-selector {
+        display: flex;
+        gap: 0.5rem;
+        margin: 1rem 0;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .difficulty-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--glass-border);
+        background: var(--glass-bg);
+        color: var(--text-light);
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+      }
+
+      .difficulty-btn.active {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .help-list {
+        text-align: left;
+        margin: 1rem 0;
+      }
+
+      .help-list li {
+        margin: 0.5rem 0;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      @media (max-width: 768px) {
+        .header {
+          flex-direction: column;
+          gap: 1rem;
+          padding: 0.5rem;
+        }
+
+        .controls {
+          order: -1;
+        }
+
+        .stats {
+          gap: 1rem;
+          font-size: 0.9rem;
+        }
+
+        .instruction {
+          top: 1rem;
+          padding: 0.5rem 1rem;
+          font-size: 1rem;
+        }
+
+        .progress-container {
+          bottom: 1rem;
+          width: 90%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1 class="title">✋ 手指狂熱</h1>
+      <div class="controls">
+        <button id="startBtn" class="btn btn-primary">
+          <i class="fas fa-play"></i> 開始
+        </button>
+        <button id="helpBtn" class="btn">
+          <i class="fas fa-question-circle"></i> 說明
+        </button>
+        <a href="index.html" class="btn"> <i class="fas fa-home"></i> 首頁 </a>
+      </div>
+      <div class="stats">
+        <div>分數: <span id="score">0</span></div>
+        <div>組合: <span id="combo">0</span></div>
+        <div>準確率: <span id="accuracy">100%</span></div>
+        <div>難度: <span id="currentDifficulty">簡單</span></div>
+      </div>
+    </div>
+
+    <div class="game-container" id="gameContainer">
+      <div class="instruction" id="instruction">準備開始...</div>
+
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+        <div class="progress-text" id="progressText">等待開始</div>
+      </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <h2><i class="fas fa-question-circle"></i> 遊戲說明</h2>
+        <ul class="help-list">
+          <li><strong>目標：</strong>同時點擊多個亮起的區域</li>
+          <li><strong>操作：</strong>用多根手指同時觸碰目標區域</li>
+          <li><strong>組合：</strong>連續成功增加組合倍數</li>
+          <li><strong>挑戰：</strong>隨關卡增加需要更多手指協調</li>
+          <li><strong>計分：</strong>根據速度、準確率和組合計算</li>
+          <li><strong>支援：</strong>滑鼠和觸控螢幕操作</li>
+        </ul>
+        <div class="difficulty-selector">
+          <button class="difficulty-btn active" data-difficulty="easy">
+            簡單 (2指)
+          </button>
+          <button class="difficulty-btn" data-difficulty="medium">
+            中等 (3指)
+          </button>
+          <button class="difficulty-btn" data-difficulty="hard">
+            困難 (4指)
+          </button>
+          <button class="difficulty-btn" data-difficulty="expert">
+            專家 (5指)
+          </button>
+        </div>
+        <button id="closeHelp" class="btn btn-primary">開始遊戲</button>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="modal">
+      <div class="modal-content">
+        <h2><i class="fas fa-trophy"></i> 遊戲結束</h2>
+        <div class="game-over-stats">
+          <div class="stat-item">
+            <div>最終分數</div>
+            <div id="finalScore">0</div>
+          </div>
+          <div class="stat-item">
+            <div>最高組合</div>
+            <div id="maxCombo">0</div>
+          </div>
+          <div class="stat-item">
+            <div>總準確率</div>
+            <div id="totalAccuracy">0%</div>
+          </div>
+          <div class="stat-item">
+            <div>最高關卡</div>
+            <div id="maxLevel">1</div>
+          </div>
+        </div>
+        <div style="margin-top: 1rem">
+          <button id="restartBtn" class="btn btn-primary">
+            <i class="fas fa-redo"></i> 再玩一次
+          </button>
+          <button id="backToMenuBtn" class="btn">
+            <i class="fas fa-home"></i> 返回主選單
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class FingerFrenzyGame {
+        constructor() {
+          this.gameContainer = document.getElementById("gameContainer");
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.level = 1;
+          this.maxLevel = 1;
+          this.gameActive = false;
+          this.currentRound = 0;
+          this.totalRounds = 10;
+          this.difficulty = "easy";
+          this.totalAttempts = 0;
+          this.correctAttempts = 0;
+          this.activeZones = [];
+          this.touchedZones = new Set();
+
+          this.difficulties = {
+            easy: {
+              zonesCount: 2,
+              zoneSize: 80,
+              timeLimit: 3000,
+              rounds: 10,
+            },
+            medium: {
+              zonesCount: 3,
+              zoneSize: 70,
+              timeLimit: 2500,
+              rounds: 12,
+            },
+            hard: {
+              zonesCount: 4,
+              zoneSize: 60,
+              timeLimit: 2000,
+              rounds: 15,
+            },
+            expert: {
+              zonesCount: 5,
+              zoneSize: 50,
+              timeLimit: 1500,
+              rounds: 20,
+            },
+          };
+
+          this.colors = ["red", "blue", "green", "yellow", "purple", "orange"];
+
+          this.initializeGame();
+          this.bindEvents();
+          this.loadStats();
+        }
+
+        initializeGame() {
+          this.updateDisplay();
+          this.showHelp();
+        }
+
+        bindEvents() {
+          document
+            .getElementById("startBtn")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("helpBtn")
+            .addEventListener("click", () => this.showHelp());
+          document
+            .getElementById("closeHelp")
+            .addEventListener("click", () => this.closeHelp());
+          document
+            .getElementById("restartBtn")
+            .addEventListener("click", () => this.restartGame());
+          document
+            .getElementById("backToMenuBtn")
+            .addEventListener("click", () => this.backToMenu());
+
+          // Difficulty selection
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              document
+                .querySelectorAll(".difficulty-btn")
+                .forEach((b) => b.classList.remove("active"));
+              e.target.classList.add("active");
+              this.difficulty = e.target.dataset.difficulty;
+              this.totalRounds = this.difficulties[this.difficulty].rounds;
+              this.updateDisplay();
+            });
+          });
+
+          // Touch and mouse events
+          this.gameContainer.addEventListener(
+            "touchstart",
+            (e) => this.handleTouchStart(e),
+            { passive: false }
+          );
+          this.gameContainer.addEventListener(
+            "touchend",
+            (e) => this.handleTouchEnd(e),
+            { passive: false }
+          );
+          this.gameContainer.addEventListener(
+            "touchmove",
+            (e) => e.preventDefault(),
+            { passive: false }
+          );
+          this.gameContainer.addEventListener("mousedown", (e) =>
+            this.handleMouseDown(e)
+          );
+          this.gameContainer.addEventListener("mouseup", (e) =>
+            this.handleMouseUp(e)
+          );
+        }
+
+        startGame() {
+          this.gameActive = true;
+          this.score = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.level = 1;
+          this.maxLevel = 1;
+          this.currentRound = 0;
+          this.totalAttempts = 0;
+          this.correctAttempts = 0;
+          this.totalRounds = this.difficulties[this.difficulty].rounds;
+
+          this.clearZones();
+          this.updateDisplay();
+          this.updateProgress();
+          this.nextRound();
+        }
+
+        nextRound() {
+          if (this.currentRound >= this.totalRounds) {
+            this.completeLevel();
+            return;
+          }
+
+          this.currentRound++;
+          this.clearZones();
+          this.touchedZones.clear();
+
+          const instruction = document.getElementById("instruction");
+          instruction.textContent = `第 ${this.currentRound} 回合 - 準備...`;
+
+          setTimeout(() => {
+            this.spawnZones();
+            instruction.textContent = "現在點擊所有亮起的區域！";
+          }, 1000);
+        }
+
+        spawnZones() {
+          const config = this.difficulties[this.difficulty];
+          const containerRect = this.gameContainer.getBoundingClientRect();
+          const zoneCount = Math.min(
+            config.zonesCount + Math.floor(this.level / 3),
+            6
+          );
+
+          this.activeZones = [];
+
+          for (let i = 0; i < zoneCount; i++) {
+            const zone = document.createElement("div");
+            zone.className =
+              "tap-zone active zone-" + this.colors[i % this.colors.length];
+            zone.textContent = i + 1;
+
+            // Random position with collision avoidance
+            let x,
+              y,
+              attempts = 0;
+            do {
+              x =
+                Math.random() * (containerRect.width - config.zoneSize - 40) +
+                20;
+              y =
+                Math.random() * (containerRect.height - config.zoneSize - 100) +
+                50;
+              attempts++;
+            } while (
+              this.checkCollision(x, y, config.zoneSize) &&
+              attempts < 50
+            );
+
+            zone.style.left = x + "px";
+            zone.style.top = y + "px";
+            zone.style.width = config.zoneSize + "px";
+            zone.style.height = config.zoneSize + "px";
+            zone.dataset.zoneId = i;
+
+            this.activeZones.push({
+              element: zone,
+              id: i,
+              x: x,
+              y: y,
+              size: config.zoneSize,
+              touched: false,
+            });
+
+            this.gameContainer.appendChild(zone);
+          }
+
+          // Start timer for this round
+          this.startRoundTimer();
+        }
+
+        checkCollision(x, y, size) {
+          for (const zone of this.activeZones) {
+            const dx = x - zone.x;
+            const dy = y - zone.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < (size + zone.size) / 2 + 20) {
+              return true;
+            }
+          }
+          return false;
+        }
+
+        startRoundTimer() {
+          const timeLimit = this.difficulties[this.difficulty].timeLimit;
+
+          setTimeout(() => {
+            if (this.gameActive && this.currentRound <= this.totalRounds) {
+              this.checkRoundResult();
+            }
+          }, timeLimit);
+        }
+
+        handleTouchStart(e) {
+          e.preventDefault();
+          if (!this.gameActive) return;
+
+          for (const touch of e.touches) {
+            this.handleTouch(touch.clientX, touch.clientY);
+          }
+        }
+
+        handleTouchEnd(e) {
+          e.preventDefault();
+          if (!this.gameActive) return;
+
+          // Check if all zones are touched when touches end
+          setTimeout(() => this.checkRoundResult(), 100);
+        }
+
+        handleMouseDown(e) {
+          if (!this.gameActive) return;
+          this.handleTouch(e.clientX, e.clientY);
+        }
+
+        handleMouseUp(e) {
+          if (!this.gameActive) return;
+          setTimeout(() => this.checkRoundResult(), 100);
+        }
+
+        handleTouch(clientX, clientY) {
+          const containerRect = this.gameContainer.getBoundingClientRect();
+          const x = clientX - containerRect.left;
+          const y = clientY - containerRect.top;
+
+          for (const zone of this.activeZones) {
+            if (!zone.touched) {
+              const dx = x - (zone.x + zone.size / 2);
+              const dy = y - (zone.y + zone.size / 2);
+              const distance = Math.sqrt(dx * dx + dy * dy);
+
+              if (distance <= zone.size / 2) {
+                zone.touched = true;
+                zone.element.classList.add("success");
+                zone.element.classList.remove("active");
+                this.touchedZones.add(zone.id);
+                break;
+              }
+            }
+          }
+        }
+
+        checkRoundResult() {
+          if (!this.gameActive || this.touchedZones.size === 0) return;
+
+          this.totalAttempts++;
+          const allTouched = this.activeZones.every((zone) => zone.touched);
+
+          if (allTouched) {
+            // Success
+            this.correctAttempts++;
+            this.combo++;
+            this.maxCombo = Math.max(this.maxCombo, this.combo);
+
+            const baseScore = 100 * this.level;
+            const comboBonus = Math.floor(baseScore * this.combo * 0.1);
+            const totalScore = baseScore + comboBonus;
+            this.score += totalScore;
+
+            // Show combo effect
+            if (this.combo >= 3) {
+              this.showComboEffect(`${this.combo}x COMBO!`);
+            }
+
+            this.updateDisplay();
+            this.updateProgress();
+
+            setTimeout(() => this.nextRound(), 1000);
+          } else {
+            // Failure
+            this.combo = 0;
+            this.activeZones.forEach((zone) => {
+              if (!zone.touched) {
+                zone.element.classList.add("miss");
+              }
+            });
+
+            this.updateDisplay();
+
+            setTimeout(() => this.nextRound(), 1500);
+          }
+        }
+
+        completeLevel() {
+          this.level++;
+          this.maxLevel = Math.max(this.maxLevel, this.level);
+          this.currentRound = 0;
+
+          document.getElementById("instruction").textContent = `關卡 ${
+            this.level - 1
+          } 完成！準備下一關...`;
+
+          setTimeout(() => {
+            if (this.level <= 10) {
+              this.nextRound();
+            } else {
+              this.endGame();
+            }
+          }, 2000);
+        }
+
+        showComboEffect(text) {
+          const effect = document.createElement("div");
+          effect.className = "combo-display";
+          effect.textContent = text;
+          this.gameContainer.appendChild(effect);
+
+          setTimeout(() => {
+            if (effect.parentNode) {
+              effect.remove();
+            }
+          }, 1500);
+        }
+
+        clearZones() {
+          this.gameContainer
+            .querySelectorAll(".tap-zone")
+            .forEach((zone) => zone.remove());
+          this.activeZones = [];
+        }
+
+        endGame() {
+          this.gameActive = false;
+          this.saveStats();
+          this.showGameOver();
+        }
+
+        showGameOver() {
+          document.getElementById("finalScore").textContent = this.score;
+          document.getElementById("maxCombo").textContent = this.maxCombo;
+          document.getElementById("maxLevel").textContent = this.maxLevel;
+
+          const accuracy =
+            this.totalAttempts > 0
+              ? Math.round((this.correctAttempts / this.totalAttempts) * 100)
+              : 0;
+          document.getElementById("totalAccuracy").textContent = accuracy + "%";
+
+          document.getElementById("gameOverModal").style.display = "flex";
+        }
+
+        restartGame() {
+          document.getElementById("gameOverModal").style.display = "none";
+          this.clearZones();
+          this.startGame();
+        }
+
+        backToMenu() {
+          window.location.href = "index.html";
+        }
+
+        showHelp() {
+          document.getElementById("helpModal").style.display = "flex";
+        }
+
+        closeHelp() {
+          document.getElementById("helpModal").style.display = "none";
+          if (!this.gameActive) {
+            this.startGame();
+          }
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("combo").textContent = this.combo;
+
+          const accuracy =
+            this.totalAttempts > 0
+              ? Math.round((this.correctAttempts / this.totalAttempts) * 100)
+              : 100;
+          document.getElementById("accuracy").textContent = accuracy + "%";
+
+          const difficultyNames = {
+            easy: "簡單",
+            medium: "中等",
+            hard: "困難",
+            expert: "專家",
+          };
+          document.getElementById("currentDifficulty").textContent =
+            difficultyNames[this.difficulty];
+        }
+
+        updateProgress() {
+          const progress = (this.currentRound / this.totalRounds) * 100;
+          document.getElementById("progressFill").style.width = progress + "%";
+          document.getElementById(
+            "progressText"
+          ).textContent = `關卡 ${this.level} - 第 ${this.currentRound}/${this.totalRounds} 回合`;
+        }
+
+        saveStats() {
+          if (typeof saveGameStats === "function") {
+            const accuracy =
+              this.totalAttempts > 0
+                ? Math.round((this.correctAttempts / this.totalAttempts) * 100)
+                : 0;
+
+            const stats = {
+              score: this.score,
+              maxCombo: this.maxCombo,
+              maxLevel: this.maxLevel,
+              accuracy: accuracy,
+              difficulty: this.difficulty,
+              timestamp: Date.now(),
+            };
+            saveGameStats("finger-frenzy", stats);
+          }
+        }
+
+        loadStats() {
+          if (typeof loadGameStats === "function") {
+            const stats = loadGameStats("finger-frenzy");
+            if (stats && stats.score) {
+              // Could display best score or other stats
+            }
+          }
+        }
+      }
+
+      // Initialize game when page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        new FingerFrenzyGame();
+      });
+    </script>
+  </body>
+</html>

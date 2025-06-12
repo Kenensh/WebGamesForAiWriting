@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gravity Sense - Physics Perception Challenge</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #1e3c72 0%,
+          #2a5298 50%,
+          #0f2027 100%
+        );
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow-x: hidden;
+      }
+
+      .game-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        text-align: center;
+        max-width: 1000px;
+        width: 90%;
+      }
+
+      h1 {
+        color: white;
+        margin-bottom: 30px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        font-size: 2.5em;
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .game-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+        color: white;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 15px;
+        backdrop-filter: blur(5px);
+      }
+
+      .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .game-area {
+        position: relative;
+        width: 100%;
+        height: 600px;
+        background: linear-gradient(
+          to bottom,
+          #0f0f23 0%,
+          #1a1a2e 50%,
+          #16213e 100%
+        );
+        border-radius: 15px;
+        margin: 20px 0;
+        overflow: hidden;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+      }
+
+      .physics-object {
+        position: absolute;
+        border-radius: 50%;
+        transition: all 0.05s linear;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+        user-select: none;
+      }
+
+      .object-ball {
+        background: radial-gradient(circle at 30% 30%, #ff6b6b, #d63031);
+        box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+      }
+
+      .object-heavy {
+        background: radial-gradient(circle at 30% 30%, #74b9ff, #0984e3);
+        box-shadow: 0 0 15px rgba(116, 185, 255, 0.5);
+      }
+
+      .object-light {
+        background: radial-gradient(circle at 30% 30%, #55efc4, #00b894);
+        box-shadow: 0 0 15px rgba(85, 239, 196, 0.5);
+      }
+
+      .object-bouncy {
+        background: radial-gradient(circle at 30% 30%, #fdcb6e, #e17055);
+        box-shadow: 0 0 15px rgba(253, 203, 110, 0.5);
+        animation: bounce-glow 2s ease-in-out infinite;
+      }
+
+      @keyframes bounce-glow {
+        0%,
+        100% {
+          box-shadow: 0 0 15px rgba(253, 203, 110, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 25px rgba(253, 203, 110, 0.8);
+        }
+      }
+
+      .gravity-field {
+        position: absolute;
+        border: 2px dashed rgba(255, 255, 255, 0.3);
+        border-radius: 15px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.05),
+          transparent
+        );
+        pointer-events: none;
+      }
+
+      .gravity-well {
+        background: radial-gradient(
+          circle,
+          rgba(138, 43, 226, 0.3),
+          transparent
+        );
+        border-color: rgba(138, 43, 226, 0.5);
+      }
+
+      .anti-gravity {
+        background: radial-gradient(
+          circle,
+          rgba(255, 20, 147, 0.3),
+          transparent
+        );
+        border-color: rgba(255, 20, 147, 0.5);
+      }
+
+      .trajectory-line {
+        position: absolute;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.8),
+          transparent
+        );
+        pointer-events: none;
+        transform-origin: left center;
+      }
+
+      .prediction-target {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 215, 0, 0.8);
+        border-radius: 50%;
+        background: rgba(255, 215, 0, 0.2);
+        pointer-events: none;
+        animation: target-pulse 1.5s ease-in-out infinite;
+      }
+
+      @keyframes target-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.8;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 1;
+        }
+      }
+
+      .physics-controls {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .control-label {
+        color: white;
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .control-slider {
+        width: 100px;
+        height: 5px;
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.2);
+        outline: none;
+        appearance: none;
+      }
+
+      .control-slider::-webkit-slider-thumb {
+        appearance: none;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+        cursor: pointer;
+      }
+
+      .game-controls {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin: 20px 0;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        backdrop-filter: blur(5px);
+        font-size: 14px;
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn-primary {
+        background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+      }
+
+      .btn-secondary {
+        background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+      }
+
+      .challenge-mode {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 15px;
+        padding: 15px;
+        margin: 20px 0;
+        color: white;
+      }
+
+      .challenge-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #4ecdc4;
+      }
+
+      .challenge-description {
+        font-size: 14px;
+        opacity: 0.9;
+        line-height: 1.4;
+      }
+
+      .accuracy-display {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 15px 0;
+        color: white;
+      }
+
+      .accuracy-bar {
+        flex: 1;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 5px;
+        overflow: hidden;
+      }
+
+      .accuracy-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff6b6b, #fdcb6e, #4ecdc4);
+        transition: width 0.3s ease;
+        border-radius: 5px;
+      }
+
+      .combo-display {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: bold;
+        display: none;
+        animation: combo-bounce 0.5s ease;
+      }
+
+      @keyframes combo-bounce {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+      }
+
+      .power-up {
+        position: absolute;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #ffd700, #ffed4e);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
+        animation: power-up-spin 3s linear infinite;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+      }
+
+      @keyframes power-up-spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .explosion-effect {
+        position: absolute;
+        pointer-events: none;
+        animation: explosion 0.5s ease-out forwards;
+      }
+
+      @keyframes explosion {
+        0% {
+          transform: scale(0);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(2);
+          opacity: 0;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .game-container {
+          padding: 20px;
+          margin: 10px;
+        }
+
+        .game-area {
+          height: 400px;
+        }
+
+        .game-stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .physics-controls {
+          flex-direction: column;
+          gap: 10px;
+        }
+        .control-group {
+          flex-direction: row;
+          gap: 15px;
+        }
+      }
+
+      /* 模態框樣式 */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(5px);
+      }
+
+      .modal-content {
+        background: linear-gradient(
+          135deg,
+          #1e3c72 0%,
+          #2a5298 50%,
+          #0f2027 100%
+        );
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 600px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        color: white;
+        max-height: 80vh;
+        overflow-y: auto;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .modal-header h2 {
+        margin: 0;
+        color: #4ecdc4;
+        font-size: 24px;
+      }
+
+      .close-btn {
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: color 0.3s ease;
+      }
+
+      .close-btn:hover {
+        color: #ff6b6b;
+      }
+
+      .modal-body {
+        line-height: 1.6;
+      }
+
+      .modal-body h3 {
+        color: #45b7d1;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+
+      .modal-body ul {
+        margin: 10px 0;
+        padding-left: 20px;
+      }
+
+      .modal-body li {
+        margin: 5px 0;
+      }
+
+      .modal-footer {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 2px solid rgba(255, 255, 255, 0.2);
+        margin-top: 20px;
+      }
+
+      .modal-btn {
+        background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .modal-btn:hover {
+        background: linear-gradient(45deg, #45b7d1, #4ecdc4);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1>🌌 Gravity Sense</h1>
+
+      <div class="game-stats">
+        <div class="stat-card">
+          <div class="stat-value" id="score">0</div>
+          <div class="stat-label">Score</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="accuracy">100%</div>
+          <div class="stat-label">Accuracy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="level">1</div>
+          <div class="stat-label">Level</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="timeLeft">60</div>
+          <div class="stat-label">Time Left</div>
+        </div>
+      </div>
+
+      <div class="challenge-mode" id="challengeMode">
+        <div class="challenge-title">Physics Prediction Challenge</div>
+        <div class="challenge-description">
+          Predict where objects will land considering gravity, mass, and physics
+          fields!
+        </div>
+      </div>
+
+      <div class="physics-controls">
+        <div class="control-group">
+          <div class="control-label">Gravity</div>
+          <input
+            type="range"
+            class="control-slider"
+            id="gravitySlider"
+            min="0.1"
+            max="2"
+            step="0.1"
+            value="1"
+          />
+        </div>
+        <div class="control-group">
+          <div class="control-label">Wind</div>
+          <input
+            type="range"
+            class="control-slider"
+            id="windSlider"
+            min="-1"
+            max="1"
+            step="0.1"
+            value="0"
+          />
+        </div>
+        <div class="control-group">
+          <div class="control-label">Friction</div>
+          <input
+            type="range"
+            class="control-slider"
+            id="frictionSlider"
+            min="0"
+            max="1"
+            step="0.05"
+            value="0.02"
+          />
+        </div>
+      </div>
+
+      <div class="game-area" id="gameArea">
+        <div class="combo-display" id="comboDisplay">COMBO x1</div>
+      </div>
+
+      <div class="accuracy-display">
+        <span>Prediction Accuracy:</span>
+        <div class="accuracy-bar">
+          <div
+            class="accuracy-fill"
+            id="accuracyFill"
+            style="width: 100%"
+          ></div>
+        </div>
+        <span id="accuracyText">100%</span>
+      </div>
+
+      <div class="game-controls">
+        <button class="btn btn-primary" id="startBtn">Start Game</button>
+        <button class="btn btn-secondary" id="pauseBtn">Pause</button>
+        <button class="btn" id="resetBtn">Reset</button>
+        <button class="btn" id="helpBtn">Help</button>
+      </div>
+    </div>
+
+    <!-- 遊戲說明模態框 -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>🌌 Gravity Sense - 遊戲說明</h2>
+          <span class="close-btn">&times;</span>
+        </div>
+        <div class="modal-body">
+          <h3>🎯 遊戲目標</h3>
+          <p>準確預測物理物體的降落位置，考慮重力、質量和物理場的影響！</p>
+
+          <h3>🎮 操作方式</h3>
+          <ul>
+            <li>觀察落下的物體的運動軌跡</li>
+            <li>點擊物體來預測它的降落點</li>
+            <li>考慮重力、風力、摩擦力的影響</li>
+            <li>收集金色能量球獲得額外分數</li>
+            <li>保持高準確率獲得更高分數</li>
+          </ul>
+
+          <h3>⚙️ 物理控制</h3>
+          <ul>
+            <li><strong>重力滑桿：</strong>調整重力強度 (0.1-2.0)</li>
+            <li><strong>風力滑桿：</strong>調整水平風力 (-1.0 到 1.0)</li>
+            <li><strong>摩擦力滑桿：</strong>調整空氣阻力 (0-1.0)</li>
+          </ul>
+
+          <h3>🎪 物體類型</h3>
+          <ul>
+            <li><strong>普通球：</strong>標準物理屬性</li>
+            <li><strong>重球：</strong>質量大，不易受風力影響</li>
+            <li><strong>輕球：</strong>質量小，容易受風力影響</li>
+            <li><strong>彈性球：</strong>彈跳係數高，會多次彈跳</li>
+          </ul>
+
+          <h3>🏆 計分系統</h3>
+          <ul>
+            <li><strong>準確預測：</strong>100+ 分數</li>
+            <li><strong>連擊加成：</strong>連續命中獲得倍數獎勵</li>
+            <li><strong>能量球：</strong>+100 分數 + 5 秒時間</li>
+            <li><strong>準確率獎勵：</strong>高準確率獲得額外分數</li>
+          </ul>
+
+          <h3>💡 遊戲技巧</h3>
+          <ul>
+            <li>注意物體的大小和顏色，它們代表不同的物理屬性</li>
+            <li>重球受風力影響較小，輕球受風力影響較大</li>
+            <li>彈性球會彈跳，需要預測最終靜止位置</li>
+            <li>物理場會改變物體的運動軌跡</li>
+            <li>維持連擊可以獲得更高的分數倍數</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn" onclick="gravityGame.closeHelp()">
+            開始遊戲
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      class GravitySenseGame {
+        constructor() {
+          this.gameArea = document.getElementById("gameArea");
+          this.isPlaying = false;
+          this.isPaused = false;
+          this.score = 0;
+          this.level = 1;
+          this.timeLeft = 60;
+          this.accuracy = 100;
+          this.totalPredictions = 0;
+          this.correctPredictions = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+
+          this.gravity = 1;
+          this.wind = 0;
+          this.friction = 0.02;
+
+          this.objects = [];
+          this.gravityFields = [];
+          this.powerUps = [];
+
+          this.gameTimer = null;
+          this.objectSpawnTimer = null;
+          this.powerUpSpawnTimer = null;
+
+          this.initializeControls();
+          this.initializePhysicsControls();
+          this.setupEventListeners();
+        }
+
+        initializeControls() {
+          this.startBtn = document.getElementById("startBtn");
+          this.pauseBtn = document.getElementById("pauseBtn");
+          this.resetBtn = document.getElementById("resetBtn");
+          this.helpBtn = document.getElementById("helpBtn");
+        }
+
+        initializePhysicsControls() {
+          this.gravitySlider = document.getElementById("gravitySlider");
+          this.windSlider = document.getElementById("windSlider");
+          this.frictionSlider = document.getElementById("frictionSlider");
+
+          this.gravitySlider.addEventListener("input", (e) => {
+            this.gravity = parseFloat(e.target.value);
+          });
+
+          this.windSlider.addEventListener("input", (e) => {
+            this.wind = parseFloat(e.target.value);
+          });
+
+          this.frictionSlider.addEventListener("input", (e) => {
+            this.friction = parseFloat(e.target.value);
+          });
+        }
+
+        setupEventListeners() {
+          this.startBtn.addEventListener("click", () => this.startGame());
+          this.pauseBtn.addEventListener("click", () => this.togglePause());
+          this.resetBtn.addEventListener("click", () => this.resetGame());
+          this.helpBtn.addEventListener("click", () => this.showHelp());
+
+          this.gameArea.addEventListener("click", (e) =>
+            this.handleAreaClick(e)
+          );
+
+          window.addEventListener("resize", () => this.handleResize());
+        }
+
+        startGame() {
+          if (this.isPlaying) return;
+
+          this.isPlaying = true;
+          this.isPaused = false;
+          this.startBtn.textContent = "Playing...";
+          this.startBtn.disabled = true;
+
+          this.gameTimer = setInterval(() => this.updateGame(), 50);
+          this.objectSpawnTimer = setInterval(() => this.spawnObject(), 2000);
+          this.powerUpSpawnTimer = setInterval(() => this.spawnPowerUp(), 8000);
+
+          this.spawnGravityFields();
+          this.spawnObject();
+        }
+
+        togglePause() {
+          if (!this.isPlaying) return;
+
+          this.isPaused = !this.isPaused;
+          this.pauseBtn.textContent = this.isPaused ? "Resume" : "Pause";
+
+          if (this.isPaused) {
+            clearInterval(this.gameTimer);
+            clearInterval(this.objectSpawnTimer);
+            clearInterval(this.powerUpSpawnTimer);
+          } else {
+            this.gameTimer = setInterval(() => this.updateGame(), 50);
+            this.objectSpawnTimer = setInterval(() => this.spawnObject(), 2000);
+            this.powerUpSpawnTimer = setInterval(
+              () => this.spawnPowerUp(),
+              8000
+            );
+          }
+        }
+
+        resetGame() {
+          this.isPlaying = false;
+          this.isPaused = false;
+          this.score = 0;
+          this.level = 1;
+          this.timeLeft = 60;
+          this.accuracy = 100;
+          this.totalPredictions = 0;
+          this.correctPredictions = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+
+          this.startBtn.textContent = "Start Game";
+          this.startBtn.disabled = false;
+          this.pauseBtn.textContent = "Pause";
+
+          clearInterval(this.gameTimer);
+          clearInterval(this.objectSpawnTimer);
+          clearInterval(this.powerUpSpawnTimer);
+
+          this.clearGameArea();
+          this.updateDisplay();
+        }
+
+        spawnObject() {
+          if (!this.isPlaying || this.isPaused) return;
+
+          const areaRect = this.gameArea.getBoundingClientRect();
+          const object = document.createElement("div");
+          object.className = "physics-object";
+
+          // Random object type
+          const types = [
+            "object-ball",
+            "object-heavy",
+            "object-light",
+            "object-bouncy",
+          ];
+          const type = types[Math.floor(Math.random() * types.length)];
+          object.classList.add(type);
+
+          // Object properties based on type
+          let size, mass, bounce;
+          switch (type) {
+            case "object-heavy":
+              size = 30 + Math.random() * 20;
+              mass = 2 + Math.random() * 2;
+              bounce = 0.3;
+              break;
+            case "object-light":
+              size = 15 + Math.random() * 15;
+              mass = 0.5 + Math.random() * 0.5;
+              bounce = 0.8;
+              break;
+            case "object-bouncy":
+              size = 20 + Math.random() * 15;
+              mass = 1 + Math.random();
+              bounce = 0.9;
+              break;
+            default:
+              size = 20 + Math.random() * 15;
+              mass = 1 + Math.random();
+              bounce = 0.6;
+          }
+
+          object.style.width = `${size}px`;
+          object.style.height = `${size}px`;
+          object.style.left = `${
+            Math.random() * (this.gameArea.offsetWidth - size)
+          }px`;
+          object.style.top = "0px";
+
+          // Physics properties
+          object.physics = {
+            x: parseFloat(object.style.left),
+            y: 0,
+            vx: (Math.random() - 0.5) * 5,
+            vy: 0,
+            mass: mass,
+            bounce: bounce,
+            size: size,
+            landed: false,
+            landingTime: 0,
+          };
+
+          object.addEventListener("click", () => this.predictLanding(object));
+
+          this.gameArea.appendChild(object);
+          this.objects.push(object);
+
+          this.showTrajectoryPreview(object);
+        }
+
+        showTrajectoryPreview(object) {
+          // Show trajectory line for a short time
+          const trajectory = document.createElement("div");
+          trajectory.className = "trajectory-line";
+
+          const physics = object.physics;
+          const endX = physics.x + physics.vx * 20;
+          const length = Math.sqrt(
+            Math.pow(endX - physics.x, 2) + Math.pow(200, 2)
+          );
+          const angle = (Math.atan2(200, endX - physics.x) * 180) / Math.PI;
+
+          trajectory.style.left = `${physics.x + physics.size / 2}px`;
+          trajectory.style.top = `${physics.y + physics.size / 2}px`;
+          trajectory.style.width = `${length}px`;
+          trajectory.style.transform = `rotate(${angle}deg)`;
+
+          this.gameArea.appendChild(trajectory);
+
+          setTimeout(() => {
+            if (trajectory.parentNode) {
+              trajectory.parentNode.removeChild(trajectory);
+            }
+          }, 1000);
+        }
+
+        spawnGravityFields() {
+          // Clear existing fields
+          this.gravityFields.forEach((field) => {
+            if (field.parentNode) {
+              field.parentNode.removeChild(field);
+            }
+          });
+          this.gravityFields = [];
+
+          // Spawn random gravity fields
+          const fieldCount = Math.min(this.level, 3);
+          for (let i = 0; i < fieldCount; i++) {
+            this.spawnGravityField();
+          }
+        }
+
+        spawnGravityField() {
+          const field = document.createElement("div");
+          field.className = "gravity-field";
+
+          const isWell = Math.random() > 0.5;
+          if (isWell) {
+            field.classList.add("gravity-well");
+            field.setAttribute("data-type", "well");
+            field.setAttribute("data-strength", "2");
+          } else {
+            field.classList.add("anti-gravity");
+            field.setAttribute("data-type", "anti");
+            field.setAttribute("data-strength", "0.5");
+          }
+
+          const size = 80 + Math.random() * 60;
+          field.style.width = `${size}px`;
+          field.style.height = `${size}px`;
+          field.style.left = `${
+            Math.random() * (this.gameArea.offsetWidth - size)
+          }px`;
+          field.style.top = `${
+            100 + Math.random() * (this.gameArea.offsetHeight - size - 100)
+          }px`;
+
+          this.gameArea.appendChild(field);
+          this.gravityFields.push(field);
+        }
+
+        spawnPowerUp() {
+          if (!this.isPlaying || this.isPaused || Math.random() > 0.7) return;
+
+          const powerUp = document.createElement("div");
+          powerUp.className = "power-up";
+          powerUp.textContent = "⚡";
+
+          powerUp.style.left = `${
+            Math.random() * (this.gameArea.offsetWidth - 25)
+          }px`;
+          powerUp.style.top = `${
+            Math.random() * (this.gameArea.offsetHeight - 25)
+          }px`;
+
+          powerUp.addEventListener("click", () => this.collectPowerUp(powerUp));
+
+          this.gameArea.appendChild(powerUp);
+          this.powerUps.push(powerUp);
+
+          // Auto-remove after 5 seconds
+          setTimeout(() => {
+            if (powerUp.parentNode) {
+              powerUp.parentNode.removeChild(powerUp);
+              const index = this.powerUps.indexOf(powerUp);
+              if (index > -1) this.powerUps.splice(index, 1);
+            }
+          }, 5000);
+        }
+
+        collectPowerUp(powerUp) {
+          this.score += 100;
+          this.timeLeft += 5;
+
+          // Visual effect
+          this.createExplosion(
+            powerUp.offsetLeft + 12,
+            powerUp.offsetTop + 12,
+            "#ffd700"
+          );
+
+          powerUp.parentNode.removeChild(powerUp);
+          const index = this.powerUps.indexOf(powerUp);
+          if (index > -1) this.powerUps.splice(index, 1);
+
+          this.updateDisplay();
+        }
+
+        predictLanding(object) {
+          if (object.physics.landed) return;
+
+          this.totalPredictions++;
+
+          // Calculate actual landing position
+          const actualLanding = this.calculateLandingPosition(object);
+          const predictedX = object.physics.x + object.physics.size / 2;
+          const distance = Math.abs(actualLanding.x - predictedX);
+
+          // Accuracy based on distance
+          const maxDistance = this.gameArea.offsetWidth / 4;
+          const accuracy = Math.max(0, 1 - distance / maxDistance);
+
+          if (accuracy > 0.7) {
+            this.correctPredictions++;
+            this.combo++;
+            this.score += Math.round(100 * accuracy * (1 + this.combo * 0.1));
+
+            // Show combo
+            if (this.combo > 1) {
+              this.showCombo();
+            }
+
+            // Visual feedback
+            this.createExplosion(
+              object.offsetLeft + object.physics.size / 2,
+              object.offsetTop + object.physics.size / 2,
+              "#4ecdc4"
+            );
+          } else {
+            this.combo = 0;
+            this.hideCombo();
+
+            // Visual feedback
+            this.createExplosion(
+              object.offsetLeft + object.physics.size / 2,
+              object.offsetTop + object.physics.size / 2,
+              "#ff6b6b"
+            );
+          }
+
+          // Mark as predicted and remove
+          object.physics.landed = true;
+          object.style.opacity = "0.5";
+
+          setTimeout(() => {
+            if (object.parentNode) {
+              object.parentNode.removeChild(object);
+              const index = this.objects.indexOf(object);
+              if (index > -1) this.objects.splice(index, 1);
+            }
+          }, 500);
+
+          this.maxCombo = Math.max(this.maxCombo, this.combo);
+          this.updateAccuracy();
+          this.updateDisplay();
+        }
+
+        calculateLandingPosition(object) {
+          // Simplified physics calculation for landing prediction
+          const physics = object.physics;
+          let x = physics.x;
+          let y = physics.y;
+          let vx = physics.vx;
+          let vy = physics.vy;
+
+          while (y < this.gameArea.offsetHeight - physics.size) {
+            // Apply gravity
+            vy += this.gravity * physics.mass * 0.5;
+
+            // Apply wind
+            vx += this.wind * 0.1;
+
+            // Apply friction
+            vx *= 1 - this.friction;
+            vy *= 1 - this.friction * 0.1;
+
+            // Apply gravity fields
+            this.gravityFields.forEach((field) => {
+              const fieldRect = field.getBoundingClientRect();
+              const gameRect = this.gameArea.getBoundingClientRect();
+              const fieldX =
+                fieldRect.left - gameRect.left + fieldRect.width / 2;
+              const fieldY =
+                fieldRect.top - gameRect.top + fieldRect.height / 2;
+
+              const dx = fieldX - (x + physics.size / 2);
+              const dy = fieldY - (y + physics.size / 2);
+              const distance = Math.sqrt(dx * dx + dy * dy);
+
+              if (distance < fieldRect.width / 2) {
+                const strength = parseFloat(
+                  field.getAttribute("data-strength")
+                );
+                const force = strength * 0.1;
+
+                if (field.getAttribute("data-type") === "well") {
+                  vx += (dx / distance) * force;
+                  vy += (dy / distance) * force;
+                } else {
+                  vx -= (dx / distance) * force;
+                  vy -= (dy / distance) * force;
+                }
+              }
+            });
+
+            x += vx;
+            y += vy;
+
+            // Bounce off walls
+            if (x <= 0 || x >= this.gameArea.offsetWidth - physics.size) {
+              vx *= -physics.bounce;
+              x = Math.max(
+                0,
+                Math.min(this.gameArea.offsetWidth - physics.size, x)
+              );
+            }
+          }
+
+          return { x: x + physics.size / 2, y: y };
+        }
+
+        updateGame() {
+          if (!this.isPlaying || this.isPaused) return;
+
+          // Update timer
+          this.timeLeft -= 0.05;
+          if (this.timeLeft <= 0) {
+            this.endGame();
+            return;
+          }
+
+          // Update physics for all objects
+          this.objects.forEach((object) => {
+            if (object.physics.landed) return;
+
+            this.updateObjectPhysics(object);
+          });
+
+          // Level progression
+          if (this.score > this.level * 1000) {
+            this.level++;
+            this.spawnGravityFields();
+          }
+
+          this.updateDisplay();
+        }
+
+        updateObjectPhysics(object) {
+          const physics = object.physics;
+
+          // Apply gravity
+          physics.vy += this.gravity * physics.mass * 0.5;
+
+          // Apply wind
+          physics.vx += this.wind * 0.1;
+
+          // Apply friction
+          physics.vx *= 1 - this.friction;
+          physics.vy *= 1 - this.friction * 0.1;
+
+          // Apply gravity fields
+          this.gravityFields.forEach((field) => {
+            const fieldRect = field.getBoundingClientRect();
+            const gameRect = this.gameArea.getBoundingClientRect();
+            const fieldX = fieldRect.left - gameRect.left + fieldRect.width / 2;
+            const fieldY = fieldRect.top - gameRect.top + fieldRect.height / 2;
+
+            const dx = fieldX - (physics.x + physics.size / 2);
+            const dy = fieldY - (physics.y + physics.size / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < fieldRect.width / 2) {
+              const strength = parseFloat(field.getAttribute("data-strength"));
+              const force = strength * 0.1;
+
+              if (field.getAttribute("data-type") === "well") {
+                physics.vx += (dx / distance) * force;
+                physics.vy += (dy / distance) * force;
+              } else {
+                physics.vx -= (dx / distance) * force;
+                physics.vy -= (dy / distance) * force;
+              }
+            }
+          });
+
+          // Update position
+          physics.x += physics.vx;
+          physics.y += physics.vy;
+
+          // Boundary collision
+          if (
+            physics.x <= 0 ||
+            physics.x >= this.gameArea.offsetWidth - physics.size
+          ) {
+            physics.vx *= -physics.bounce;
+            physics.x = Math.max(
+              0,
+              Math.min(this.gameArea.offsetWidth - physics.size, physics.x)
+            );
+          }
+
+          if (physics.y >= this.gameArea.offsetHeight - physics.size) {
+            physics.y = this.gameArea.offsetHeight - physics.size;
+            physics.vy *= -physics.bounce;
+            physics.vx *= 0.8; // Ground friction
+
+            if (Math.abs(physics.vy) < 1) {
+              physics.landed = true;
+              physics.landingTime = Date.now();
+            }
+          }
+
+          // Update DOM position
+          object.style.left = `${physics.x}px`;
+          object.style.top = `${physics.y}px`;
+
+          // Auto-remove if stuck too long
+          if (physics.landed && Date.now() - physics.landingTime > 3000) {
+            object.parentNode.removeChild(object);
+            const index = this.objects.indexOf(object);
+            if (index > -1) this.objects.splice(index, 1);
+          }
+        }
+
+        handleAreaClick(e) {
+          if (!this.isPlaying || this.isPaused) return;
+
+          const rect = this.gameArea.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          // Create prediction target
+          const target = document.createElement("div");
+          target.className = "prediction-target";
+          target.style.left = `${x - 20}px`;
+          target.style.top = `${y - 20}px`;
+
+          this.gameArea.appendChild(target);
+
+          setTimeout(() => {
+            if (target.parentNode) {
+              target.parentNode.removeChild(target);
+            }
+          }, 2000);
+        }
+
+        showCombo() {
+          const comboDisplay = document.getElementById("comboDisplay");
+          comboDisplay.textContent = `COMBO x${this.combo}`;
+          comboDisplay.style.display = "block";
+
+          setTimeout(() => {
+            comboDisplay.style.display = "none";
+          }, 1500);
+        }
+
+        hideCombo() {
+          const comboDisplay = document.getElementById("comboDisplay");
+          comboDisplay.style.display = "none";
+        }
+
+        createExplosion(x, y, color) {
+          const explosion = document.createElement("div");
+          explosion.className = "explosion-effect";
+          explosion.style.left = `${x - 15}px`;
+          explosion.style.top = `${y - 15}px`;
+          explosion.style.width = "30px";
+          explosion.style.height = "30px";
+          explosion.style.background = `radial-gradient(circle, ${color}, transparent)`;
+          explosion.style.borderRadius = "50%";
+
+          this.gameArea.appendChild(explosion);
+
+          setTimeout(() => {
+            if (explosion.parentNode) {
+              explosion.parentNode.removeChild(explosion);
+            }
+          }, 500);
+        }
+
+        updateAccuracy() {
+          this.accuracy =
+            this.totalPredictions > 0
+              ? Math.round(
+                  (this.correctPredictions / this.totalPredictions) * 100
+                )
+              : 100;
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("accuracy").textContent = `${this.accuracy}%`;
+          document.getElementById("level").textContent = this.level;
+          document.getElementById("timeLeft").textContent = Math.max(
+            0,
+            Math.ceil(this.timeLeft)
+          );
+
+          const accuracyFill = document.getElementById("accuracyFill");
+          const accuracyText = document.getElementById("accuracyText");
+          accuracyFill.style.width = `${this.accuracy}%`;
+          accuracyText.textContent = `${this.accuracy}%`;
+        }
+
+        clearGameArea() {
+          this.objects.forEach((object) => {
+            if (object.parentNode) {
+              object.parentNode.removeChild(object);
+            }
+          });
+          this.objects = [];
+
+          this.gravityFields.forEach((field) => {
+            if (field.parentNode) {
+              field.parentNode.removeChild(field);
+            }
+          });
+          this.gravityFields = [];
+
+          this.powerUps.forEach((powerUp) => {
+            if (powerUp.parentNode) {
+              powerUp.parentNode.removeChild(powerUp);
+            }
+          });
+          this.powerUps = [];
+
+          // Clear any remaining elements
+          const gameElements = this.gameArea.querySelectorAll(
+            ".physics-object, .gravity-field, .power-up, .prediction-target, .trajectory-line, .explosion-effect"
+          );
+          gameElements.forEach((element) => element.remove());
+        }
+
+        endGame() {
+          this.isPlaying = false;
+          this.isPaused = false;
+
+          clearInterval(this.gameTimer);
+          clearInterval(this.objectSpawnTimer);
+          clearInterval(this.powerUpSpawnTimer);
+
+          this.startBtn.textContent = "Start Game";
+          this.startBtn.disabled = false;
+          this.pauseBtn.textContent = "Pause";
+
+          // Show final stats
+          alert(
+            `Game Over!\n\nFinal Score: ${this.score}\nAccuracy: ${this.accuracy}%\nMax Combo: ${this.maxCombo}\nLevel Reached: ${this.level}`
+          );
+        }
+        showHelp() {
+          const modal = document.getElementById("helpModal");
+          modal.style.display = "block";
+
+          // 點擊模態框外部關閉
+          modal.onclick = (e) => {
+            if (e.target === modal) {
+              this.closeHelp();
+            }
+          };
+
+          // 點擊關閉按鈕
+          const closeBtn = modal.querySelector(".close-btn");
+          closeBtn.onclick = () => this.closeHelp();
+        }
+
+        closeHelp() {
+          const modal = document.getElementById("helpModal");
+          modal.style.display = "none";
+        }
+
+        handleResize() {
+          // Handle responsive layout changes
+          this.clearGameArea();
+        }
+      } // Initialize game when page loads
+      let gravityGame;
+      window.addEventListener("load", () => {
+        gravityGame = new GravitySenseGame();
+      });
+    </script>
+  </body>
+</html>

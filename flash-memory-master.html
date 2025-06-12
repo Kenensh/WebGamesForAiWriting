@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>瞬間記憶 - Flash Memory Master</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #8360c3 0%, #2ebf91 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Arial", sans-serif;
+        overflow: hidden;
+      }
+
+      .game-container {
+        width: 90vw;
+        height: 90vh;
+        max-width: 900px;
+        max-height: 700px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 30px;
+        text-align: center;
+        position: relative;
+      }
+
+      h1 {
+        color: white;
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+        color: white;
+        font-size: 1.1em;
+      }
+
+      .stat-box {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .timer-bar {
+        width: 100%;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        margin: 20px 0;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .timer-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c);
+        border-radius: 10px;
+        transition: width 0.1s linear;
+        width: 100%;
+      }
+
+      .game-area {
+        width: 100%;
+        height: 400px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 15px;
+        position: relative;
+        margin: 20px 0;
+        overflow: hidden;
+      }
+
+      .memory-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 8px;
+        padding: 20px;
+        width: 100%;
+        height: 100%;
+      }
+
+      .memory-cell {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5em;
+        font-weight: bold;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .memory-cell:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.05);
+      }
+
+      .memory-cell.flash {
+        animation: flashCell 0.3s ease;
+      }
+
+      .memory-cell.correct {
+        background: linear-gradient(45deg, #2ecc71, #27ae60);
+        border-color: #2ecc71;
+        animation: correctPulse 0.5s ease;
+      }
+
+      .memory-cell.wrong {
+        background: linear-gradient(45deg, #e74c3c, #c0392b);
+        border-color: #e74c3c;
+        animation: wrongShake 0.5s ease;
+      }
+
+      .memory-cell.revealed {
+        background: linear-gradient(45deg, #3498db, #2980b9);
+        border-color: #3498db;
+        transform: scale(1.1);
+      }
+
+      @keyframes flashCell {
+        0% {
+          background: rgba(255, 255, 255, 0.1);
+        }
+        50% {
+          background: rgba(255, 255, 255, 0.8);
+          box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+        }
+        100% {
+          background: rgba(255, 255, 255, 0.1);
+        }
+      }
+
+      @keyframes correctPulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes wrongShake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-5px);
+        }
+        75% {
+          transform: translateX(5px);
+        }
+      }
+
+      .phase-indicator {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: white;
+        font-size: 2em;
+        font-weight: bold;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        z-index: 10;
+      }
+
+      .countdown {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 5em;
+        color: white;
+        font-weight: bold;
+        text-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        z-index: 100;
+        opacity: 0;
+        animation: countdownPulse 1s ease-in-out;
+      }
+
+      @keyframes countdownPulse {
+        0% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.5);
+        }
+        50% {
+          opacity: 1;
+          transform: translate(-50%, -50%) scale(1.2);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(1);
+        }
+      }
+
+      .controls {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      /* 幫助模態框樣式 */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #8360c3 0%, #2ebf91 100%);
+        padding: 30px;
+        border-radius: 20px;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        color: white;
+        position: relative;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+
+      .modal h2 {
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 2em;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      .modal h3 {
+        margin: 20px 0 10px 0;
+        color: #fff;
+        font-size: 1.3em;
+      }
+
+      .modal p,
+      .modal li {
+        margin: 10px 0;
+        line-height: 1.6;
+        font-size: 1.1em;
+      }
+
+      .modal ul {
+        margin-left: 20px;
+      }
+
+      .close-help {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 0;
+        line-height: 1;
+      }
+
+      .close-help:hover {
+        color: #ff6b6b;
+        transform: scale(1.1);
+      }
+
+      .difficulty-select {
+        margin-bottom: 20px;
+      }
+
+      .difficulty-btn {
+        margin: 0 5px;
+        padding: 8px 16px;
+        font-size: 0.9em;
+      }
+
+      .difficulty-btn.active {
+        background: linear-gradient(45deg, #2ecc71, #27ae60);
+      }
+
+      .status {
+        color: white;
+        font-size: 1.3em;
+        margin: 15px 0;
+        min-height: 30px;
+        font-weight: bold;
+      }
+
+      .pattern-preview {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3em;
+        color: white;
+        font-weight: bold;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .pattern-preview.show {
+        opacity: 1;
+      }
+
+      @media (max-width: 768px) {
+        .game-container {
+          width: 95vw;
+          height: 95vh;
+          padding: 20px;
+        }
+
+        h1 {
+          font-size: 2em;
+        }
+
+        .game-stats {
+          grid-template-columns: repeat(2, 1fr);
+          font-size: 1em;
+        }
+
+        .memory-grid {
+          grid-template-columns: repeat(4, 1fr);
+          grid-template-rows: repeat(3, 1fr);
+          gap: 6px;
+          padding: 15px;
+        }
+
+        .memory-cell {
+          font-size: 1.2em;
+        }
+
+        .game-area {
+          height: 350px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1>⚡ 瞬間記憶</h1>
+
+      <div class="game-stats">
+        <div class="stat-box">分數: <span id="score">0</span></div>
+        <div class="stat-box">等級: <span id="level">1</span></div>
+        <div class="stat-box">連勝: <span id="streak">0</span></div>
+        <div class="stat-box">準確率: <span id="accuracy">100%</span></div>
+      </div>
+
+      <div class="timer-bar">
+        <div class="timer-fill" id="timerFill"></div>
+      </div>
+
+      <div class="difficulty-select">
+        <button class="btn difficulty-btn active" data-difficulty="easy">
+          簡單 (2秒)
+        </button>
+        <button class="btn difficulty-btn" data-difficulty="normal">
+          普通 (1.5秒)
+        </button>
+        <button class="btn difficulty-btn" data-difficulty="hard">
+          困難 (1秒)
+        </button>
+        <button class="btn difficulty-btn" data-difficulty="extreme">
+          極限 (0.5秒)
+        </button>
+      </div>
+
+      <div class="status" id="status">
+        準備挑戰瞬間記憶！記住閃現的圖案位置！
+      </div>
+
+      <div class="game-area" id="gameArea">
+        <div class="phase-indicator" id="phaseIndicator">準備</div>
+        <div class="memory-grid" id="memoryGrid">
+          <!-- 記憶格子將由JS生成 -->
+        </div>
+        <div class="pattern-preview" id="patternPreview"></div>
+        <div class="countdown" id="countdown"></div>
+      </div>
+      <div class="controls">
+        <button class="btn" id="startBtn">開始遊戲</button>
+        <button class="btn" id="hintBtn" style="display: none">
+          提示 (扣分)
+        </button>
+        <button class="btn" id="resetBtn">重新開始</button>
+        <button class="btn" id="helpBtn">遊戲說明</button>
+      </div>
+      <!-- 幫助模態框 -->
+      <div class="modal" id="helpModal">
+        <div class="modal-content">
+          <button class="close-help">&times;</button>
+          <h2>🧠 瞬間記憶 - 遊戲說明</h2>
+
+          <h3>🎯 遊戲目標</h3>
+          <p>考驗瞬間記憶能力！觀察短暫顯示的圖案位置，然後準確復原。</p>
+
+          <h3>🎮 遊戲流程</h3>
+          <ul>
+            <li><strong>準備階段</strong>：系統生成隨機圖案</li>
+            <li><strong>記憶階段</strong>：圖案會短暫閃現，仔細觀察位置</li>
+            <li><strong>回憶階段</strong>：點擊格子來復原剛才看到的圖案</li>
+            <li><strong>驗證階段</strong>：系統檢查答案正確性</li>
+          </ul>
+
+          <h3>📊 計分系統</h3>
+          <ul>
+            <li><strong>正確復原</strong>：根據等級和速度獲得分數</li>
+            <li><strong>連續正確</strong>：連擊次數越高，獲得額外獎勵</li>
+            <li><strong>時間獎勵</strong>：越快完成獲得越多分數</li>
+            <li><strong>準確度</strong>：影響總體評分和等級提升</li>
+          </ul>
+
+          <h3>🏆 難度等級</h3>
+          <ul>
+            <li><strong>簡單</strong>：3-4個目標，顯示時間較長</li>
+            <li><strong>普通</strong>：5-6個目標，中等顯示時間</li>
+            <li><strong>困難</strong>：7-8個目標，顯示時間很短</li>
+            <li><strong>極限</strong>：9-12個目標，極短顯示時間</li>
+          </ul>
+
+          <h3>💡 遊戲技巧</h3>
+          <ul>
+            <li>集中注意力，不要分心</li>
+            <li>嘗試記住圖案的形狀或規律</li>
+            <li>使用視覺記憶技巧，如分組記憶</li>
+            <li>提示功能會扣分，謹慎使用</li>
+            <li>練習提高瞬間記憶能力</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      class FlashMemoryMaster {
+        constructor() {
+          this.gameArea = document.getElementById("gameArea");
+          this.memoryGrid = document.getElementById("memoryGrid");
+          this.startBtn = document.getElementById("startBtn");
+          this.hintBtn = document.getElementById("hintBtn");
+          this.resetBtn = document.getElementById("resetBtn");
+          this.status = document.getElementById("status");
+          this.scoreEl = document.getElementById("score");
+          this.levelEl = document.getElementById("level");
+          this.streakEl = document.getElementById("streak");
+          this.accuracyEl = document.getElementById("accuracy");
+          this.timerFill = document.getElementById("timerFill");
+          this.phaseIndicator = document.getElementById("phaseIndicator");
+          this.patternPreview = document.getElementById("patternPreview");
+          this.countdown = document.getElementById("countdown");
+
+          this.score = 0;
+          this.level = 1;
+          this.streak = 0;
+          this.totalAttempts = 0;
+          this.correctAttempts = 0;
+          this.gameActive = false;
+          this.currentPhase = "ready"; // ready, memorize, recall
+          this.difficulty = "easy";
+
+          this.pattern = [];
+          this.playerGuesses = [];
+          this.revealedCells = new Set();
+          this.gridSize = { cols: 6, rows: 4 };
+          this.timeLeft = 0;
+          this.maxTime = 0;
+
+          this.difficulties = {
+            easy: { flashTime: 2000, patterns: 3, timeLimit: 15000 },
+            normal: { flashTime: 1500, patterns: 4, timeLimit: 12000 },
+            hard: { flashTime: 1000, patterns: 5, timeLimit: 10000 },
+            extreme: { flashTime: 500, patterns: 6, timeLimit: 8000 },
+          };
+
+          this.symbols = [
+            "★",
+            "♠",
+            "♥",
+            "♦",
+            "♣",
+            "●",
+            "■",
+            "▲",
+            "♪",
+            "⚡",
+            "🔥",
+            "💎",
+            "🌟",
+            "⭐",
+            "🎯",
+            "🎪",
+          ];
+          this.timerInterval = null;
+
+          this.initializeGame();
+        }
+
+        initializeGame() {
+          this.createGrid();
+
+          this.startBtn.addEventListener("click", () => this.startGame());
+          this.hintBtn.addEventListener("click", () => this.showHint());
+          this.resetBtn.addEventListener("click", () => this.resetGame());
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) =>
+              this.setDifficulty(e.target.dataset.difficulty)
+            );
+          });
+
+          // 幫助系統
+          const helpBtn = document.getElementById("helpBtn");
+          if (helpBtn) {
+            helpBtn.addEventListener("click", () => this.showHelp());
+          }
+
+          this.updateDisplay();
+        }
+
+        showHelp() {
+          const modal = document.getElementById("helpModal");
+          if (modal) {
+            modal.style.display = "flex";
+
+            // 添加關閉按鈕事件監聽器
+            const closeBtn = modal.querySelector(".close-help");
+            if (closeBtn) {
+              closeBtn.onclick = () => this.closeHelp();
+            }
+
+            // 點擊背景關閉
+            modal.onclick = (e) => {
+              if (e.target === modal) {
+                this.closeHelp();
+              }
+            };
+
+            // ESC鍵關閉
+            document.addEventListener("keydown", (e) => {
+              if (e.key === "Escape") {
+                this.closeHelp();
+              }
+            });
+          }
+        }
+
+        closeHelp() {
+          const modal = document.getElementById("helpModal");
+          if (modal) {
+            modal.style.display = "none";
+          }
+        }
+
+        createGrid() {
+          this.memoryGrid.innerHTML = "";
+
+          for (let i = 0; i < this.gridSize.rows * this.gridSize.cols; i++) {
+            const cell = document.createElement("div");
+            cell.className = "memory-cell";
+            cell.dataset.index = i;
+            cell.addEventListener("click", () => this.handleCellClick(i));
+            this.memoryGrid.appendChild(cell);
+          }
+        }
+
+        setDifficulty(diff) {
+          if (this.gameActive) return;
+
+          this.difficulty = diff;
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.classList.remove("active");
+          });
+          document
+            .querySelector(`[data-difficulty="${diff}"]`)
+            .classList.add("active");
+
+          // 調整網格大小
+          if (diff === "extreme") {
+            this.gridSize = { cols: 8, rows: 5 };
+          } else if (diff === "hard") {
+            this.gridSize = { cols: 7, rows: 4 };
+          } else {
+            this.gridSize = { cols: 6, rows: 4 };
+          }
+
+          this.createGrid();
+        }
+
+        startGame() {
+          this.gameActive = true;
+          this.score = 0;
+          this.level = 1;
+          this.streak = 0;
+          this.totalAttempts = 0;
+          this.correctAttempts = 0;
+
+          this.updateDisplay();
+          this.startLevel();
+
+          this.startBtn.style.display = "none";
+          this.hintBtn.style.display = "inline-block";
+        }
+
+        startLevel() {
+          this.currentPhase = "ready";
+          this.pattern = [];
+          this.playerGuesses = [];
+          this.revealedCells.clear();
+          this.clearGrid();
+
+          this.generatePattern();
+          this.showCountdown(() => this.showPattern());
+        }
+
+        generatePattern() {
+          const config = this.difficulties[this.difficulty];
+          const patternSize = Math.min(
+            config.patterns + Math.floor(this.level / 3),
+            8
+          );
+          const totalCells = this.gridSize.rows * this.gridSize.cols;
+
+          const usedPositions = new Set();
+
+          for (let i = 0; i < patternSize; i++) {
+            let position;
+            do {
+              position = Math.floor(Math.random() * totalCells);
+            } while (usedPositions.has(position));
+
+            usedPositions.add(position);
+
+            this.pattern.push({
+              position: position,
+              symbol:
+                this.symbols[Math.floor(Math.random() * this.symbols.length)],
+              order: i + 1,
+            });
+          }
+        }
+
+        showCountdown(callback) {
+          this.phaseIndicator.textContent = "準備";
+          let count = 3;
+
+          const countInterval = setInterval(() => {
+            if (count > 0) {
+              this.countdown.textContent = count;
+              this.countdown.style.animation = "countdownPulse 1s ease-in-out";
+              count--;
+            } else {
+              this.countdown.textContent = "";
+              callback();
+              clearInterval(countInterval);
+            }
+          }, 1000);
+        }
+
+        showPattern() {
+          this.currentPhase = "memorize";
+          this.phaseIndicator.textContent = "記住圖案！";
+          this.status.textContent = "仔細記住閃現的圖案位置和符號！";
+
+          const config = this.difficulties[this.difficulty];
+
+          // 顯示所有圖案
+          this.pattern.forEach((item) => {
+            const cell = this.memoryGrid.children[item.position];
+            cell.textContent = item.symbol;
+            cell.classList.add("revealed");
+          });
+
+          // 閃現效果
+          setTimeout(() => {
+            this.pattern.forEach((item) => {
+              const cell = this.memoryGrid.children[item.position];
+              cell.classList.add("flash");
+            });
+          }, 100);
+
+          // 隱藏圖案，開始回憶階段
+          setTimeout(() => {
+            this.startRecall();
+          }, config.flashTime);
+        }
+
+        startRecall() {
+          this.currentPhase = "recall";
+          this.phaseIndicator.textContent = "點擊回憶！";
+          this.status.textContent = "點擊剛才看到圖案的位置！";
+
+          // 清除顯示的圖案
+          this.clearGrid();
+
+          // 開始計時
+          const config = this.difficulties[this.difficulty];
+          this.maxTime = config.timeLimit;
+          this.timeLeft = this.maxTime;
+          this.startTimer();
+        }
+
+        handleCellClick(index) {
+          if (this.currentPhase !== "recall") return;
+
+          const cell = this.memoryGrid.children[index];
+          const patternItem = this.pattern.find(
+            (item) => item.position === index
+          );
+
+          if (patternItem && !this.revealedCells.has(index)) {
+            // 正確答案
+            cell.textContent = patternItem.symbol;
+            cell.classList.add("correct");
+            this.revealedCells.add(index);
+            this.playerGuesses.push(index);
+
+            if (this.revealedCells.size === this.pattern.length) {
+              this.levelComplete();
+            }
+          } else if (!patternItem && !this.revealedCells.has(index)) {
+            // 錯誤答案
+            cell.classList.add("wrong");
+            this.gameOver("點擊了錯誤的位置！");
+          }
+        }
+
+        levelComplete() {
+          clearInterval(this.timerInterval);
+          this.currentPhase = "complete";
+          this.totalAttempts++;
+          this.correctAttempts++;
+          this.streak++;
+
+          const timeBonus = Math.floor((this.timeLeft / this.maxTime) * 200);
+          const levelBonus = this.level * 100;
+          const streakBonus = this.streak >= 5 ? this.streak * 50 : 0;
+          const totalBonus = levelBonus + timeBonus + streakBonus;
+
+          this.score += totalBonus;
+          this.level++;
+
+          this.phaseIndicator.textContent = "完成！";
+          this.status.textContent = `第 ${
+            this.level - 1
+          } 關完成！獲得 ${totalBonus} 分！`;
+          this.updateDisplay();
+
+          setTimeout(() => {
+            this.startLevel();
+          }, 2000);
+        }
+
+        gameOver(reason) {
+          this.gameActive = false;
+          clearInterval(this.timerInterval);
+          this.totalAttempts++;
+          this.streak = 0;
+
+          this.phaseIndicator.textContent = "失敗";
+          this.status.textContent = `❌ 遊戲結束！${reason} 最終分數: ${this.score}`;
+
+          // 顯示正確答案
+          this.pattern.forEach((item) => {
+            const cell = this.memoryGrid.children[item.position];
+            if (!this.revealedCells.has(item.position)) {
+              cell.textContent = item.symbol;
+              cell.classList.add("revealed");
+            }
+          });
+
+          this.updateDisplay();
+          this.endGame();
+        }
+
+        showHint() {
+          if (this.currentPhase !== "recall" || this.score < 100) return;
+
+          this.score -= 100;
+
+          // 隨機顯示一個未發現的正確位置
+          const unrevealedPattern = this.pattern.filter(
+            (item) => !this.revealedCells.has(item.position)
+          );
+
+          if (unrevealedPattern.length > 0) {
+            const hintItem =
+              unrevealedPattern[
+                Math.floor(Math.random() * unrevealedPattern.length)
+              ];
+            const cell = this.memoryGrid.children[hintItem.position];
+
+            cell.style.backgroundColor = "rgba(241, 196, 15, 0.5)";
+            setTimeout(() => {
+              cell.style.backgroundColor = "";
+            }, 1500);
+          }
+
+          this.updateDisplay();
+        }
+
+        startTimer() {
+          this.timerInterval = setInterval(() => {
+            this.timeLeft -= 100;
+            const progress = (this.timeLeft / this.maxTime) * 100;
+            this.timerFill.style.width = Math.max(progress, 0) + "%";
+
+            if (this.timeLeft <= 0) {
+              this.gameOver("時間到！");
+            }
+          }, 100);
+        }
+
+        clearGrid() {
+          Array.from(this.memoryGrid.children).forEach((cell) => {
+            cell.textContent = "";
+            cell.className = "memory-cell";
+          });
+        }
+
+        updateDisplay() {
+          this.scoreEl.textContent = this.score;
+          this.levelEl.textContent = this.level;
+          this.streakEl.textContent = this.streak;
+
+          const accuracy =
+            this.totalAttempts > 0
+              ? Math.round((this.correctAttempts / this.totalAttempts) * 100)
+              : 100;
+          this.accuracyEl.textContent = accuracy + "%";
+
+          // 更新提示按鈕狀態
+          this.hintBtn.disabled = this.score < 100;
+          this.hintBtn.textContent =
+            this.score < 100 ? "提示 (需要100分)" : "提示 (-100分)";
+        }
+
+        endGame() {
+          this.startBtn.style.display = "inline-block";
+          this.hintBtn.style.display = "none";
+          this.timerFill.style.width = "100%";
+        }
+
+        resetGame() {
+          this.gameActive = false;
+          clearInterval(this.timerInterval);
+
+          this.score = 0;
+          this.level = 1;
+          this.streak = 0;
+          this.totalAttempts = 0;
+          this.correctAttempts = 0;
+          this.currentPhase = "ready";
+
+          this.clearGrid();
+          this.updateDisplay();
+
+          this.phaseIndicator.textContent = "準備";
+          this.status.textContent = "準備挑戰瞬間記憶！記住閃現的圖案位置！";
+          this.startBtn.style.display = "inline-block";
+          this.hintBtn.style.display = "none";
+          this.timerFill.style.width = "100%";
+        }
+      }
+
+      // 初始化遊戲
+      window.addEventListener("load", () => {
+        new FlashMemoryMaster();
+      });
+    </script>
+  </body>
+</html>

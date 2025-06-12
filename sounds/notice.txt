@@ -1,0 +1,14 @@
+These sound effects are for the web game collection.
+Please ensure that all sound files used in this project are either:
+1. Created by yourself
+2. Licensed for free use
+3. Properly attributed if required by the license
+
+Common sound files that would be useful:
+- success.mp3 - Short success sound for completing levels
+- error.mp3 - Sound for errors/mistakes
+- click.mp3 - UI click feedback
+- achievement.mp3 - Special sound for unlocking achievements
+- start.mp3 - Game start sound
+- gameover.mp3 - Game over sound
+- button_tones.mp3 - Various tones for the Music Memory game

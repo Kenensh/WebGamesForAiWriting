@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>極速打字挑戰 - 網頁小遊戲</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
+    />
+    <style>
+      :root {
+        --primary-color: #4caf50;
+        --secondary-color: #ffc107;
+        --accent-color: #ff5722;
+        --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --text-light: #ffffff;
+        --text-dark: #333333;
+        --border-radius: 12px;
+        --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        --glass-bg: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Noto Sans TC", sans-serif;
+        background: var(--background);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .header {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--glass-border);
+        padding: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+        z-index: 1000;
+      }
+
+      .title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-light);
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+
+      .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: var(--border-radius);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--glass-bg);
+        color: var(--text-light);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow);
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .btn-primary {
+        background: var(--primary-color);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #45a049;
+      }
+
+      .stats {
+        display: flex;
+        gap: 2rem;
+        font-size: 1rem;
+        color: var(--text-light);
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+      }
+
+      .game-container {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        padding: 2rem;
+      }
+
+      .text-display {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        max-height: 200px;
+        overflow-y: auto;
+        font-size: 1.2rem;
+        line-height: 1.6;
+        color: var(--text-light);
+      }
+
+      .text-char {
+        transition: all 0.2s ease;
+      }
+
+      .text-char.correct {
+        background-color: rgba(76, 175, 80, 0.3);
+        color: #4caf50;
+      }
+
+      .text-char.incorrect {
+        background-color: rgba(244, 67, 54, 0.3);
+        color: #f44336;
+      }
+
+      .text-char.current {
+        background-color: rgba(255, 193, 7, 0.5);
+        animation: blink 1s infinite;
+      }
+
+      @keyframes blink {
+        0%,
+        50% {
+          opacity: 1;
+        }
+        51%,
+        100% {
+          opacity: 0.3;
+        }
+      }
+
+      .input-area {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        font-size: 1.2rem;
+        color: var(--text-light);
+        width: 100%;
+        outline: none;
+        margin-bottom: 2rem;
+        min-height: 100px;
+        resize: none;
+      }
+
+      .input-area::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+      }
+
+      .progress-container {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        transition: width 0.3s ease;
+        border-radius: 6px;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        text-align: center;
+        color: var(--text-light);
+        font-weight: bold;
+      }
+
+      .metric {
+        padding: 0.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        border: 1px solid var(--glass-border);
+      }
+
+      .metric-value {
+        font-size: 1.5rem;
+        color: var(--secondary-color);
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+        color: var(--text-light);
+      }
+
+      .modal h2 {
+        margin-bottom: 1rem;
+        color: var(--secondary-color);
+      }
+
+      .difficulty-selector {
+        display: flex;
+        gap: 0.5rem;
+        margin: 1rem 0;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .difficulty-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--glass-border);
+        background: var(--glass-bg);
+        color: var(--text-light);
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+      }
+
+      .difficulty-btn.active {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .help-list {
+        text-align: left;
+        margin: 1rem 0;
+      }
+
+      .help-list li {
+        margin: 0.5rem 0;
+        color: rgba(255, 255, 255, 0.9);
+      }
+
+      .game-over-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--glass-border);
+      }
+
+      @media (max-width: 768px) {
+        .header {
+          flex-direction: column;
+          gap: 1rem;
+          padding: 0.5rem;
+        }
+
+        .controls {
+          order: -1;
+        }
+
+        .stats {
+          gap: 1rem;
+          font-size: 0.9rem;
+        }
+
+        .game-container {
+          padding: 1rem;
+        }
+
+        .text-display {
+          font-size: 1rem;
+          padding: 1rem;
+        }
+
+        .input-area {
+          font-size: 1rem;
+        }
+
+        .metrics {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1 class="title">⚡ 極速打字挑戰</h1>
+      <div class="controls">
+        <button id="startBtn" class="btn btn-primary">
+          <i class="fas fa-play"></i> 開始
+        </button>
+        <button id="helpBtn" class="btn">
+          <i class="fas fa-question-circle"></i> 說明
+        </button>
+        <a href="index.html" class="btn"> <i class="fas fa-home"></i> 首頁 </a>
+      </div>
+      <div class="stats">
+        <div>WPM: <span id="wpm">0</span></div>
+        <div>準確率: <span id="accuracy">100%</span></div>
+        <div>時間: <span id="timer">60</span>s</div>
+        <div>難度: <span id="currentDifficulty">中等</span></div>
+      </div>
+    </div>
+
+    <div class="game-container">
+      <div class="text-display" id="textDisplay">準備開始打字挑戰...</div>
+
+      <textarea
+        id="inputArea"
+        class="input-area"
+        placeholder="請在此輸入文字..."
+        disabled
+      ></textarea>
+
+      <div class="progress-container">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-value" id="wordsTyped">0</div>
+            <div>已輸入字數</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="errors">0</div>
+            <div>錯誤數</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="correctChars">0</div>
+            <div>正確字符</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="totalChars">0</div>
+            <div>總字符數</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <h2><i class="fas fa-question-circle"></i> 遊戲說明</h2>
+        <ul class="help-list">
+          <li><strong>目標：</strong>在時間內盡可能快速且準確地輸入文字</li>
+          <li><strong>操作：</strong>看著上方文字，在輸入框中打字</li>
+          <li><strong>計分：</strong>WPM(每分鐘字數)和準確率決定分數</li>
+          <li><strong>顏色：</strong>綠色=正確，紅色=錯誤，黃色=當前位置</li>
+          <li><strong>提示：</strong>專注準確性比速度更重要</li>
+        </ul>
+        <div class="difficulty-selector">
+          <button class="difficulty-btn" data-difficulty="easy">
+            簡單 (90s)
+          </button>
+          <button class="difficulty-btn active" data-difficulty="medium">
+            中等 (60s)
+          </button>
+          <button class="difficulty-btn" data-difficulty="hard">
+            困難 (45s)
+          </button>
+          <button class="difficulty-btn" data-difficulty="expert">
+            專家 (30s)
+          </button>
+        </div>
+        <button id="closeHelp" class="btn btn-primary">開始遊戲</button>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="modal">
+      <div class="modal-content">
+        <h2><i class="fas fa-trophy"></i> 挑戰完成</h2>
+        <div class="game-over-stats">
+          <div class="stat-item">
+            <div>最終WPM</div>
+            <div id="finalWpm">0</div>
+          </div>
+          <div class="stat-item">
+            <div>準確率</div>
+            <div id="finalAccuracy">0%</div>
+          </div>
+          <div class="stat-item">
+            <div>正確字符</div>
+            <div id="finalCorrect">0</div>
+          </div>
+          <div class="stat-item">
+            <div>打字評級</div>
+            <div id="typingRank">初學者</div>
+          </div>
+        </div>
+        <div style="margin-top: 1rem">
+          <button id="restartBtn" class="btn btn-primary">
+            <i class="fas fa-redo"></i> 再試一次
+          </button>
+          <button id="backToMenuBtn" class="btn">
+            <i class="fas fa-home"></i> 返回主選單
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class SpeedTypingGame {
+        constructor() {
+          this.gameActive = false;
+          this.startTime = null;
+          this.timeLeft = 60;
+          this.difficulty = "medium";
+          this.currentCharIndex = 0;
+          this.correctChars = 0;
+          this.totalChars = 0;
+          this.errors = 0;
+          this.gameTimer = null;
+          this.wpm = 0;
+          this.accuracy = 100;
+
+          this.difficulties = {
+            easy: { timeLimit: 90, name: "簡單" },
+            medium: { timeLimit: 60, name: "中等" },
+            hard: { timeLimit: 45, name: "困難" },
+            expert: { timeLimit: 30, name: "專家" },
+          };
+
+          this.texts = [
+            "科技改變生活，人工智慧正在重塑我們對未來的想像。在這個數位化時代，我們需要不斷學習新技能，適應快速變化的世界。",
+            "閱讀是人類最偉大的發明之一。透過文字，我們能夠跨越時空，與古今中外的智者對話，汲取前人的智慧與經驗。",
+            "健康的生活方式包括均衡飲食、規律運動、充足睡眠和心理健康。這些要素相互影響，共同維護我們的身心福祉。",
+            "創新思維是解決問題的關鍵。當我們面對挑戰時，換個角度思考往往能找到意想不到的解決方案。",
+            "環境保護是每個人的責任。從日常生活中的小事做起，如減少塑膠使用、節約能源，都能為地球的未來貢獻一份力量。",
+          ];
+
+          this.currentText = "";
+          this.inputArea = document.getElementById("inputArea");
+          this.textDisplay = document.getElementById("textDisplay");
+
+          this.initializeGame();
+          this.bindEvents();
+          this.loadStats();
+        }
+
+        initializeGame() {
+          this.updateDisplay();
+          this.showHelp();
+        }
+
+        bindEvents() {
+          document
+            .getElementById("startBtn")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("helpBtn")
+            .addEventListener("click", () => this.showHelp());
+          document
+            .getElementById("closeHelp")
+            .addEventListener("click", () => this.closeHelp());
+          document
+            .getElementById("restartBtn")
+            .addEventListener("click", () => this.restartGame());
+          document
+            .getElementById("backToMenuBtn")
+            .addEventListener("click", () => this.backToMenu());
+
+          // Difficulty selection
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              document
+                .querySelectorAll(".difficulty-btn")
+                .forEach((b) => b.classList.remove("active"));
+              e.target.classList.add("active");
+              this.difficulty = e.target.dataset.difficulty;
+              this.timeLeft = this.difficulties[this.difficulty].timeLimit;
+              this.updateDisplay();
+            });
+          });
+
+          // Input events
+          this.inputArea.addEventListener("input", (e) => this.handleInput(e));
+          this.inputArea.addEventListener("keydown", (e) => {
+            if (e.key === "Tab") {
+              e.preventDefault();
+            }
+          });
+        }
+
+        startGame() {
+          this.gameActive = true;
+          this.startTime = Date.now();
+          this.currentCharIndex = 0;
+          this.correctChars = 0;
+          this.totalChars = 0;
+          this.errors = 0;
+          this.timeLeft = this.difficulties[this.difficulty].timeLimit;
+
+          // Select random text
+          this.currentText =
+            this.texts[Math.floor(Math.random() * this.texts.length)];
+          this.renderText();
+
+          this.inputArea.disabled = false;
+          this.inputArea.value = "";
+          this.inputArea.focus();
+
+          this.updateDisplay();
+          this.startTimer();
+        }
+
+        startTimer() {
+          this.gameTimer = setInterval(() => {
+            if (this.gameActive) {
+              this.timeLeft--;
+              this.calculateStats();
+              this.updateDisplay();
+
+              if (this.timeLeft <= 0) {
+                this.endGame();
+              }
+            }
+          }, 1000);
+        }
+
+        handleInput(e) {
+          if (!this.gameActive) return;
+
+          const inputText = e.target.value;
+          this.totalChars = inputText.length;
+
+          // Calculate correct characters
+          this.correctChars = 0;
+          this.errors = 0;
+
+          for (let i = 0; i < inputText.length; i++) {
+            if (i < this.currentText.length) {
+              if (inputText[i] === this.currentText[i]) {
+                this.correctChars++;
+              } else {
+                this.errors++;
+              }
+            }
+          }
+
+          this.currentCharIndex = inputText.length;
+          this.renderText();
+          this.calculateStats();
+          this.updateDisplay();
+
+          // Check if text is completed
+          if (inputText.length >= this.currentText.length) {
+            this.endGame();
+          }
+        }
+
+        renderText() {
+          const inputText = this.inputArea.value;
+          let html = "";
+
+          for (let i = 0; i < this.currentText.length; i++) {
+            const char = this.currentText[i];
+            let className = "";
+
+            if (i < inputText.length) {
+              if (inputText[i] === char) {
+                className = "correct";
+              } else {
+                className = "incorrect";
+              }
+            } else if (i === inputText.length) {
+              className = "current";
+            }
+
+            html += `<span class="text-char ${className}">${
+              char === " " ? "&nbsp;" : char
+            }</span>`;
+          }
+
+          this.textDisplay.innerHTML = html;
+        }
+
+        calculateStats() {
+          if (!this.startTime) return;
+
+          const timeElapsed = (Date.now() - this.startTime) / 1000 / 60; // in minutes
+          const words = this.correctChars / 5; // Standard: 5 characters = 1 word
+          this.wpm = timeElapsed > 0 ? Math.round(words / timeElapsed) : 0;
+          this.accuracy =
+            this.totalChars > 0
+              ? Math.round((this.correctChars / this.totalChars) * 100)
+              : 100;
+
+          const progress = (this.correctChars / this.currentText.length) * 100;
+          document.getElementById("progressFill").style.width = progress + "%";
+        }
+
+        updateDisplay() {
+          document.getElementById("wpm").textContent = this.wpm;
+          document.getElementById("accuracy").textContent = this.accuracy + "%";
+          document.getElementById("timer").textContent = this.timeLeft;
+          document.getElementById("currentDifficulty").textContent =
+            this.difficulties[this.difficulty].name;
+
+          document.getElementById("wordsTyped").textContent = Math.floor(
+            this.correctChars / 5
+          );
+          document.getElementById("errors").textContent = this.errors;
+          document.getElementById("correctChars").textContent =
+            this.correctChars;
+          document.getElementById("totalChars").textContent = this.totalChars;
+        }
+
+        getTypingRank() {
+          if (this.wpm >= 80) return "打字高手";
+          if (this.wpm >= 60) return "熟練者";
+          if (this.wpm >= 40) return "進階者";
+          if (this.wpm >= 20) return "中級者";
+          if (this.wpm >= 10) return "初學者";
+          return "新手";
+        }
+
+        endGame() {
+          this.gameActive = false;
+          this.inputArea.disabled = true;
+
+          if (this.gameTimer) {
+            clearInterval(this.gameTimer);
+          }
+
+          this.calculateStats();
+          this.saveStats();
+          this.showGameOver();
+        }
+
+        showGameOver() {
+          document.getElementById("finalWpm").textContent = this.wpm;
+          document.getElementById("finalAccuracy").textContent =
+            this.accuracy + "%";
+          document.getElementById("finalCorrect").textContent =
+            this.correctChars;
+          document.getElementById("typingRank").textContent =
+            this.getTypingRank();
+
+          document.getElementById("gameOverModal").style.display = "flex";
+        }
+
+        restartGame() {
+          document.getElementById("gameOverModal").style.display = "none";
+          this.startGame();
+        }
+
+        backToMenu() {
+          window.location.href = "index.html";
+        }
+
+        showHelp() {
+          document.getElementById("helpModal").style.display = "flex";
+        }
+
+        closeHelp() {
+          document.getElementById("helpModal").style.display = "none";
+          if (!this.gameActive) {
+            this.startGame();
+          }
+        }
+
+        saveStats() {
+          if (typeof saveGameStats === "function") {
+            const stats = {
+              wpm: this.wpm,
+              accuracy: this.accuracy,
+              correctChars: this.correctChars,
+              difficulty: this.difficulty,
+              rank: this.getTypingRank(),
+            };
+            saveGameStats("speed-typing-challenge", stats);
+          }
+        }
+
+        loadStats() {
+          if (typeof loadGameStats === "function") {
+            const stats = loadGameStats("speed-typing-challenge");
+            if (stats && stats.length > 0) {
+              console.log("Loaded previous stats:", stats);
+            }
+          }
+        }
+      }
+
+      // Initialize game when page loads
+      window.addEventListener("DOMContentLoaded", () => {
+        new SpeedTypingGame();
+      });
+    </script>
+  </body>
+</html>

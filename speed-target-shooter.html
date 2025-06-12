@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>極速射擊 - 網頁小遊戲</title>
+    <meta name="game-id" content="speed-target-shooter" />
+    <meta name="game-name" content="極速射擊" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .shooting-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        min-height: 100vh;
+        font-family: "Noto Sans TC", sans-serif;
+      }
+
+      .game-board {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(15px);
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .game-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px 15px;
+        border-radius: 8px;
+        text-align: center;
+        min-width: 80px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.8);
+        margin-bottom: 2px;
+      }
+
+      .stat-value {
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+      }
+
+      .shooting-area {
+        width: 600px;
+        height: 400px;
+        background: linear-gradient(45deg, #0a0a0a, #1a1a1a);
+        border: 3px solid #333;
+        border-radius: 15px;
+        position: relative;
+        overflow: hidden;
+        cursor: crosshair;
+        margin: 20px 0;
+        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+      }
+
+      .target {
+        position: absolute;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 14px;
+        transition: all 0.1s ease;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .target.normal {
+        background: radial-gradient(circle at 30% 30%, #ff6b6b, #e74c3c);
+        color: white;
+      }
+
+      .target.fast {
+        background: radial-gradient(circle at 30% 30%, #4ecdc4, #1abc9c);
+        color: white;
+      }
+
+      .target.bonus {
+        background: radial-gradient(circle at 30% 30%, #f1c40f, #f39c12);
+        color: #333;
+        animation: bonus-glow 1s infinite alternate;
+      }
+
+      .target.mini {
+        background: radial-gradient(circle at 30% 30%, #9b59b6, #8e44ad);
+        color: white;
+      }
+
+      @keyframes bonus-glow {
+        0% {
+          box-shadow: 0 0 5px #f1c40f;
+        }
+        100% {
+          box-shadow: 0 0 20px #f1c40f, 0 0 30px #f39c12;
+        }
+      }
+
+      /* Modal styles for help functionality */
+      .game-modal {
+        display: none;
+        position: fixed;
+        z-index: 10000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        animation: modalFadeIn 0.3s ease-out;
+      }
+
+      .modal-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: 5% auto;
+        padding: 0;
+        border: none;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        transform: translateY(-20px);
+        animation: modalSlideIn 0.3s ease-out forwards;
+      }
+
+      .modal-header {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .modal-header h2 {
+        margin: 0;
+        color: white;
+        font-size: 24px;
+        font-weight: 600;
+      }
+
+      .close-button {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+      }
+
+      .close-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(1.1);
+      }
+
+      .modal-body {
+        padding: 20px;
+        color: white;
+        line-height: 1.6;
+        max-height: 50vh;
+        overflow-y: auto;
+      }
+
+      .modal-body h3 {
+        color: #ffd700;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-size: 18px;
+      }
+
+      .modal-body h3:first-child {
+        margin-top: 0;
+      }
+
+      .modal-body ul {
+        margin: 10px 0;
+        padding-left: 20px;
+      }
+
+      .modal-body li {
+        margin: 5px 0;
+      }
+
+      .modal-footer {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px 20px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        text-align: right;
+      }
+
+      .modal-button {
+        background: linear-gradient(135deg, #4caf50, #45a049);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+      }
+
+      .modal-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(76, 175, 80, 0.4);
+      }
+
+      @keyframes modalFadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes modalSlideIn {
+        from {
+          transform: translateY(-50px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* 響應式設計 */
+      @media (max-width: 768px) {
+        .shooting-area {
+          width: 90vw;
+          height: 50vh;
+          max-width: 500px;
+        }
+
+        .game-header {
+          justify-content: center;
+        }
+
+        .stats-display {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .modal-content {
+          width: 95%;
+          margin: 10% auto;
+          max-height: 85vh;
+        }
+
+        .modal-header h2 {
+          font-size: 20px;
+        }
+
+        .modal-body {
+          padding: 15px;
+          max-height: 60vh;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shooting-container">
+      <div class="game-board">
+        <h1 style="color: white; margin-bottom: 20px">🎯 極速射擊</h1>
+
+        <div class="game-header">
+          <div class="stat-item">
+            <div class="stat-label">分數</div>
+            <div class="stat-value" id="score">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">命中</div>
+            <div class="stat-value" id="hits">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">未命中</div>
+            <div class="stat-value" id="misses">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">連擊</div>
+            <div class="stat-value" id="combo">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">剩餘時間</div>
+            <div class="stat-value" id="timeLeft">60</div>
+          </div>
+        </div>
+
+        <div class="timer-bar">
+          <div class="timer-fill" id="timerFill"></div>
+        </div>
+
+        <div class="difficulty-controls">
+          <button class="difficulty-btn active" data-difficulty="easy">
+            簡單
+          </button>
+          <button class="difficulty-btn" data-difficulty="medium">中等</button>
+          <button class="difficulty-btn" data-difficulty="hard">困難</button>
+          <button class="difficulty-btn" data-difficulty="extreme">極限</button>
+        </div>
+
+        <div class="shooting-area" id="shootingArea">
+          <div class="crosshair" id="crosshair"></div>
+        </div>
+
+        <div class="stats-display">
+          <div class="stat-item">
+            <div class="stat-label">準確率</div>
+            <div class="stat-value" id="accuracy">100%</div>
+            <div class="accuracy-bar">
+              <div class="accuracy-fill" id="accuracyFill"></div>
+            </div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">目標/秒</div>
+            <div class="stat-value" id="targetsPerSecond">0.0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">平均反應</div>
+            <div class="stat-value" id="avgReaction">0ms</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">最高連擊</div>
+            <div class="stat-value" id="maxCombo">0</div>
+          </div>
+        </div>
+
+        <div class="game-controls">
+          <button class="control-btn" id="startBtn">開始遊戲</button>
+          <button class="control-btn" id="pauseBtn" disabled>暫停</button>
+          <button class="control-btn" id="restartBtn" disabled>重新開始</button>
+          <button class="control-btn" id="helpBtn">遊戲說明</button>
+          <button class="control-btn" id="homeBtn">返回首頁</button>
+        </div>
+
+        <div class="achievements" id="achievements"></div>
+
+        <div class="game-over-stats" id="gameOverStats">
+          <h3>遊戲結束</h3>
+          <div id="finalStats"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      class SpeedTargetShooter {
+        constructor() {
+          this.gameActive = false;
+          this.score = 0;
+          this.hits = 0;
+          this.misses = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.timeLeft = 60;
+          this.difficulty = "easy";
+          this.targets = [];
+          this.reactionTimes = [];
+
+          this.difficultySettings = {
+            easy: {
+              spawnRate: 1500,
+              targetSpeed: 2,
+              targetSizes: [40, 50, 60],
+              maxTargets: 3,
+            },
+            medium: {
+              spawnRate: 1200,
+              targetSpeed: 3,
+              targetSizes: [35, 45, 55],
+              maxTargets: 4,
+            },
+            hard: {
+              spawnRate: 900,
+              targetSpeed: 4,
+              targetSizes: [30, 40, 50],
+              maxTargets: 5,
+            },
+            extreme: {
+              spawnRate: 600,
+              targetSpeed: 5,
+              targetSizes: [25, 35, 45],
+              maxTargets: 6,
+            },
+          };
+
+          this.targetTypes = [
+            { type: "normal", points: 10, probability: 0.5 },
+            { type: "fast", points: 20, probability: 0.25 },
+            { type: "bonus", points: 50, probability: 0.15 },
+            { type: "mini", points: 30, probability: 0.1 },
+          ];
+
+          this.initializeGame();
+        }
+
+        initializeGame() {
+          this.bindEvents();
+          this.setupHelpModal();
+          this.loadStats();
+          this.showHelp();
+        }
+
+        bindEvents() {
+          // 難度選擇
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.addEventListener("click", () =>
+              this.setDifficulty(btn.dataset.difficulty)
+            );
+          });
+
+          // 控制按鈕
+          document
+            .getElementById("startBtn")
+            .addEventListener("click", () => this.startGame());
+          document
+            .getElementById("pauseBtn")
+            .addEventListener("click", () => this.togglePause());
+          document
+            .getElementById("restartBtn")
+            .addEventListener("click", () => this.restartGame());
+          document
+            .getElementById("helpBtn")
+            .addEventListener("click", () => this.showHelp());
+          document
+            .getElementById("homeBtn")
+            .addEventListener(
+              "click",
+              () => (window.location.href = "index.html")
+            );
+
+          // 滑鼠移動和點擊
+          const shootingArea = document.getElementById("shootingArea");
+          shootingArea.addEventListener("mousemove", (e) =>
+            this.updateCrosshair(e)
+          );
+          shootingArea.addEventListener("click", (e) => this.handleShot(e));
+
+          // 防止右鍵選單
+          shootingArea.addEventListener("contextmenu", (e) =>
+            e.preventDefault()
+          );
+        }
+
+        setDifficulty(newDifficulty) {
+          this.difficulty = newDifficulty;
+
+          document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+            btn.classList.remove("active");
+          });
+          document
+            .querySelector(`[data-difficulty="${newDifficulty}"]`)
+            .classList.add("active");
+        }
+
+        startGame() {
+          this.gameActive = true;
+          this.score = 0;
+          this.hits = 0;
+          this.misses = 0;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.timeLeft = 60;
+          this.targets = [];
+          this.reactionTimes = [];
+          this.gameStartTime = Date.now();
+
+          this.updateDisplay();
+          this.startTimer();
+          this.startTargetSpawning();
+
+          document.getElementById("startBtn").disabled = true;
+          document.getElementById("pauseBtn").disabled = false;
+          document.getElementById("restartBtn").disabled = false;
+          document.getElementById("gameOverStats").style.display = "none";
+        }
+
+        togglePause() {
+          if (!this.gameActive) return;
+
+          this.gameActive = !this.gameActive;
+          const pauseBtn = document.getElementById("pauseBtn");
+
+          if (this.gameActive) {
+            pauseBtn.textContent = "暫停";
+            this.startTimer();
+            this.startTargetSpawning();
+          } else {
+            pauseBtn.textContent = "繼續";
+            clearInterval(this.gameTimer);
+            clearInterval(this.spawnTimer);
+          }
+        }
+
+        restartGame() {
+          this.endGame();
+          setTimeout(() => this.startGame(), 100);
+        }
+
+        startTimer() {
+          this.gameTimer = setInterval(() => {
+            if (!this.gameActive) return;
+
+            this.timeLeft--;
+            this.updateDisplay();
+
+            if (this.timeLeft <= 0) {
+              this.endGame();
+            }
+          }, 1000);
+        }
+
+        startTargetSpawning() {
+          const settings = this.difficultySettings[this.difficulty];
+
+          this.spawnTimer = setInterval(() => {
+            if (!this.gameActive) return;
+
+            if (this.targets.length < settings.maxTargets) {
+              this.spawnTarget();
+            }
+          }, settings.spawnRate);
+        }
+
+        spawnTarget() {
+          const shootingArea = document.getElementById("shootingArea");
+          const rect = shootingArea.getBoundingClientRect();
+          const settings = this.difficultySettings[this.difficulty];
+
+          // 隨機選擇目標類型
+          const random = Math.random();
+          let targetType = this.targetTypes[0];
+          let cumulative = 0;
+
+          for (const type of this.targetTypes) {
+            cumulative += type.probability;
+            if (random <= cumulative) {
+              targetType = type;
+              break;
+            }
+          }
+
+          // 創建目標元素
+          const target = document.createElement("div");
+          target.className = `target ${targetType.type}`;
+
+          // 設置大小
+          const sizeIndex = Math.floor(
+            Math.random() * settings.targetSizes.length
+          );
+          const size = settings.targetSizes[sizeIndex];
+          target.style.width = size + "px";
+          target.style.height = size + "px";
+
+          // 設置位置
+          const maxX = shootingArea.offsetWidth - size;
+          const maxY = shootingArea.offsetHeight - size;
+          const x = Math.random() * maxX;
+          const y = Math.random() * maxY;
+
+          target.style.left = x + "px";
+          target.style.top = y + "px";
+
+          // 設置內容
+          target.textContent = targetType.points;
+
+          // 目標數據
+          const targetData = {
+            element: target,
+            type: targetType.type,
+            points: targetType.points,
+            spawnTime: Date.now(),
+            speed: settings.targetSpeed,
+            direction: Math.random() * Math.PI * 2,
+            x: x,
+            y: y,
+            size: size,
+          };
+
+          // 點擊事件
+          target.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.hitTarget(targetData);
+          });
+
+          // 添加到DOM和數組
+          shootingArea.appendChild(target);
+          this.targets.push(targetData);
+
+          // 移動動畫
+          this.animateTarget(targetData);
+
+          // 自動移除
+          setTimeout(() => {
+            if (target.parentNode) {
+              this.removeTarget(targetData);
+            }
+          }, 3000 + Math.random() * 2000);
+        }
+
+        animateTarget(targetData) {
+          const animate = () => {
+            if (!this.gameActive || !targetData.element.parentNode) return;
+
+            const shootingArea = document.getElementById("shootingArea");
+
+            // 更新位置
+            targetData.x += Math.cos(targetData.direction) * targetData.speed;
+            targetData.y += Math.sin(targetData.direction) * targetData.speed;
+
+            // 邊界碰撞
+            if (
+              targetData.x <= 0 ||
+              targetData.x >= shootingArea.offsetWidth - targetData.size
+            ) {
+              targetData.direction = Math.PI - targetData.direction;
+              targetData.x = Math.max(
+                0,
+                Math.min(
+                  shootingArea.offsetWidth - targetData.size,
+                  targetData.x
+                )
+              );
+            }
+
+            if (
+              targetData.y <= 0 ||
+              targetData.y >= shootingArea.offsetHeight - targetData.size
+            ) {
+              targetData.direction = -targetData.direction;
+              targetData.y = Math.max(
+                0,
+                Math.min(
+                  shootingArea.offsetHeight - targetData.size,
+                  targetData.y
+                )
+              );
+            }
+
+            // 應用位置
+            targetData.element.style.left = targetData.x + "px";
+            targetData.element.style.top = targetData.y + "px";
+
+            // 繼續動畫
+            requestAnimationFrame(animate);
+          };
+
+          animate();
+        }
+
+        updateCrosshair(e) {
+          const crosshair = document.getElementById("crosshair");
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - rect.left - 10;
+          const y = e.clientY - rect.top - 10;
+
+          crosshair.style.left = x + "px";
+          crosshair.style.top = y + "px";
+        }
+
+        handleShot(e) {
+          if (!this.gameActive) return;
+
+          // 創建命中效果
+          this.createHitEffect(e);
+
+          // 檢查是否命中任何目標
+          let hit = false;
+          const rect = e.currentTarget.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const clickY = e.clientY - rect.top;
+
+          for (const target of this.targets) {
+            const targetRect = target.element.getBoundingClientRect();
+            const relativeRect = {
+              left: targetRect.left - rect.left,
+              top: targetRect.top - rect.top,
+              right: targetRect.right - rect.left,
+              bottom: targetRect.bottom - rect.top,
+            };
+
+            if (
+              clickX >= relativeRect.left &&
+              clickX <= relativeRect.right &&
+              clickY >= relativeRect.top &&
+              clickY <= relativeRect.bottom
+            ) {
+              this.hitTarget(target);
+              hit = true;
+              break;
+            }
+          }
+
+          if (!hit) {
+            this.missTarget();
+          }
+        }
+
+        hitTarget(targetData) {
+          if (!this.gameActive) return;
+
+          // 計算反應時間
+          const reactionTime = Date.now() - targetData.spawnTime;
+          this.reactionTimes.push(reactionTime);
+
+          // 更新統計
+          this.hits++;
+          this.combo++;
+          this.maxCombo = Math.max(this.maxCombo, this.combo);
+
+          // 計算分數 (包含連擊獎勵)
+          let points = targetData.points;
+          if (this.combo > 1) {
+            points = Math.floor(points * (1 + (this.combo - 1) * 0.1));
+          }
+          this.score += points;
+
+          // 顯示分數彈出效果
+          this.createScorePopup(targetData.element, points);
+
+          // 移除目標
+          this.removeTarget(targetData);
+
+          // 連擊顯示
+          if (this.combo >= 3) {
+            this.showComboEffect();
+          }
+
+          // 檢查成就
+          this.checkAchievements();
+
+          this.updateDisplay();
+        }
+
+        missTarget() {
+          this.misses++;
+          this.combo = 0;
+          this.updateDisplay();
+        }
+
+        removeTarget(targetData) {
+          if (targetData.element.parentNode) {
+            targetData.element.remove();
+          }
+          const index = this.targets.indexOf(targetData);
+          if (index > -1) {
+            this.targets.splice(index, 1);
+          }
+        }
+
+        createHitEffect(e) {
+          const effect = document.createElement("div");
+          effect.className = "hit-effect";
+          const rect = e.currentTarget.getBoundingClientRect();
+          effect.style.left = e.clientX - rect.left - 15 + "px";
+          effect.style.top = e.clientY - rect.top - 15 + "px";
+
+          document.getElementById("shootingArea").appendChild(effect);
+
+          setTimeout(() => effect.remove(), 500);
+        }
+
+        createScorePopup(targetElement, points) {
+          const popup = document.createElement("div");
+          popup.className = "score-popup";
+          popup.textContent = "+" + points;
+          popup.style.left = targetElement.style.left;
+          popup.style.top = targetElement.style.top;
+
+          document.getElementById("shootingArea").appendChild(popup);
+
+          setTimeout(() => popup.remove(), 1000);
+        }
+
+        showComboEffect() {
+          const existing = document.querySelector(".combo-display");
+          if (existing) existing.remove();
+
+          const comboDisplay = document.createElement("div");
+          comboDisplay.className = "combo-display";
+          comboDisplay.textContent = `${this.combo}x 連擊!`;
+
+          document.getElementById("shootingArea").appendChild(comboDisplay);
+
+          setTimeout(() => comboDisplay.remove(), 2000);
+        }
+
+        checkAchievements() {
+          const achievements = document.getElementById("achievements");
+          achievements.innerHTML = "";
+
+          const newAchievements = [];
+
+          if (this.hits >= 10) newAchievements.push("神射手");
+          if (this.maxCombo >= 5) newAchievements.push("連擊大師");
+          if (this.score >= 1000) newAchievements.push("高分射手");
+          if (this.getAccuracy() >= 90) newAchievements.push("精準射擊");
+
+          newAchievements.forEach((achievement) => {
+            const badge = document.createElement("div");
+            badge.className = "achievement";
+            badge.textContent = achievement;
+            achievements.appendChild(badge);
+          });
+        }
+
+        updateDisplay() {
+          document.getElementById("score").textContent = this.score;
+          document.getElementById("hits").textContent = this.hits;
+          document.getElementById("misses").textContent = this.misses;
+          document.getElementById("combo").textContent = this.combo;
+          document.getElementById("timeLeft").textContent = this.timeLeft;
+          document.getElementById("maxCombo").textContent = this.maxCombo;
+
+          // 準確率
+          const accuracy = this.getAccuracy();
+          document.getElementById("accuracy").textContent = accuracy + "%";
+          document.getElementById("accuracyFill").style.width = accuracy + "%";
+
+          // 目標/秒
+          const gameTime =
+            (Date.now() - (this.gameStartTime || Date.now())) / 1000;
+          const targetsPerSecond =
+            gameTime > 0 ? (this.hits / gameTime).toFixed(1) : "0.0";
+          document.getElementById("targetsPerSecond").textContent =
+            targetsPerSecond;
+
+          // 平均反應時間
+          const avgReaction =
+            this.reactionTimes.length > 0
+              ? Math.round(
+                  this.reactionTimes.reduce((a, b) => a + b, 0) /
+                    this.reactionTimes.length
+                )
+              : 0;
+          document.getElementById("avgReaction").textContent =
+            avgReaction + "ms";
+
+          // 時間條
+          const timePercent = (this.timeLeft / 60) * 100;
+          document.getElementById("timerFill").style.width = timePercent + "%";
+        }
+
+        getAccuracy() {
+          const totalShots = this.hits + this.misses;
+          return totalShots > 0
+            ? Math.round((this.hits / totalShots) * 100)
+            : 100;
+        }
+
+        endGame() {
+          this.gameActive = false;
+          clearInterval(this.gameTimer);
+          clearInterval(this.spawnTimer);
+
+          // 清除所有目標
+          this.targets.forEach((target) => {
+            if (target.element.parentNode) {
+              target.element.remove();
+            }
+          });
+          this.targets = [];
+
+          // 顯示最終統計
+          this.showFinalStats();
+          this.saveStats();
+
+          document.getElementById("startBtn").disabled = false;
+          document.getElementById("pauseBtn").disabled = true;
+          document.getElementById("restartBtn").disabled = true;
+        }
+
+        showFinalStats() {
+          const statsDiv = document.getElementById("gameOverStats");
+          const finalStats = document.getElementById("finalStats");
+
+          const gameTime = (Date.now() - this.gameStartTime) / 1000;
+          const accuracy = this.getAccuracy();
+          const avgReaction =
+            this.reactionTimes.length > 0
+              ? Math.round(
+                  this.reactionTimes.reduce((a, b) => a + b, 0) /
+                    this.reactionTimes.length
+                )
+              : 0;
+
+          finalStats.innerHTML = `
+                    <p><strong>最終分數:</strong> ${this.score}</p>
+                    <p><strong>命中目標:</strong> ${this.hits}</p>
+                    <p><strong>射擊準確率:</strong> ${accuracy}%</p>
+                    <p><strong>最高連擊:</strong> ${this.maxCombo}</p>
+                    <p><strong>平均反應時間:</strong> ${avgReaction}ms</p>
+                    <p><strong>目標每秒:</strong> ${(this.hits / 60).toFixed(
+                      1
+                    )}</p>
+                `;
+
+          statsDiv.style.display = "block";
+        }
+
+        setupHelpModal() {
+          this.helpModal = new GameUtils.Modal(
+            "helpModal",
+            "極速射擊 - 遊戲說明",
+            `
+                    <h3>遊戲規則：</h3>
+                    <ul>
+                        <li>在60秒內射擊盡可能多的移動目標</li>
+                        <li>不同顏色目標有不同分值：</li>
+                        <ul>
+                            <li>🔴 普通目標: 10分</li>
+                            <li>🔵 快速目標: 20分</li>
+                            <li>🟡 獎勵目標: 50分</li>
+                            <li>🟣 迷你目標: 30分</li>
+                        </ul>
+                        <li>連續命中可獲得連擊獎勵</li>
+                        <li>錯過目標會重置連擊</li>
+                        <li>追求高分和高準確率！</li>
+                    </ul>
+                    
+                    <h3>操作方式：</h3>
+                    <ul>
+                        <li>移動滑鼠控制準星</li>
+                        <li>點擊滑鼠左鍵射擊</li>
+                        <li>瞄準移動的彩色目標</li>
+                    </ul>
+                    
+                    <h3>難度差異：</h3>
+                    <ul>
+                        <li>簡單: 較慢的目標生成和移動速度</li>
+                        <li>中等: 中等速度和較多目標</li>
+                        <li>困難: 快速移動和小目標</li>
+                        <li>極限: 最高難度挑戰</li>
+                    </ul>
+                `
+          );
+        }
+
+        showHelp() {
+          this.helpModal.show();
+        }
+
+        saveStats() {
+          const stats = {
+            bestScore: this.score,
+            totalHits: this.hits,
+            totalMisses: this.misses,
+            bestCombo: this.maxCombo,
+            bestAccuracy: this.getAccuracy(),
+            totalGames: 1,
+            lastPlayed: Date.now(),
+          };
+
+          const existing = JSON.parse(
+            localStorage.getItem("speedTargetShooterStats") || "{}"
+          );
+
+          stats.bestScore = Math.max(stats.bestScore, existing.bestScore || 0);
+          stats.totalHits = (existing.totalHits || 0) + this.hits;
+          stats.totalMisses = (existing.totalMisses || 0) + this.misses;
+          stats.bestCombo = Math.max(stats.bestCombo, existing.bestCombo || 0);
+          stats.bestAccuracy = Math.max(
+            stats.bestAccuracy,
+            existing.bestAccuracy || 0
+          );
+          stats.totalGames = (existing.totalGames || 0) + 1;
+
+          localStorage.setItem(
+            "speedTargetShooterStats",
+            JSON.stringify(stats)
+          );
+        }
+
+        loadStats() {
+          const stats = JSON.parse(
+            localStorage.getItem("speedTargetShooterStats") || "{}"
+          );
+          // 可以在這裡顯示歷史最佳成績
+        }
+      }
+
+      // 等待頁面加載完成
+      document.addEventListener("DOMContentLoaded", () => {
+        new SpeedTargetShooter();
+      });
+    </script>
+  </body>
+</html>

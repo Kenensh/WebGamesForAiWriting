@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>圓圈點擊器 - 網頁小遊戲</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #2196f3 0%, #21cbf3 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+      }
+
+      .game-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        max-width: 800px;
+        width: 95%;
+      }
+
+      h1 {
+        margin-bottom: 20px;
+        font-size: 2.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .controls {
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+      }
+
+      .btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .difficulty-selector {
+        margin: 20px 0;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .difficulty-btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+        min-width: 80px;
+      }
+
+      .difficulty-btn.active {
+        background: rgba(76, 175, 80, 0.7);
+        border-color: #4caf50;
+      }
+
+      .game-info {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+      }
+
+      .info-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .info-label {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        margin-bottom: 5px;
+      }
+
+      .info-value {
+        font-size: 1.2rem;
+        font-weight: bold;
+      }
+
+      .game-area {
+        width: 100%;
+        height: 500px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        position: relative;
+        margin: 20px 0;
+        overflow: hidden;
+      }
+
+      .circle {
+        position: absolute;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .circle:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+      }
+
+      .circle.hit {
+        animation: hitEffect 0.3s ease;
+      }
+
+      @keyframes hitEffect {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.3);
+          opacity: 0.8;
+        }
+        100% {
+          transform: scale(0);
+          opacity: 0;
+        }
+      }
+
+      .circle.miss {
+        animation: missEffect 0.5s ease;
+      }
+
+      @keyframes missEffect {
+        0% {
+          transform: scale(1);
+        }
+        25% {
+          transform: scale(1.1);
+          background-color: #ff4444;
+        }
+        100% {
+          transform: scale(0);
+          opacity: 0;
+        }
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+      }
+
+      .modal-content {
+        background: rgba(255, 255, 255, 0.95);
+        color: #333;
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 500px;
+        position: relative;
+        backdrop-filter: blur(10px);
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        position: absolute;
+        right: 15px;
+        top: 10px;
+      }
+
+      .close:hover {
+        color: #000;
+      }
+
+      .countdown {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 4rem;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        z-index: 100;
+      }
+
+      .game-over {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        padding: 30px;
+        border-radius: 15px;
+        text-align: center;
+        z-index: 100;
+      }
+
+      @media (max-width: 768px) {
+        .game-container {
+          padding: 20px;
+          margin: 10px;
+        }
+
+        h1 {
+          font-size: 2rem;
+        }
+
+        .game-area {
+          height: 400px;
+        }
+
+        .controls {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .btn {
+          width: 200px;
+        }
+
+        .difficulty-selector {
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .difficulty-btn {
+          width: 200px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1><i class="fas fa-circle"></i> 圓圈點擊器</h1>
+
+      <div class="controls">
+        <button class="btn" onclick="startGame()" id="startBtn">
+          <i class="fas fa-play"></i> 開始遊戲
+        </button>
+        <button class="btn" onclick="pauseGame()" id="pauseBtn" disabled>
+          <i class="fas fa-pause"></i> 暫停
+        </button>
+        <button class="btn" onclick="resetGame()">
+          <i class="fas fa-redo"></i> 重置
+        </button>
+        <button class="btn" onclick="showHelp()">
+          <i class="fas fa-question-circle"></i> 說明
+        </button>
+        <button class="btn" onclick="window.location.href='index.html'">
+          <i class="fas fa-home"></i> 返回選單
+        </button>
+      </div>
+
+      <div class="difficulty-selector">
+        <button
+          class="btn difficulty-btn active"
+          onclick="setDifficulty('easy')"
+        >
+          簡單
+        </button>
+        <button class="btn difficulty-btn" onclick="setDifficulty('medium')">
+          中等
+        </button>
+        <button class="btn difficulty-btn" onclick="setDifficulty('hard')">
+          困難
+        </button>
+        <button class="btn difficulty-btn" onclick="setDifficulty('expert')">
+          專家
+        </button>
+      </div>
+
+      <div class="game-info">
+        <div class="info-item">
+          <div class="info-label">分數</div>
+          <div class="info-value" id="score">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">時間</div>
+          <div class="info-value" id="timeLeft">60</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">連擊</div>
+          <div class="info-value" id="combo">0</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">準確率</div>
+          <div class="info-value" id="accuracy">100%</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">最高分</div>
+          <div class="info-value" id="bestScore">0</div>
+        </div>
+      </div>
+
+      <div class="game-area" id="gameArea">
+        <div
+          style="
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            opacity: 0.7;
+          "
+        >
+          選擇難度並點擊開始遊戲
+        </div>
+      </div>
+    </div>
+
+    <!-- 說明模態框 -->
+    <div id="helpModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeHelp()">&times;</span>
+        <h2><i class="fas fa-info-circle"></i> 圓圈點擊器說明</h2>
+        <h3>遊戲規則：</h3>
+        <ul style="margin: 15px 0; padding-left: 20px">
+          <li>在時間限制內點擊出現的圓圈獲得分數</li>
+          <li>圓圈會隨時間縮小，越小的圓圈分數越高</li>
+          <li>錯過圓圈會重置連擊數</li>
+          <li>連續擊中可獲得連擊加成</li>
+          <li>不同顏色的圓圈有不同分值</li>
+        </ul>
+        <h3>難度差異：</h3>
+        <ul style="margin: 15px 0; padding-left: 20px">
+          <li><strong>簡單：</strong>圓圈較大，縮小較慢，生成間隔較長</li>
+          <li><strong>中等：</strong>中等大小和速度</li>
+          <li><strong>困難：</strong>圓圈較小，縮小較快，生成間隔較短</li>
+          <li><strong>專家：</strong>最小圓圈，最快速度，最短間隔</li>
+        </ul>
+        <h3>計分系統：</h3>
+        <ul style="margin: 15px 0; padding-left: 20px">
+          <li>基礎分數基於圓圈類型和大小</li>
+          <li>連擊加成：2x, 3x, 4x, 5x（最高）</li>
+          <li>圓圈越小分數越高</li>
+          <li>金色圓圈有額外獎勵</li>
+        </ul>
+      </div>
+    </div>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      let gameState = "idle"; // idle, playing, paused, gameOver
+      let score = 0;
+      let timeLeft = 60;
+      let combo = 0;
+      let hitCount = 0;
+      let missCount = 0;
+      let circles = [];
+      let gameTimer = null;
+      let spawnTimer = null;
+      let currentDifficulty = "easy";
+
+      const difficulties = {
+        easy: {
+          name: "簡單",
+          baseSize: 80,
+          minSize: 40,
+          shrinkRate: 0.5,
+          spawnInterval: 1500,
+          timeLimit: 60,
+          colors: ["#ff4444", "#44ff44", "#4444ff"],
+        },
+        medium: {
+          name: "中等",
+          baseSize: 70,
+          minSize: 35,
+          shrinkRate: 0.7,
+          spawnInterval: 1200,
+          timeLimit: 60,
+          colors: ["#ff4444", "#44ff44", "#4444ff", "#ffff44"],
+        },
+        hard: {
+          name: "困難",
+          baseSize: 60,
+          minSize: 30,
+          shrinkRate: 1.0,
+          spawnInterval: 1000,
+          timeLimit: 60,
+          colors: ["#ff4444", "#44ff44", "#4444ff", "#ffff44", "#ff44ff"],
+        },
+        expert: {
+          name: "專家",
+          baseSize: 50,
+          minSize: 25,
+          shrinkRate: 1.5,
+          spawnInterval: 800,
+          timeLimit: 60,
+          colors: [
+            "#ff4444",
+            "#44ff44",
+            "#4444ff",
+            "#ffff44",
+            "#ff44ff",
+            "#44ffff",
+          ],
+        },
+      };
+
+      // 從本地存儲載入最高分
+      function loadBestScore() {
+        const saved = localStorage.getItem(
+          `circleClicker_${currentDifficulty}`
+        );
+        return saved ? parseInt(saved) : 0;
+      }
+
+      // 保存最高分
+      function saveBestScore() {
+        const bestScore = loadBestScore();
+        if (score > bestScore) {
+          localStorage.setItem(
+            `circleClicker_${currentDifficulty}`,
+            score.toString()
+          );
+          return true;
+        }
+        return false;
+      }
+
+      // 設置難度
+      function setDifficulty(difficulty) {
+        if (gameState === "playing") return;
+
+        currentDifficulty = difficulty;
+
+        // 更新按鈕狀態
+        document.querySelectorAll(".difficulty-btn").forEach((btn) => {
+          btn.classList.remove("active");
+        });
+        event.target.classList.add("active");
+
+        // 更新最高分顯示
+        updateBestScore();
+      }
+
+      // 更新最高分顯示
+      function updateBestScore() {
+        document.getElementById("bestScore").textContent = loadBestScore();
+      }
+
+      // 開始遊戲
+      function startGame() {
+        if (gameState === "playing") return;
+
+        gameState = "playing";
+        score = 0;
+        combo = 0;
+        hitCount = 0;
+        missCount = 0;
+        timeLeft = difficulties[currentDifficulty].timeLimit;
+        circles = [];
+
+        document.getElementById("startBtn").disabled = true;
+        document.getElementById("pauseBtn").disabled = false;
+
+        clearGameArea();
+        updateUI();
+        startCountdown();
+      }
+
+      // 開始倒數
+      function startCountdown() {
+        let count = 3;
+        showCountdown(count);
+
+        const countdownTimer = setInterval(() => {
+          count--;
+          if (count > 0) {
+            showCountdown(count);
+          } else {
+            hideCountdown();
+            startGameLoop();
+            clearInterval(countdownTimer);
+          }
+        }, 1000);
+      }
+
+      // 顯示倒數
+      function showCountdown(count) {
+        const gameArea = document.getElementById("gameArea");
+        const countdown = document.createElement("div");
+        countdown.className = "countdown";
+        countdown.textContent = count;
+
+        // 移除舊的倒數
+        const oldCountdown = gameArea.querySelector(".countdown");
+        if (oldCountdown) {
+          oldCountdown.remove();
+        }
+
+        gameArea.appendChild(countdown);
+      }
+
+      // 隱藏倒數
+      function hideCountdown() {
+        const countdown = document.querySelector(".countdown");
+        if (countdown) {
+          countdown.remove();
+        }
+      }
+
+      // 開始遊戲循環
+      function startGameLoop() {
+        // 開始計時器
+        gameTimer = setInterval(() => {
+          timeLeft--;
+          updateUI();
+
+          if (timeLeft <= 0) {
+            endGame();
+          }
+        }, 1000);
+
+        // 開始生成圓圈
+        spawnCircle();
+        spawnTimer = setInterval(
+          spawnCircle,
+          difficulties[currentDifficulty].spawnInterval
+        );
+
+        // 開始更新圓圈
+        updateCircles();
+      }
+
+      // 生成圓圈
+      function spawnCircle() {
+        if (gameState !== "playing") return;
+
+        const gameArea = document.getElementById("gameArea");
+        const difficulty = difficulties[currentDifficulty];
+        const rect = gameArea.getBoundingClientRect();
+
+        const circle = {
+          id: Date.now() + Math.random(),
+          size: difficulty.baseSize,
+          x: Math.random() * (rect.width - difficulty.baseSize),
+          y: Math.random() * (rect.height - difficulty.baseSize),
+          color:
+            difficulty.colors[
+              Math.floor(Math.random() * difficulty.colors.length)
+            ],
+          isGolden: Math.random() < 0.1, // 10% 機率金色
+          element: null,
+        };
+
+        // 如果是金色圓圈
+        if (circle.isGolden) {
+          circle.color = "#ffd700";
+        }
+
+        circle.element = createCircleElement(circle);
+        gameArea.appendChild(circle.element);
+        circles.push(circle);
+      }
+
+      // 創建圓圈元素
+      function createCircleElement(circle) {
+        const element = document.createElement("div");
+        element.className = "circle";
+        element.style.width = circle.size + "px";
+        element.style.height = circle.size + "px";
+        element.style.left = circle.x + "px";
+        element.style.top = circle.y + "px";
+        element.style.backgroundColor = circle.color;
+
+        if (circle.isGolden) {
+          element.style.boxShadow = "0 0 20px gold";
+          element.innerHTML = '<i class="fas fa-star"></i>';
+        }
+
+        element.onclick = () => hitCircle(circle);
+
+        return element;
+      }
+
+      // 更新圓圈
+      function updateCircles() {
+        if (gameState !== "playing") return;
+
+        circles = circles.filter((circle) => {
+          if (!circle.element.parentNode) return false;
+
+          // 縮小圓圈
+          circle.size -= difficulties[currentDifficulty].shrinkRate;
+
+          if (circle.size <= difficulties[currentDifficulty].minSize) {
+            // 圓圈消失，錯過
+            missCircle(circle);
+            return false;
+          }
+
+          // 更新顯示
+          circle.element.style.width = circle.size + "px";
+          circle.element.style.height = circle.size + "px";
+
+          return true;
+        });
+
+        if (gameState === "playing") {
+          requestAnimationFrame(updateCircles);
+        }
+      }
+
+      // 擊中圓圈
+      function hitCircle(circle) {
+        if (gameState !== "playing") return;
+
+        hitCount++;
+        combo++;
+
+        // 計算分數
+        let points = calculateScore(circle);
+        score += points;
+
+        // 顯示擊中效果
+        circle.element.classList.add("hit");
+        circle.element.innerHTML = `+${points}`;
+
+        // 移除圓圈
+        setTimeout(() => {
+          if (circle.element.parentNode) {
+            circle.element.remove();
+          }
+        }, 300);
+
+        // 從陣列中移除
+        circles = circles.filter((c) => c.id !== circle.id);
+
+        updateUI();
+      }
+
+      // 錯過圓圈
+      function missCircle(circle) {
+        missCount++;
+        combo = 0;
+
+        // 顯示錯過效果
+        circle.element.classList.add("miss");
+
+        // 移除圓圈
+        setTimeout(() => {
+          if (circle.element.parentNode) {
+            circle.element.remove();
+          }
+        }, 500);
+
+        updateUI();
+      }
+
+      // 計算分數
+      function calculateScore(circle) {
+        const difficulty = difficulties[currentDifficulty];
+        let baseScore =
+          Math.round((difficulty.baseSize - circle.size) * 2) + 10;
+
+        // 金色圓圈額外獎勵
+        if (circle.isGolden) {
+          baseScore *= 3;
+        }
+
+        // 連擊加成
+        const comboMultiplier = Math.min(combo / 5 + 1, 5);
+
+        return Math.round(baseScore * comboMultiplier);
+      }
+
+      // 暫停遊戲
+      function pauseGame() {
+        if (gameState !== "playing") return;
+
+        gameState = "paused";
+        clearInterval(gameTimer);
+        clearInterval(spawnTimer);
+
+        document.getElementById("startBtn").disabled = false;
+        document.getElementById("pauseBtn").disabled = true;
+
+        // 暫停所有圓圈
+        circles.forEach((circle) => {
+          circle.element.style.animationPlayState = "paused";
+        });
+      }
+
+      // 重置遊戲
+      function resetGame() {
+        gameState = "idle";
+        clearInterval(gameTimer);
+        clearInterval(spawnTimer);
+
+        score = 0;
+        timeLeft = difficulties[currentDifficulty].timeLimit;
+        combo = 0;
+        hitCount = 0;
+        missCount = 0;
+        circles = [];
+
+        document.getElementById("startBtn").disabled = false;
+        document.getElementById("pauseBtn").disabled = true;
+
+        clearGameArea();
+        updateUI();
+      }
+
+      // 結束遊戲
+      function endGame() {
+        gameState = "gameOver";
+        clearInterval(gameTimer);
+        clearInterval(spawnTimer);
+
+        document.getElementById("startBtn").disabled = false;
+        document.getElementById("pauseBtn").disabled = true;
+
+        const isNewRecord = saveBestScore();
+        updateBestScore();
+
+        showGameOver(isNewRecord);
+      }
+
+      // 顯示遊戲結束畫面
+      function showGameOver(isNewRecord) {
+        const gameArea = document.getElementById("gameArea");
+        const accuracy =
+          hitCount > 0
+            ? Math.round((hitCount / (hitCount + missCount)) * 100)
+            : 0;
+
+        const gameOverDiv = document.createElement("div");
+        gameOverDiv.className = "game-over";
+        gameOverDiv.innerHTML = `
+                <h2>遊戲結束！</h2>
+                <p>最終分數：${score}</p>
+                <p>準確率：${accuracy}%</p>
+                <p>最大連擊：${combo}</p>
+                ${isNewRecord ? '<p style="color: gold;">🏆 新紀錄！</p>' : ""}
+                <button class="btn" onclick="resetGame()" style="margin: 10px;">再玩一次</button>
+            `;
+
+        gameArea.appendChild(gameOverDiv);
+
+        // 3秒後自動移除
+        setTimeout(() => {
+          if (gameOverDiv.parentNode) {
+            gameOverDiv.remove();
+          }
+        }, 5000);
+      }
+
+      // 清空遊戲區域
+      function clearGameArea() {
+        const gameArea = document.getElementById("gameArea");
+        gameArea.innerHTML = "";
+        circles = [];
+      }
+
+      // 更新UI
+      function updateUI() {
+        document.getElementById("score").textContent = score;
+        document.getElementById("timeLeft").textContent = timeLeft;
+        document.getElementById("combo").textContent = combo;
+
+        const accuracy =
+          hitCount + missCount > 0
+            ? Math.round((hitCount / (hitCount + missCount)) * 100)
+            : 100;
+        document.getElementById("accuracy").textContent = accuracy + "%";
+      }
+
+      // 顯示說明
+      function showHelp() {
+        document.getElementById("helpModal").style.display = "block";
+      }
+
+      // 關閉說明
+      function closeHelp() {
+        document.getElementById("helpModal").style.display = "none";
+      }
+
+      // 點擊模態框外部關閉
+      window.onclick = function (event) {
+        const modal = document.getElementById("helpModal");
+        if (event.target === modal) {
+          modal.style.display = "none";
+        }
+      };
+
+      // 初始化
+      document.addEventListener("DOMContentLoaded", () => {
+        updateBestScore();
+        updateUI();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,385 @@
+/* 
+ * 遊戲通用樣式 - 活潑配色版本
+ * 適用於所有小遊戲頁面
+ */
+
+/* 遊戲專用CSS變數 */
+:root {
+  /* 活潑遊戲配色 */
+  --game-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --game-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --game-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --game-warning: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --game-danger: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --game-info: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  
+  /* 遊戲容器背景 */
+  --game-container-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --game-container-overlay: rgba(255, 255, 255, 0.1);
+  
+  /* 遊戲按鈕顏色 */
+  --btn-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --btn-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --btn-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --btn-warning: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --btn-danger: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --btn-info: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  
+  /* 遊戲元素顏色 */
+  --target-colors: #ff6b6b, #4ecdc4, #45b7d1, #96c93d, #f9ca24, #6c5ce7, #fd79a8, #fdcb6e;
+}
+
+/* 暗色主題的遊戲配色 */
+[data-theme="dark"] {
+  --game-primary: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  --game-secondary: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  --game-success: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  --game-warning: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  --game-danger: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  --game-info: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  
+  --game-container-bg: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  --game-container-overlay: rgba(0, 0, 0, 0.3);
+  
+  --btn-primary: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  --btn-secondary: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  --btn-success: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  --btn-warning: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+  --btn-danger: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  --btn-info: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+}
+
+/* 通用遊戲容器樣式 */
+.game-container {
+  background: var(--game-container-bg);
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.game-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--game-container-overlay);
+  backdrop-filter: blur(10px);
+  z-index: 0;
+}
+
+.game-container > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 通用遊戲標題 */
+.game-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  color: white;
+  text-align: center;
+  margin-bottom: 2rem;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(45deg, #fff, #e2e8f0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 通用按鈕樣式 */
+.btn, .control-button, .primary-button, .secondary-button, .tool-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before, .control-button::before, .primary-button::before, 
+.secondary-button::before, .tool-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn:hover::before, .control-button:hover::before, .primary-button:hover::before,
+.secondary-button:hover::before, .tool-button:hover::before {
+  left: 100%;
+}
+
+.btn:hover, .control-button:hover, .primary-button:hover, 
+.secondary-button:hover, .tool-button:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.btn:active, .control-button:active, .primary-button:active,
+.secondary-button:active, .tool-button:active {
+  transform: translateY(-1px) scale(1.02);
+}
+
+/* 按鈕顏色變體 */
+.btn, .primary-button, .control-button {
+  background: var(--btn-primary);
+}
+
+.secondary-button, .tool-button {
+  background: var(--btn-secondary);
+}
+
+.btn.success {
+  background: var(--btn-success);
+}
+
+.btn.warning {
+  background: var(--btn-warning);
+}
+
+.btn.danger {
+  background: var(--btn-danger);
+}
+
+.btn.info {
+  background: var(--btn-info);
+}
+
+/* 遊戲資訊面板 */
+.game-info, .game-stats {
+  display: flex;
+  justify-content: space-around;
+  margin: 2rem 0;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.info-item, .stat-item {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1rem;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-width: 120px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.info-item:hover, .stat-item:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-5px);
+}
+
+.info-label, .stat-label {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 0.5rem;
+  color: white;
+}
+
+.info-value, .stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 遊戲區域 */
+.game-area, .game-board {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+  margin: 2rem auto;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+/* 進度條 */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
+}
+
+/* 狀態訊息 */
+.status, .status-message {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 1rem 0;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+}
+
+/* Modal樣式改進 */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--game-primary);
+  padding: 2rem;
+  border-radius: 20px;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  color: white;
+  position: relative;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(20px);
+}
+
+.modal h2 {
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-size: 2rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.modal h3 {
+  margin: 1.5rem 0 1rem 0;
+  color: #fff;
+  font-size: 1.3rem;
+}
+
+.modal p, .modal li {
+  margin: 0.8rem 0;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+.modal ul {
+  margin-left: 1.5rem;
+}
+
+.close, .close-help {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  color: white;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  line-height: 1;
+  transition: all 0.3s ease;
+}
+
+.close:hover, .close-help:hover {
+  color: #ff6b6b;
+  transform: scale(1.2) rotate(90deg);
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+  .game-title {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .btn, .control-button, .primary-button, .secondary-button, .tool-button {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  
+  .info-item, .stat-item {
+    min-width: 100px;
+    padding: 0.8rem;
+  }
+  
+  .modal-content {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+}
+
+/* 動畫效果 */
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  }
+}
+
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}

@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>記憶配對 - 小遊戲合集</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "微軟正黑體", "Microsoft JhengHei", Arial, sans-serif;
+      }
+
+      body {
+        background-color: #f5f5f5;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      header {
+        background-color: #3498db;
+        color: white;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      header h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 1rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      footer {
+        background-color: #34495e;
+        color: white;
+        text-align: center;
+        padding: 1rem;
+        margin-top: auto;
+      }
+
+      .back-button {
+        display: inline-block;
+        margin: 0.5rem 0;
+        padding: 0.5rem 1rem;
+        background-color: #3498db;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+      }
+
+      .back-button:hover {
+        background-color: #2980b9;
+      }
+
+      .game-info {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .game-title {
+        font-size: 1.8rem;
+        color: #3498db;
+        margin-bottom: 0.5rem;
+      }
+
+      .game-instructions {
+        margin-bottom: 1rem;
+        line-height: 1.6;
+      }
+
+      .game-container {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .controls {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .difficulty {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+      }
+
+      .difficulty label {
+        margin-right: 1rem;
+        font-weight: bold;
+      }
+
+      .difficulty button {
+        margin-right: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        background-color: #ecf0f1;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .difficulty button.active {
+        background-color: #3498db;
+        color: white;
+      }
+
+      .game-buttons {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .game-button {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .start-btn {
+        background-color: #2ecc71;
+        color: white;
+      }
+
+      .start-btn:hover {
+        background-color: #27ae60;
+      }
+
+      .pause-btn {
+        background-color: #f39c12;
+        color: white;
+      }
+
+      .pause-btn:hover {
+        background-color: #d35400;
+      }
+
+      .restart-btn {
+        background-color: #e74c3c;
+        color: white;
+      }
+
+      .restart-btn:hover {
+        background-color: #c0392b;
+      }
+
+      .game-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        background-color: #ecf0f1;
+        padding: 0.5rem;
+        border-radius: 4px;
+      }
+
+      .stat {
+        font-weight: bold;
+      }
+
+      .game-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+
+      #game-board {
+        display: grid;
+        gap: 10px;
+        margin: 0 auto;
+        max-width: 800px;
+        width: 100%;
+      }
+
+      .card {
+        aspect-ratio: 1/1;
+        background-color: #3498db;
+        border-radius: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transform-style: preserve-3d;
+        transition: transform 0.5s;
+      }
+
+      .card.flipped {
+        transform: rotateY(180deg);
+      }
+
+      .card.matched {
+        background-color: #2ecc71;
+        cursor: default;
+      }
+
+      .card-front,
+      .card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 5px;
+      }
+
+      .card-front {
+        background-color: #3498db;
+        transform: rotateY(0deg);
+      }
+
+      .card-back {
+        background-color: #f5f5f5;
+        transform: rotateY(180deg);
+        font-size: 1.5rem;
+      }
+
+      .card.matched .card-back {
+        background-color: #d5f5e3;
+      }
+
+      .message-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 2rem;
+        text-align: center;
+        z-index: 10;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+
+      .message-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .message-overlay button {
+        margin-top: 1rem;
+        padding: 0.5rem 1.5rem;
+        font-size: 1.2rem;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .message-overlay button:hover {
+        background-color: #2980b9;
+      }
+
+      /* Timer bar */
+      .timer-container {
+        width: 100%;
+        height: 10px;
+        background-color: #ecf0f1;
+        border-radius: 5px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+      }
+
+      .timer-bar {
+        height: 100%;
+        background-color: #3498db;
+        width: 100%;
+        transition: width 1s linear;
+      }
+
+      /* Responsive adjustments */
+      @media screen and (max-width: 768px) {
+        .container {
+          padding: 0.5rem;
+        }
+
+        .controls {
+          flex-direction: column;
+        }
+
+        #game-board {
+          gap: 5px;
+        }
+
+        .card-back {
+          font-size: 1.2rem;
+        }
+      }
+
+      /* Animation for card matching */
+      @keyframes cardMatch {
+        0% {
+          transform: scale(1) rotateY(180deg);
+        }
+        50% {
+          transform: scale(1.1) rotateY(180deg);
+        }
+        100% {
+          transform: scale(1) rotateY(180deg);
+        }
+      }
+
+      .card.match-animation {
+        animation: cardMatch 0.5s;
+      }
+
+      /* Animation for game completion */
+      @keyframes celebration {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.1);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .celebrate {
+        animation: celebration 0.5s ease-in-out;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>小遊戲合集</h1>
+      <p>好玩的小遊戲，休閒時間的最佳選擇！</p>
+      <a href="index.html" class="back-button">回到遊戲列表</a>
+    </header>
+
+    <div class="container">
+      <div class="game-info">
+        <h2 class="game-title">記憶配對</h2>
+        <div class="game-instructions">
+          <p><strong>遊戲說明：</strong></p>
+          <p>翻開卡片，尋找配對的圖案，考驗你的記憶力！</p>
+          <ol>
+            <li>每次可以翻開兩張卡片</li>
+            <li>如果兩張卡片圖案一樣，那麼它們會維持翻開狀態</li>
+            <li>如果兩張卡片圖案不同，則會自動翻回背面</li>
+            <li>遊戲目標是在時間內翻開所有的卡片配對</li>
+            <li>難度越高，卡片數量越多，時間壓力越大</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="game-container">
+        <div class="controls">
+          <div class="difficulty">
+            <label>難度：</label>
+            <button class="difficulty-btn active" data-difficulty="easy">
+              簡單
+            </button>
+            <button class="difficulty-btn" data-difficulty="medium">
+              中等
+            </button>
+            <button class="difficulty-btn" data-difficulty="hard">困難</button>
+          </div>
+          <div class="game-buttons">
+            <button class="game-button start-btn">開始遊戲</button>
+            <button class="game-button pause-btn" disabled>暫停</button>
+            <button class="game-button restart-btn" disabled>重新開始</button>
+          </div>
+        </div>
+
+        <div class="game-stats">
+          <div class="stat">時間：<span id="time">0</span>秒</div>
+          <div class="stat">嘗試次數：<span id="moves">0</span></div>
+          <div class="stat">分數：<span id="score">0</span></div>
+        </div>
+
+        <div class="timer-container">
+          <div class="timer-bar" id="timer-bar"></div>
+        </div>
+
+        <div class="game-area">
+          <div id="game-board"></div>
+
+          <div class="message-overlay" id="start-message">
+            <div>準備好了嗎？</div>
+            <div>點擊「開始」按鈕來開始遊戲！</div>
+          </div>
+
+          <div class="message-overlay" id="pause-message">
+            <div>遊戲暫停</div>
+            <div>點擊「繼續」按鈕來繼續遊戲</div>
+            <button id="resume-btn">繼續</button>
+          </div>
+
+          <div class="message-overlay" id="game-over-message">
+            <div>時間到了！</div>
+            <div>你的分數：<span id="final-score">0</span></div>
+            <button id="try-again-btn">再試一次</button>
+          </div>
+
+          <div class="message-overlay" id="win-message">
+            <div>恭喜你完成了！</div>
+            <div>用時：<span id="win-time">0</span>秒</div>
+            <div>嘗試次數：<span id="win-moves">0</span></div>
+            <div>最終分數：<span id="win-score">0</span></div>
+            <button id="play-again-btn">再玩一次</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>&copy; 2023 小遊戲合集 版權所有</p>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 遊戲狀態
+        const gameState = {
+          isPlaying: false,
+          isPaused: false,
+          difficulty: "easy",
+          cards: [],
+          flippedCards: [],
+          matchedPairs: 0,
+          totalPairs: 0,
+          moves: 0,
+          score: 0,
+          startTime: 0,
+          currentTime: 0,
+          timeLimit: 0,
+          timerInterval: null,
+          canFlip: true,
+        };
+
+        // 遊戲設置
+        const gameSettings = {
+          easy: {
+            rows: 4,
+            cols: 4,
+            timeLimit: 60,
+          },
+          medium: {
+            rows: 5,
+            cols: 4,
+            timeLimit: 90,
+          },
+          hard: {
+            rows: 6,
+            cols: 5,
+            timeLimit: 120,
+          },
+        };
+
+        // 遊戲圖示（使用Font Awesome圖示）
+        const gameIcons = [
+          "fas fa-cat",
+          "fas fa-dog",
+          "fas fa-fish",
+          "fas fa-dove",
+          "fas fa-dragon",
+          "fas fa-frog",
+          "fas fa-horse",
+          "fas fa-spider",
+          "fas fa-hippo",
+          "fas fa-otter",
+          "fas fa-kiwi-bird",
+          "fas fa-crow",
+          "fas fa-paw",
+          "fas fa-feather",
+          "fas fa-bug",
+          "fas fa-ghost",
+          "fas fa-apple-alt",
+          "fas fa-lemon",
+          "fas fa-leaf",
+          "fas fa-tree",
+          "fas fa-snowflake",
+          "fas fa-sun",
+          "fas fa-moon",
+          "fas fa-cloud",
+          "fas fa-bolt",
+          "fas fa-fire",
+          "fas fa-hamburger",
+          "fas fa-pizza-slice",
+          "fas fa-ice-cream",
+          "fas fa-cookie",
+        ];
+
+        // 選擇要使用的DOM元素
+        const gameBoard = document.getElementById("game-board");
+        const movesDisplay = document.getElementById("moves");
+        const scoreDisplay = document.getElementById("score");
+        const timeDisplay = document.getElementById("time");
+        const timerBar = document.getElementById("timer-bar");
+
+        const startBtn = document.querySelector(".start-btn");
+        const pauseBtn = document.querySelector(".pause-btn");
+        const restartBtn = document.querySelector(".restart-btn");
+
+        const difficultyBtns = document.querySelectorAll(".difficulty-btn");
+
+        const startMessage = document.getElementById("start-message");
+        const pauseMessage = document.getElementById("pause-message");
+        const gameOverMessage = document.getElementById("game-over-message");
+        const winMessage = document.getElementById("win-message");
+        const resumeBtn = document.getElementById("resume-btn");
+        const tryAgainBtn = document.getElementById("try-again-btn");
+        const playAgainBtn = document.getElementById("play-again-btn");
+
+        const finalScore = document.getElementById("final-score");
+        const winTime = document.getElementById("win-time");
+        const winMoves = document.getElementById("win-moves");
+        const winScore = document.getElementById("win-score");
+
+        // 初始化遊戲
+        function initializeGame() {
+          // 設置難度
+          difficultyBtns.forEach((btn) => {
+            btn.addEventListener("click", () => {
+              if (gameState.isPlaying && !gameState.isPaused) return;
+
+              difficultyBtns.forEach((b) => b.classList.remove("active"));
+              btn.classList.add("active");
+              gameState.difficulty = btn.dataset.difficulty;
+            });
+          });
+
+          // 開始遊戲按鈕
+          startBtn.addEventListener("click", startGame);
+
+          // 暫停按鈕
+          pauseBtn.addEventListener("click", togglePause);
+
+          // 重新開始按鈕
+          restartBtn.addEventListener("click", restartGame);
+
+          // 其他按鈕
+          resumeBtn.addEventListener("click", togglePause);
+          tryAgainBtn.addEventListener("click", restartGame);
+          playAgainBtn.addEventListener("click", restartGame);
+
+          // 顯示開始訊息
+          startMessage.classList.add("visible");
+        }
+
+        // 開始遊戲
+        function startGame() {
+          // 重設遊戲狀態
+          resetGameState();
+
+          // 設置遊戲參數
+          const settings = gameSettings[gameState.difficulty];
+          gameState.timeLimit = settings.timeLimit;
+
+          // 創建遊戲板
+          createGameBoard(settings.rows, settings.cols);
+
+          // 更新UI
+          updateStats();
+
+          // 隱藏開始訊息
+          startMessage.classList.remove("visible");
+
+          // 啟用按鈕
+          pauseBtn.disabled = false;
+          restartBtn.disabled = false;
+          startBtn.disabled = true;
+
+          // 設置遊戲狀態
+          gameState.isPlaying = true;
+          gameState.startTime = Date.now();
+
+          // 開始計時器
+          startTimer();
+        }
+
+        // 暫停/繼續遊戲
+        function togglePause() {
+          if (!gameState.isPlaying) return;
+
+          gameState.isPaused = !gameState.isPaused;
+
+          if (gameState.isPaused) {
+            // 暫停
+            clearInterval(gameState.timerInterval);
+            pauseMessage.classList.add("visible");
+            pauseBtn.textContent = "繼續";
+          } else {
+            // 繼續
+            startTimer();
+            pauseMessage.classList.remove("visible");
+            pauseBtn.textContent = "暫停";
+          }
+        }
+
+        // 重新開始遊戲
+        function restartGame() {
+          // 重置界面
+          gameOverMessage.classList.remove("visible");
+          winMessage.classList.remove("visible");
+          pauseMessage.classList.remove("visible");
+
+          // 開始新遊戲
+          startGame();
+        }
+
+        // 重設遊戲狀態
+        function resetGameState() {
+          gameState.isPlaying = false;
+          gameState.isPaused = false;
+          gameState.cards = [];
+          gameState.flippedCards = [];
+          gameState.matchedPairs = 0;
+          gameState.totalPairs = 0;
+          gameState.moves = 0;
+          gameState.score = 0;
+          gameState.startTime = 0;
+          gameState.currentTime = 0;
+          gameState.canFlip = true;
+
+          // 清除計時器
+          clearInterval(gameState.timerInterval);
+
+          // 重設計時器條
+          timerBar.style.width = "100%";
+        }
+
+        // 創建遊戲板
+        function createGameBoard(rows, cols) {
+          // 清空遊戲板
+          gameBoard.innerHTML = "";
+
+          // 設置網格樣式
+          gameBoard.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+          gameBoard.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+          // 計算需要多少對卡片
+          const totalCards = rows * cols;
+          if (totalCards % 2 !== 0) {
+            console.error("卡片總數必須是偶數！");
+            return;
+          }
+
+          const totalPairs = totalCards / 2;
+          gameState.totalPairs = totalPairs;
+
+          // 選擇要使用的圖案
+          const selectedIcons = gameIcons.slice(0, totalPairs);
+
+          // 創建卡片數組 (每個圖案出現兩次)
+          const cardIcons = [...selectedIcons, ...selectedIcons];
+
+          // 隨機排序卡片
+          shuffle(cardIcons);
+
+          // 創建卡片元素
+          cardIcons.forEach((icon, index) => {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.dataset.id = index;
+            card.dataset.icon = icon;
+
+            const cardFront = document.createElement("div");
+            cardFront.className = "card-front";
+            cardFront.innerHTML = '<i class="fas fa-question"></i>';
+
+            const cardBack = document.createElement("div");
+            cardBack.className = "card-back";
+            cardBack.innerHTML = `<i class="${icon}"></i>`;
+
+            card.appendChild(cardFront);
+            card.appendChild(cardBack);
+
+            // 添加點擊事件
+            card.addEventListener("click", () => flipCard(card));
+
+            // 添加到遊戲板
+            gameBoard.appendChild(card);
+
+            // 保存到遊戲狀態
+            gameState.cards.push(card);
+          });
+        }
+
+        // 翻卡片
+        function flipCard(card) {
+          // 檢查是否可以翻卡
+          if (!gameState.isPlaying || gameState.isPaused) return;
+          if (!gameState.canFlip) return;
+          if (card.classList.contains("flipped")) return;
+          if (card.classList.contains("matched")) return;
+          if (gameState.flippedCards.length >= 2) return;
+
+          // 翻卡
+          card.classList.add("flipped");
+          gameState.flippedCards.push(card);
+
+          // 如果翻了兩張卡，檢查是否匹配
+          if (gameState.flippedCards.length === 2) {
+            gameState.moves++;
+            updateStats();
+
+            const card1 = gameState.flippedCards[0];
+            const card2 = gameState.flippedCards[1];
+
+            if (card1.dataset.icon === card2.dataset.icon) {
+              // 匹配成功
+              handleMatch();
+            } else {
+              // 匹配失敗
+              gameState.canFlip = false;
+              setTimeout(handleMismatch, 1000);
+            }
+          }
+        }
+
+        // 處理卡片匹配成功
+        function handleMatch() {
+          // 標記匹配的卡片
+          gameState.flippedCards.forEach((card) => {
+            card.classList.add("matched");
+            card.classList.add("match-animation");
+          });
+
+          // 計算分數
+          const timeFactor = Math.max(
+            0,
+            1 - gameState.currentTime / gameState.timeLimit
+          );
+          const baseScore = 10 * (1 + timeFactor);
+          const difficultyMultiplier =
+            gameState.difficulty === "easy"
+              ? 1
+              : gameState.difficulty === "medium"
+              ? 1.5
+              : 2;
+
+          gameState.score += Math.round(baseScore * difficultyMultiplier);
+          updateStats();
+
+          // 增加配對數
+          gameState.matchedPairs++;
+
+          // 重置已翻卡片
+          gameState.flippedCards = [];
+
+          // 檢查是否勝利
+          if (gameState.matchedPairs === gameState.totalPairs) {
+            setTimeout(() => handleWin(), 500);
+          }
+        }
+
+        // 處理卡片匹配失敗
+        function handleMismatch() {
+          // 翻回卡片
+          gameState.flippedCards.forEach((card) => {
+            card.classList.remove("flipped");
+          });
+
+          // 重置已翻卡片
+          gameState.flippedCards = [];
+          gameState.canFlip = true;
+        }
+
+        // 處理勝利
+        function handleWin() {
+          // 停止遊戲
+          gameState.isPlaying = false;
+          clearInterval(gameState.timerInterval);
+
+          // 顯示勝利訊息
+          winTime.textContent = gameState.currentTime;
+          winMoves.textContent = gameState.moves;
+          winScore.textContent = gameState.score;
+          winMessage.classList.add("visible");
+
+          // 更新按鈕狀態
+          pauseBtn.disabled = true;
+          startBtn.disabled = false;
+
+          // 慶祝動畫
+          gameBoard.classList.add("celebrate");
+          setTimeout(() => {
+            gameBoard.classList.remove("celebrate");
+          }, 500);
+        }
+
+        // 處理遊戲結束
+        function handleGameOver() {
+          // 停止遊戲
+          gameState.isPlaying = false;
+          clearInterval(gameState.timerInterval);
+
+          // 顯示遊戲結束訊息
+          finalScore.textContent = gameState.score;
+          gameOverMessage.classList.add("visible");
+
+          // 更新按鈕狀態
+          pauseBtn.disabled = true;
+          startBtn.disabled = false;
+        }
+
+        // 開始計時器
+        function startTimer() {
+          clearInterval(gameState.timerInterval);
+
+          const startTime = Date.now() - gameState.currentTime * 1000;
+          const endTime = startTime + gameState.timeLimit * 1000;
+
+          gameState.timerInterval = setInterval(() => {
+            const now = Date.now();
+            const remaining = endTime - now;
+
+            if (remaining <= 0) {
+              // 時間到
+              gameState.currentTime = gameState.timeLimit;
+              updateStats();
+              clearInterval(gameState.timerInterval);
+              handleGameOver();
+            } else {
+              // 更新剩餘時間
+              gameState.currentTime = Math.floor((now - startTime) / 1000);
+              updateStats();
+
+              // 更新計時器條
+              const percentage =
+                (remaining / (gameState.timeLimit * 1000)) * 100;
+              timerBar.style.width = `${percentage}%`;
+            }
+          }, 100);
+        }
+
+        // 更新遊戲統計
+        function updateStats() {
+          movesDisplay.textContent = gameState.moves;
+          scoreDisplay.textContent = gameState.score;
+          timeDisplay.textContent = gameState.currentTime;
+        }
+
+        // 打亂數組
+        function shuffle(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+          }
+          return array;
+        }
+
+        // 初始化遊戲
+        initializeGame();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文字尋寶 - 網頁小遊戲</title>
+    <meta name="game-id" content="word-search" />
+    <meta name="game-name" content="文字尋寶" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .word-search-container {
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .game-controls {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .difficulty-selector {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        justify-content: center;
+      }
+
+      .difficulty-button {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        background-color: #f0f0f0;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .difficulty-button:hover {
+        background-color: #e0e0e0;
+      }
+
+      .difficulty-button.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .word-search-grid {
+        display: grid;
+        grid-template-columns: repeat(var(--grid-size), 1fr);
+        gap: 2px;
+        margin-bottom: 20px;
+        user-select: none;
+      }
+
+      .grid-cell {
+        width: calc(min(40px, 10vw));
+        height: calc(min(40px, 10vw));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: calc(min(20px, 5vw));
+        font-weight: bold;
+        background-color: #f9f9f9;
+        border-radius: 4px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.1s ease;
+      }
+
+      .grid-cell:hover {
+        background-color: #f0f0f0;
+      }
+
+      .grid-cell.selected {
+        background-color: #ffffb3;
+      }
+
+      .grid-cell.found {
+        background-color: #c8e6c9;
+        color: #2e7d32;
+      }
+
+      .grid-cell.path {
+        background-color: #bbdefb;
+        color: #0d47a1;
+      }
+
+      .word-list {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        max-width: 600px;
+      }
+
+      .word-item {
+        padding: 8px 12px;
+        background-color: #f0f0f0;
+        border-radius: 4px;
+        text-align: center;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+
+      .word-item.found {
+        background-color: #c8e6c9;
+        text-decoration: line-through;
+        color: #2e7d32;
+      }
+
+      .game-info {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 500px;
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #f0f0f0;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .timer-display,
+      .words-found-display,
+      .hint-display {
+        flex: 1;
+        padding: 0 10px;
+      }
+
+      .timer-display span,
+      .words-found-display span,
+      .hint-display span {
+        font-weight: bold;
+        color: #333;
+      }
+
+      .hint-button {
+        padding: 8px 15px;
+        margin-top: 10px;
+        border: none;
+        border-radius: 5px;
+        background-color: #bbdefb;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .hint-button:hover:not(:disabled) {
+        background-color: #90caf9;
+      }
+
+      .hint-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      @media (max-width: 768px) {
+        .word-search-container {
+          padding: 0 10px;
+        }
+
+        .grid-cell {
+          width: calc(min(35px, 9vw));
+          height: calc(min(35px, 9vw));
+          font-size: calc(min(18px, 4.5vw));
+        }
+
+        .game-info {
+          flex-direction: column;
+          gap: 5px;
+        }
+      }
+
+      /* Path line between selected letters */
+      .selection-line {
+        position: absolute;
+        height: 3px;
+        background-color: #0d47a1;
+        transform-origin: left center;
+        z-index: 5;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <a href="index.html" class="site-title">網頁小遊戲</a>
+        <nav class="site-nav">
+          <ul>
+            <li><a href="index.html#games">遊戲列表</a></li>
+            <li><a href="index.html#about">關於</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <div class="game-header">
+        <h1>文字尋寶</h1>
+        <div class="game-toolbar">
+          <button id="helpButton" class="tool-button">遊戲說明</button>
+          <button id="pauseButton" class="tool-button">暫停</button>
+          <button id="restartButton" class="tool-button">重新開始</button>
+          <button id="homeButton" class="tool-button">返回首頁</button>
+        </div>
+      </div>
+
+      <div class="score-display">分數: <span id="scoreValue">0</span></div>
+
+      <div class="word-search-container">
+        <div class="difficulty-selector">
+          <button id="easyBtn" class="difficulty-button active">簡單</button>
+          <button id="mediumBtn" class="difficulty-button">中等</button>
+          <button id="hardBtn" class="difficulty-button">困難</button>
+        </div>
+
+        <div class="game-info">
+          <div class="timer-display">時間: <span id="timer">00:00</span></div>
+          <div class="words-found-display">
+            找到: <span id="wordsFound">0/0</span>
+          </div>
+          <div class="hint-display">
+            提示: <span id="hintsLeft">3</span>
+            <br />
+            <button id="hintButton" class="hint-button">使用提示</button>
+          </div>
+        </div>
+
+        <div
+          id="wordSearchGrid"
+          class="word-search-grid"
+          style="--grid-size: 10"
+        >
+          <!-- 動態生成網格 -->
+        </div>
+
+        <div id="wordList" class="word-list">
+          <!-- 動態生成單字列表 -->
+        </div>
+      </div>
+
+      <div id="gamePaused" class="game-paused">暫停中</div>
+    </main>
+
+    <script src="gameUtils.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 初始化遊戲工具
+        const helpModal = new GameUtils.Modal(
+          "helpModal",
+          "文字尋寶 - 遊戲說明",
+          `
+            <h3>遊戲介紹：</h3>
+            <p>文字尋寶是一個尋找單詞的益智遊戲。你需要在字母網格中找出隱藏的單字，單字可以水平、垂直或對角線排列。</p>
+            
+            <h3>遊戲規則：</h3>
+            <ul>
+              <li>在字母網格中尋找下方列表中的單字</li>
+              <li>單字可以水平、垂直或對角線排列</li>
+              <li>單字可以從左到右、從右到左、從上到下、從下到上或對角線方向排列</li>
+              <li>點擊並拖動來選擇字母組成單字</li>
+              <li>正確找出的單字會被標記為綠色，並在單字列表中劃掉</li>
+            </ul>
+            
+            <h3>操作方法：</h3>
+            <ul>
+              <li>點擊並按住第一個字母</li>
+              <li>拖動到最後一個字母</li>
+              <li>鬆開滑鼠/手指確認選擇</li>
+              <li>點擊「提示」按鈕可以高亮顯示一個未找到的單字的第一個字母</li>
+            </ul>
+            
+            <h3>遊戲難度：</h3>
+            <ul>
+              <li><strong>簡單</strong>：8×8 網格，10個單字，全部水平或垂直排列</li>
+              <li><strong>中等</strong>：10×10 網格，12個單字，包含對角線排列</li>
+              <li><strong>困難</strong>：12×12 網格，15個單字，包含反向和對角線排列</li>
+            </ul>
+            
+            <h3>計分方式：</h3>
+            <ul>
+              <li>每找到一個單字可獲得10分</li>
+              <li>使用提示會減少獲得的分數</li>
+              <li>根據完成時間可獲得額外獎勵分數</li>
+            </ul>
+          `
+        );
+
+        // 初始化遊戲控制器
+        const gameController = new GameUtils.GameController();
+        const scoreManager = new GameUtils.ScoreManager("scoreValue");
+
+        // 取得 DOM 元素
+        const wordSearchGrid = document.getElementById("wordSearchGrid");
+        const wordList = document.getElementById("wordList");
+        const timerDisplay = document.getElementById("timer");
+        const wordsFoundDisplay = document.getElementById("wordsFound");
+        const hintsLeftDisplay = document.getElementById("hintsLeft");
+        const hintButton = document.getElementById("hintButton");
+        const easyBtn = document.getElementById("easyBtn");
+        const mediumBtn = document.getElementById("mediumBtn");
+        const hardBtn = document.getElementById("hardBtn");
+
+        // 遊戲變數
+        let grid = [];
+        let words = [];
+        let foundWords = [];
+        let selectedCells = [];
+        let isSelecting = false;
+        let difficulty = "easy";
+        let gridSize = 8;
+        let hintsLeft = 3;
+        let timePlayed = 0;
+        let gameActive = false;
+        let timerInterval;
+        let currentWordList = [];
+        let lastCellElement = null;
+        let selectionLine = null;
+
+        // 難度設定
+        const difficultySettings = {
+          easy: {
+            gridSize: 8,
+            wordCount: 10,
+            diagonal: false, // 不包含對角線
+            backward: false, // 不包含反向排列
+          },
+          medium: {
+            gridSize: 10,
+            wordCount: 12,
+            diagonal: true, // 包含對角線
+            backward: false, // 不包含反向排列
+          },
+          hard: {
+            gridSize: 12,
+            wordCount: 15,
+            diagonal: true, // 包含對角線
+            backward: true, // 包含反向排列
+          },
+        };
+
+        // 中文詞語庫
+        const wordBank = {
+          animals: [
+            "貓咪",
+            "狗狗",
+            "老虎",
+            "獅子",
+            "大象",
+            "猴子",
+            "長頸鹿",
+            "熊貓",
+            "袋鼠",
+            "刺蝟",
+            "兔子",
+            "烏龜",
+            "鱷魚",
+            "蜥蜴",
+            "河馬",
+          ],
+          fruits: [
+            "蘋果",
+            "香蕉",
+            "橘子",
+            "葡萄",
+            "西瓜",
+            "草莓",
+            "藍莓",
+            "櫻桃",
+            "鳳梨",
+            "奇異果",
+            "檸檬",
+            "芒果",
+            "荔枝",
+            "龍眼",
+            "柚子",
+          ],
+          countries: [
+            "台灣",
+            "日本",
+            "中國",
+            "美國",
+            "英國",
+            "法國",
+            "德國",
+            "義大利",
+            "加拿大",
+            "澳洲",
+            "韓國",
+            "泰國",
+            "新加坡",
+            "越南",
+            "馬來西亞",
+          ],
+          colors: [
+            "紅色",
+            "藍色",
+            "黃色",
+            "綠色",
+            "白色",
+            "黑色",
+            "紫色",
+            "橙色",
+            "粉色",
+            "灰色",
+            "褐色",
+            "金色",
+            "銀色",
+            "青色",
+            "靛色",
+          ],
+          sports: [
+            "足球",
+            "籃球",
+            "棒球",
+            "網球",
+            "排球",
+            "游泳",
+            "跑步",
+            "跳高",
+            "滑雪",
+            "溜冰",
+            "拳擊",
+            "單車",
+            "高爾夫",
+            "桌球",
+            "羽球",
+          ],
+          jobs: [
+            "醫生",
+            "護士",
+            "老師",
+            "工程師",
+            "廚師",
+            "警察",
+            "消防員",
+            "律師",
+            "會計師",
+            "記者",
+            "演員",
+            "畫家",
+            "作家",
+            "歌手",
+            "司機",
+          ],
+        };
+
+        // 初始化遊戲
+        function initGame() {
+          // 設定難度
+          const setting = difficultySettings[difficulty];
+          gridSize = setting.gridSize;
+
+          // 更新網格樣式變量
+          wordSearchGrid.style.setProperty("--grid-size", gridSize);
+
+          // 清空之前的內容
+          wordSearchGrid.innerHTML = "";
+          wordList.innerHTML = "";
+
+          // 重置遊戲狀態
+          grid = Array(gridSize)
+            .fill()
+            .map(() => Array(gridSize).fill(""));
+          words = [];
+          foundWords = [];
+          selectedCells = [];
+          isSelecting = false;
+          hintsLeft = 3;
+          timePlayed = 0;
+
+          // 更新顯示
+          hintsLeftDisplay.textContent = hintsLeft;
+          hintButton.disabled = false;
+          scoreManager.set(0);
+          updateTimerDisplay();
+
+          // 選擇單字類別
+          const categories = Object.keys(wordBank);
+          const selectedCategory =
+            categories[Math.floor(Math.random() * categories.length)];
+          const categoryWords = wordBank[selectedCategory];
+
+          // 隨機選擇單字
+          const shuffledWords = shuffleArray([...categoryWords]);
+          currentWordList = shuffledWords
+            .slice(0, setting.wordCount)
+            .map((word) => ({
+              word: word,
+              found: false,
+              orientation: null,
+              row: null,
+              col: null,
+            }));
+
+          // 生成網格
+          generateGrid();
+
+          // 創建網格UI
+          createGridUI();
+
+          // 創建單字列表UI
+          createWordListUI();
+
+          // 更新單字找到計數
+          updateWordsFoundDisplay();
+
+          // 設置遊戲為活動狀態
+          gameActive = true;
+
+          // 開始計時
+          startTimer();
+        }
+
+        // 生成網格
+        function generateGrid() {
+          // 初始化空網格
+          for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+              grid[i][j] = "";
+            }
+          }
+
+          // 嘗試放置每個單字
+          currentWordList.forEach((wordObj) => {
+            let placed = false;
+            let maxAttempts = 100;
+            let attempts = 0;
+            const word = wordObj.word;
+
+            while (!placed && attempts < maxAttempts) {
+              attempts++;
+
+              // 決定方向
+              // 0: 水平, 1: 垂直, 2: 對角下, 3: 對角上
+              // 4: 水平反向, 5: 垂直反向, 6: 對角下反向, 7: 對角上反向
+              let orientations = [0, 1]; // 預設水平、垂直
+
+              if (difficultySettings[difficulty].diagonal) {
+                orientations.push(2, 3); // 加入對角線
+              }
+
+              if (difficultySettings[difficulty].backward) {
+                orientations.push(4, 5); // 加入水平反向、垂直反向
+                if (difficultySettings[difficulty].diagonal) {
+                  orientations.push(6, 7); // 加入對角線反向
+                }
+              }
+
+              const orientation =
+                orientations[Math.floor(Math.random() * orientations.length)];
+
+              let row, col;
+              let canPlace = false;
+              let lettersToCheck = [];
+
+              // 根據方向和單字長度決定起始位置的限制
+              let rowLimit = gridSize;
+              let colLimit = gridSize;
+
+              switch (orientation) {
+                case 0: // 水平
+                  rowLimit = gridSize;
+                  colLimit = gridSize - word.length + 1;
+                  break;
+                case 1: // 垂直
+                  rowLimit = gridSize - word.length + 1;
+                  colLimit = gridSize;
+                  break;
+                case 2: // 對角下
+                  rowLimit = gridSize - word.length + 1;
+                  colLimit = gridSize - word.length + 1;
+                  break;
+                case 3: // 對角上
+                  rowLimit = word.length - 1;
+                  colLimit = gridSize - word.length + 1;
+                  break;
+                case 4: // 水平反向
+                  rowLimit = gridSize;
+                  colLimit = gridSize - word.length + 1;
+                  break;
+                case 5: // 垂直反向
+                  rowLimit = gridSize - word.length + 1;
+                  colLimit = gridSize;
+                  break;
+                case 6: // 對角下反向
+                  rowLimit = gridSize - word.length + 1;
+                  colLimit = gridSize - word.length + 1;
+                  break;
+                case 7: // 對角上反向
+                  rowLimit = word.length - 1;
+                  colLimit = gridSize - word.length + 1;
+                  break;
+              }
+
+              // 隨機選擇起始位置
+              row = Math.floor(Math.random() * rowLimit);
+              col = Math.floor(Math.random() * colLimit);
+
+              // 檢查是否可以放置
+              canPlace = true;
+              lettersToCheck = [];
+
+              for (let i = 0; i < word.length; i++) {
+                let r = row;
+                let c = col;
+
+                // 根據方向計算位置
+                switch (orientation) {
+                  case 0: // 水平
+                    c += i;
+                    break;
+                  case 1: // 垂直
+                    r += i;
+                    break;
+                  case 2: // 對角下
+                    r += i;
+                    c += i;
+                    break;
+                  case 3: // 對角上
+                    r -= i;
+                    c += i;
+                    break;
+                  case 4: // 水平反向
+                    c += i;
+                    break;
+                  case 5: // 垂直反向
+                    r += i;
+                    break;
+                  case 6: // 對角下反向
+                    r += i;
+                    c += i;
+                    break;
+                  case 7: // 對角上反向
+                    r -= i;
+                    c += i;
+                    break;
+                }
+
+                // 檢查該位置是否為空或有相同的字母
+                const letter =
+                  orientation >= 4 ? word[word.length - 1 - i] : word[i];
+
+                if (grid[r][c] === "" || grid[r][c] === letter) {
+                  lettersToCheck.push({ row: r, col: c, letter: letter });
+                } else {
+                  canPlace = false;
+                  break;
+                }
+              }
+
+              // 如果可以放置，則放置單字
+              if (canPlace) {
+                lettersToCheck.forEach((item) => {
+                  grid[item.row][item.col] = item.letter;
+                });
+
+                // 更新單字物件
+                wordObj.orientation = orientation;
+                wordObj.row = row;
+                wordObj.col = col;
+
+                placed = true;
+              }
+            }
+
+            // 如果嘗試次數太多還是沒放好，就重新生成網格
+            if (!placed) {
+              return generateGrid();
+            }
+          });
+
+          // 填充空格
+          const chineseCharacters =
+            "一二三四五六七八九十口日月年水火木金土天地人心手山出入大小上下左右中東西南北前後白黑紅藍黃綠";
+
+          for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+              if (grid[i][j] === "") {
+                grid[i][j] =
+                  chineseCharacters[
+                    Math.floor(Math.random() * chineseCharacters.length)
+                  ];
+              }
+            }
+          }
+        }
+
+        // 創建網格UI
+        function createGridUI() {
+          wordSearchGrid.innerHTML = "";
+
+          for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+              const cell = document.createElement("div");
+              cell.className = "grid-cell";
+              cell.textContent = grid[i][j];
+              cell.dataset.row = i;
+              cell.dataset.col = j;
+
+              // 滑鼠事件
+              cell.addEventListener("mousedown", function (e) {
+                if (!gameActive) return;
+                startSelection(i, j, cell);
+              });
+
+              cell.addEventListener("mouseover", function (e) {
+                if (!gameActive || !isSelecting) return;
+                continueSelection(i, j, cell);
+              });
+
+              // 觸控事件
+              cell.addEventListener("touchstart", function (e) {
+                if (!gameActive) return;
+                e.preventDefault();
+                startSelection(i, j, cell);
+              });
+
+              cell.addEventListener("touchmove", function (e) {
+                if (!gameActive || !isSelecting) return;
+                e.preventDefault();
+
+                const touch = e.touches[0];
+                const element = document.elementFromPoint(
+                  touch.clientX,
+                  touch.clientY
+                );
+
+                if (element && element.classList.contains("grid-cell")) {
+                  const row = parseInt(element.dataset.row);
+                  const col = parseInt(element.dataset.col);
+                  continueSelection(row, col, element);
+                }
+              });
+
+              wordSearchGrid.appendChild(cell);
+            }
+          }
+
+          // 添加滑鼠抬起/觸控結束事件
+          document.addEventListener("mouseup", endSelection);
+          document.addEventListener("touchend", endSelection);
+        }
+
+        // 創建單字列表UI
+        function createWordListUI() {
+          wordList.innerHTML = "";
+
+          currentWordList.forEach((wordObj) => {
+            const wordItem = document.createElement("div");
+            wordItem.className = "word-item";
+            wordItem.dataset.word = wordObj.word;
+            wordItem.textContent = wordObj.word;
+
+            wordList.appendChild(wordItem);
+          });
+        }
+
+        // 開始選擇
+        function startSelection(row, col, cell) {
+          isSelecting = true;
+          selectedCells = [{ row, col }];
+
+          // 移除所有已選中的格子
+          document.querySelectorAll(".grid-cell.selected").forEach((cell) => {
+            cell.classList.remove("selected");
+          });
+
+          // 標記選中格子
+          cell.classList.add("selected");
+
+          // 創建選擇線
+          selectionLine = document.createElement("div");
+          selectionLine.className = "selection-line";
+          selectionLine.style.display = "none";
+          document.body.appendChild(selectionLine);
+
+          lastCellElement = cell;
+        }
+
+        // 繼續選擇
+        function continueSelection(row, col, cell) {
+          // 如果格子已經在選擇列表中，不要重複添加
+          if (
+            selectedCells.some((item) => item.row === row && item.col === col)
+          ) {
+            return;
+          }
+
+          const lastCell = selectedCells[selectedCells.length - 1];
+
+          // 確保選擇的格子和上一個格子相鄰（水平、垂直或對角線）
+          const rowDiff = Math.abs(row - lastCell.row);
+          const colDiff = Math.abs(col - lastCell.col);
+
+          if (
+            rowDiff <= 1 &&
+            colDiff <= 1 &&
+            (rowDiff !== 0 || colDiff !== 0)
+          ) {
+            // 檢查方向是否一致
+            if (selectedCells.length === 1 || isConsistentDirection(row, col)) {
+              selectedCells.push({ row, col });
+              cell.classList.add("selected");
+
+              // 更新選擇線
+              updateSelectionLine(lastCellElement, cell);
+              lastCellElement = cell;
+            }
+          }
+        }
+
+        // 檢查是否與已選擇方向一致
+        function isConsistentDirection(newRow, newCol) {
+          if (selectedCells.length < 2) return true;
+
+          const first = selectedCells[0];
+          const second = selectedCells[1];
+
+          // 計算最初方向向量
+          const originalDirRow = second.row - first.row;
+          const originalDirCol = second.col - first.col;
+
+          // 計算新點與初始點的方向向量
+          const newDirRow = newRow - first.row;
+          const newDirCol = newCol - first.col;
+
+          // 檢查方向是否一致（向量平行）
+          return (
+            originalDirRow * newDirCol === originalDirCol * newDirRow &&
+            originalDirRow * newDirRow >= 0 &&
+            originalDirCol * newDirCol >= 0
+          );
+        }
+
+        // 更新選擇線
+        function updateSelectionLine(fromCell, toCell) {
+          if (!selectionLine) return;
+
+          const fromRect = fromCell.getBoundingClientRect();
+          const toRect = toCell.getBoundingClientRect();
+
+          // 計算線的長度
+          const dx =
+            toRect.left +
+            toRect.width / 2 -
+            (fromRect.left + fromRect.width / 2);
+          const dy =
+            toRect.top +
+            toRect.height / 2 -
+            (fromRect.top + fromRect.height / 2);
+          const length = Math.sqrt(dx * dx + dy * dy);
+
+          // 計算線的角度
+          const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+
+          // 設置線的位置和樣式
+          selectionLine.style.display = "block";
+          selectionLine.style.width = `${length}px`;
+          selectionLine.style.left = `${fromRect.left + fromRect.width / 2}px`;
+          selectionLine.style.top = `${fromRect.top + fromRect.height / 2}px`;
+          selectionLine.style.transform = `rotate(${angle}deg)`;
+        }
+
+        // 結束選擇
+        function endSelection() {
+          if (!isSelecting) return;
+          isSelecting = false;
+
+          // 移除選擇線
+          if (selectionLine) {
+            selectionLine.remove();
+            selectionLine = null;
+          }
+
+          // 檢查是否找到單字
+          checkForWord();
+
+          // 移除所有選中的格子
+          document.querySelectorAll(".grid-cell.selected").forEach((cell) => {
+            cell.classList.remove("selected");
+          });
+
+          selectedCells = [];
+        }
+
+        // 檢查選擇的字母是否組成單字
+        function checkForWord() {
+          if (selectedCells.length < 2) return;
+
+          // 組合成字串
+          let forwardWord = "";
+          let backwardWord = "";
+
+          selectedCells.forEach((cell) => {
+            forwardWord += grid[cell.row][cell.col];
+          });
+
+          backwardWord = forwardWord.split("").reverse().join("");
+
+          // 檢查是否匹配單字列表
+          let foundWordObj = currentWordList.find(
+            (wordObj) =>
+              (wordObj.word === forwardWord || wordObj.word === backwardWord) &&
+              !wordObj.found
+          );
+
+          if (foundWordObj) {
+            // 標記已找到
+            foundWordObj.found = true;
+            foundWords.push(foundWordObj.word);
+
+            // 更新UI
+            updateFoundWordUI(foundWordObj.word);
+
+            // 標記格子
+            selectedCells.forEach((cell) => {
+              const gridCell = document.querySelector(
+                `.grid-cell[data-row="${cell.row}"][data-col="${cell.col}"]`
+              );
+              if (gridCell) {
+                gridCell.classList.add("found");
+              }
+            });
+
+            // 加分
+            const points = hintsLeft === 3 ? 10 : 8; // 沒用提示多給分
+            scoreManager.add(points);
+
+            // 播放音效
+            const audio = new Audio(
+              "data:audio/wav;base64,UklGRpQGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YXAGAACAgICAgICAgICAgICAgICAgICAgICAgICAf3hxeH+AfXZ1eHx6dnR5fXt9fXZ8gXqAe3qAfXqCgX96fX+Af3+AYYF/gn59fn1/gIF/fX+Af3+BgH5+fn6Af3+Af35/f4B/f4B+f39/f4B/f35/f4B/f35/f39/gH9+f39/gH9/f39/f4B/f39/f39/f39/f39/f39/f39/f39/f3+Af39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f4CAf39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f3+Af39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f38AvH2KABgAGP/Y/xj/GP+IALx9ig=="
+            );
+            audio.volume = 0.3;
+            audio.play();
+
+            // 更新單字找到計數
+            updateWordsFoundDisplay();
+
+            // 檢查是否完成
+            if (foundWords.length === currentWordList.length) {
+              gameComplete();
+            }
+          }
+        }
+
+        // 更新已找到單字的UI
+        function updateFoundWordUI(word) {
+          const wordItem = document.querySelector(
+            `.word-item[data-word="${word}"]`
+          );
+          if (wordItem) {
+            wordItem.classList.add("found");
+          }
+        }
+
+        // 更新單字找到計數顯示
+        function updateWordsFoundDisplay() {
+          wordsFoundDisplay.textContent = `${foundWords.length}/${currentWordList.length}`;
+        }
+
+        // 使用提示
+        function useHint() {
+          if (!gameActive || hintsLeft <= 0) return;
+
+          // 找出未找到的單字
+          const unfoundWords = currentWordList.filter(
+            (wordObj) => !wordObj.found
+          );
+
+          if (unfoundWords.length > 0) {
+            // 隨機選一個未找到的單字
+            const randomWord =
+              unfoundWords[Math.floor(Math.random() * unfoundWords.length)];
+
+            // 決定第一個字母的位置
+            const isBackward = randomWord.orientation >= 4; // 4及以上是反向排列
+            let row = randomWord.row;
+            let col = randomWord.col;
+
+            if (isBackward) {
+              // 如果是反向單字，找最後一個字母的位置
+              switch (randomWord.orientation) {
+                case 4: // 水平反向
+                  col += randomWord.word.length - 1;
+                  break;
+                case 5: // 垂直反向
+                  row += randomWord.word.length - 1;
+                  break;
+                case 6: // 對角下反向
+                  row += randomWord.word.length - 1;
+                  col += randomWord.word.length - 1;
+                  break;
+                case 7: // 對角上反向
+                  row -= randomWord.word.length - 1;
+                  col += randomWord.word.length - 1;
+                  break;
+              }
+            }
+
+            // 標記提示格子
+            const gridCell = document.querySelector(
+              `.grid-cell[data-row="${row}"][data-col="${col}"]`
+            );
+            if (gridCell) {
+              gridCell.classList.add("path");
+
+              // 1.5秒後移除標記
+              setTimeout(() => {
+                gridCell.classList.remove("path");
+              }, 1500);
+            }
+
+            // 減少提示次數
+            hintsLeft--;
+            hintsLeftDisplay.textContent = hintsLeft;
+
+            // 沒有提示次數了，禁用提示按鈕
+            if (hintsLeft <= 0) {
+              hintButton.disabled = true;
+            }
+          }
+        }
+
+        // 開始計時器
+        function startTimer() {
+          stopTimer(); // 先清除之前的計時器
+          timePlayed = 0;
+          updateTimerDisplay();
+
+          timerInterval = setInterval(() => {
+            if (gameActive) {
+              timePlayed++;
+              updateTimerDisplay();
+            }
+          }, 1000);
+        }
+
+        // 停止計時器
+        function stopTimer() {
+          if (timerInterval) {
+            clearInterval(timerInterval);
+          }
+        }
+
+        // 更新計時器顯示
+        function updateTimerDisplay() {
+          timerDisplay.textContent = formatTime(timePlayed);
+        }
+
+        // 格式化時間為 MM:SS
+        function formatTime(seconds) {
+          const mins = Math.floor(seconds / 60)
+            .toString()
+            .padStart(2, "0");
+          const secs = (seconds % 60).toString().padStart(2, "0");
+          return `${mins}:${secs}`;
+        }
+
+        // 遊戲完成
+        function gameComplete() {
+          stopTimer();
+          gameActive = false;
+
+          // 計算得分
+          let baseScore = parseInt(scoreManager.get());
+
+          // 根據難度增加基礎分數
+          switch (difficulty) {
+            case "easy":
+              baseScore += 50;
+              break;
+            case "medium":
+              baseScore += 100;
+              break;
+            case "hard":
+              baseScore += 200;
+              break;
+          }
+
+          // 根據用時減少分數（最高300分時間獎勵）
+          const maxTimeLimit = {
+            easy: 180, // 3分鐘
+            medium: 240, // 4分鐘
+            hard: 300, // 5分鐘
+          };
+
+          const timeBonus = Math.max(
+            0,
+            300 - Math.floor((timePlayed / maxTimeLimit[difficulty]) * 300)
+          );
+
+          // 總分
+          const totalScore = baseScore + timeBonus;
+
+          // 設置最終分數
+          scoreManager.set(totalScore);
+
+          // 顯示完成訊息
+          gameController.showMessage(
+            "恭喜完成！",
+            `
+            <div style="text-align:center;">
+              <p>你成功找出了所有單字！</p>
+              <p>用時: ${formatTime(timePlayed)}</p>
+              <p>難度: ${getDifficultyText()}</p>
+              <p>使用提示: ${3 - hintsLeft}次</p>
+              <p>基礎分數: ${baseScore}</p>
+              <p>時間獎勵: ${timeBonus}</p>
+              <p>最終分數: ${totalScore}</p>
+              <button id="playAgainBtn" class="primary-button">再來一局</button>
+            </div>
+            `
+          );
+
+          setTimeout(() => {
+            document
+              .getElementById("playAgainBtn")
+              .addEventListener("click", () => {
+                gameController.hideMessage();
+                initGame();
+              });
+          }, 100);
+        }
+
+        // 重啟遊戲
+        function restartGame() {
+          gameActive = false;
+          stopTimer();
+          initGame();
+        }
+
+        // 獲取難度文字
+        function getDifficultyText() {
+          switch (difficulty) {
+            case "easy":
+              return "簡單";
+            case "medium":
+              return "中等";
+            case "hard":
+              return "困難";
+            default:
+              return "簡單";
+          }
+        }
+
+        // 隨機排序陣列
+        function shuffleArray(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+          }
+          return array;
+        }
+
+        // 難度選擇按鈕事件
+        easyBtn.addEventListener("click", function () {
+          if (!gameActive || foundWords.length === 0) {
+            difficulty = "easy";
+            updateDifficultyButtons();
+            restartGame();
+          }
+        });
+
+        mediumBtn.addEventListener("click", function () {
+          if (!gameActive || foundWords.length === 0) {
+            difficulty = "medium";
+            updateDifficultyButtons();
+            restartGame();
+          }
+        });
+
+        hardBtn.addEventListener("click", function () {
+          if (!gameActive || foundWords.length === 0) {
+            difficulty = "hard";
+            updateDifficultyButtons();
+            restartGame();
+          }
+        });
+
+        // 提示按鈕事件
+        hintButton.addEventListener("click", useHint);
+
+        // 更新難度按鈕狀態
+        function updateDifficultyButtons() {
+          easyBtn.classList.toggle("active", difficulty === "easy");
+          mediumBtn.classList.toggle("active", difficulty === "medium");
+          hardBtn.classList.toggle("active", difficulty === "hard");
+        }
+
+        // 設置遊戲控制器
+        gameController.setGameLoop(() => {
+          // 這個遊戲不需要遊戲循環
+        });
+
+        // 設置重啟處理器
+        gameController.setRestartHandler(() => {
+          restartGame();
+        });
+
+        // 處理暫停狀態變化
+        gameController.onPauseStateChange = function (isPaused) {
+          const pauseIndicator = document.getElementById("gamePaused");
+          if (pauseIndicator) {
+            pauseIndicator.style.display = isPaused ? "flex" : "none";
+          }
+          gameActive = !isPaused;
+        };
+
+        // 初始化遊戲
+        initGame();
+
+        // 顯示開始動畫
+        gameController.showStartAnimation(() => {
+          gameController.showMessage(
+            "文字尋寶",
+            `
+            <div style="text-align:center;">
+              <p>歡迎來到文字尋寶遊戲！</p>
+              <p>你需要在字母網格中找出所有隱藏的單字。</p>
+              <p>點擊並拖動來選擇字母，組成單字。</p>
+              <button id="startGameBtn" class="primary-button">開始遊戲</button>
+            </div>
+            `
+          );
+
+          setTimeout(() => {
+            document
+              .getElementById("startGameBtn")
+              .addEventListener("click", () => {
+                gameController.hideMessage();
+              });
+          }, 100);
+        });
+      });
+    </script>
+  </body>
+</html>
